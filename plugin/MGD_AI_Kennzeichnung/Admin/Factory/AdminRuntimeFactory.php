@@ -21,12 +21,13 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\ImageScanServiceAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlAuthorizationAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlCsrfAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlLogAdapter;
-use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlLockedConfirmationPort;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\DatabaseClaimingConfirmationPort;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\OneTimeConfirmationAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\SessionConfirmationStore;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Controller\AdminAssetController;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Http\AdminRequestNormalizer;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\AssetRepository;
+use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\ConfirmationClaimRepository;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\UsageRepository;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\Adapter\BannerSourceAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\Adapter\CategorySourceAdapter;
@@ -53,9 +54,9 @@ final class AdminRuntimeFactory
     ): AdminAssetController {
         $authorization = new JtlAuthorizationAdapter($account, $plugin->getID(), $sessionId);
         $csrf = new JtlCsrfAdapter($session);
-        $confirmation = new JtlLockedConfirmationPort(
+        $confirmation = new DatabaseClaimingConfirmationPort(
             new OneTimeConfirmationAdapter(new SessionConfirmationStore($session)),
-            $db,
+            new ConfirmationClaimRepository($db),
         );
         $assets = new AssetRepository($db);
         $usages = new UsageRepository($db);

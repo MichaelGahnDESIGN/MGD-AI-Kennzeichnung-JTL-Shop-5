@@ -53,6 +53,10 @@ final class TransactionalDatabaseFake implements DbInterface
     /** @var array<string, string> */
     private array $philosophies = [];
 
+    /** @var array<string, true> Persistente Hash-Claims außerhalb der Session. */
+    private array $confirmationClaims = [];
+    private bool $confirmationClaimsFail = false;
+
     /** @var null|array{assets: array<string, array{id: int, label: string, status: string, position: string, theme: string, local_path: string}>, usages: array<string, array<string, mixed>>, philosophies: array<string, string>} */
     private ?array $snapshot = null;
 
@@ -286,6 +290,12 @@ final class TransactionalDatabaseFake implements DbInterface
         return $this->philosophies;
     }
 
+    /** Erzwingt ausschließlich für Sicherheits-Claim-Tests einen DB-Ausfall. */
+    public function failConfirmationClaimsForTest(): void
+    {
+        $this->confirmationClaimsFail = true;
+    }
+
     /** @return list<string> */
     public function existingTables(): array
     {
@@ -514,6 +524,22 @@ final class TransactionalDatabaseFake implements DbInterface
             $this->droppedTables[] = $table;
 
             return 0;
+        }
+
+        if (str_contains($stmt, 'INSERT IGNORE INTO `xplugin_mgd_ai_confirmation_claim`')) {
+            if ($this->confirmationClaimsFail) {
+                throw new RuntimeException('Erzwungener interner Claim-Datenbankfehler.');
+            }
+            $tokenHash = $params['token_hash'] ?? null;
+            if (!is_string($tokenHash)) {
+                throw new RuntimeException('Claim ohne gebundenen Token-Hash.');
+            }
+            if (isset($this->confirmationClaims[$tokenHash])) {
+                return 0;
+            }
+            $this->confirmationClaims[$tokenHash] = true;
+
+            return 1;
         }
 
         if (str_contains($stmt, 'UPDATE `xplugin_mgd_ai_asset`')) {
@@ -773,6 +799,12 @@ final class TransactionalDatabaseFake implements DbInterface
                 ['created_at', 'timestamp', 'NO', 'current_timestamp()', null, ''],
                 ['updated_at', 'timestamp', 'NO', 'current_timestamp()', null, 'on update current_timestamp()'],
             ],
+            'xplugin_mgd_ai_confirmation_claim' => [
+                ['token_hash', 'char(64)', 'NO', null, 'ascii_bin', ''],
+                ['subject_hash', 'char(64)', 'NO', null, 'ascii_bin', ''],
+                ['expires_at', 'datetime(6)', 'NO', null, null, ''],
+                ['claimed_at', 'timestamp(6)', 'NO', 'current_timestamp(6)', null, 'DEFAULT_GENERATED'],
+            ],
             default => throw new RuntimeException('Unbekanntes Testschema.'),
         };
         $columnRows = [];
@@ -796,10 +828,15 @@ final class TransactionalDatabaseFake implements DbInterface
                 ['idx_mgd_ai_usage_present_seen', '1', '1', 'is_present'],
                 ['idx_mgd_ai_usage_present_seen', '1', '2', 'last_seen_at'],
             ];
-        } else {
+        } elseif ($table === 'xplugin_mgd_ai_philosophy') {
             $indexes = [
                 ['PRIMARY', '0', '1', 'id'],
                 ['uq_mgd_ai_philosophy_language', '0', '1', 'language'],
+            ];
+        } else {
+            $indexes = [
+                ['PRIMARY', '0', '1', 'token_hash'],
+                ['idx_mgd_ai_confirmation_expires', '1', '1', 'expires_at'],
             ];
         }
         $indexRows = [];

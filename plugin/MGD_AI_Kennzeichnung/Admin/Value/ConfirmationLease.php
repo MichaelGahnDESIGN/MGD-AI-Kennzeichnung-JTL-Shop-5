@@ -11,10 +11,16 @@ final class ConfirmationLease
 {
     private readonly Closure $releaseCallback;
     private bool $released = false;
+    public readonly int $expiresAt;
 
-    public function __construct(public readonly StoredOperation $operation, callable $release)
-    {
+    public function __construct(
+        public readonly StoredOperation $operation,
+        callable $release,
+        ?int $expiresAt = null,
+    ) {
         $this->releaseCallback = Closure::fromCallable($release);
+        /* Alte interne Ports ohne Ablaufmetadatum bleiben während der Umstellung kompatibel. */
+        $this->expiresAt = $expiresAt ?? PHP_INT_MAX;
     }
 
     /** Gibt die Reservierung idempotent frei. Fehler werden bewusst nicht verschluckt. */

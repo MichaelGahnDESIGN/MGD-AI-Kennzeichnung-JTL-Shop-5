@@ -35,7 +35,7 @@ final class OneTimeConfirmationAdapter implements ConfirmationPortInterface
             return null;
         }
 
-        return new ConfirmationLease($entry['operation'], static function (): void {});
+        return new ConfirmationLease($entry['operation'], static function (): void {}, $entry['expires_at']);
     }
 
     private function key(string $subjectKey, string $token): string
