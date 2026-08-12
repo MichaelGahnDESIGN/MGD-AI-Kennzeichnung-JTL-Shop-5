@@ -135,4 +135,34 @@ final class JtlRuntimeAdapterTest extends TestCase
             }
         }
     }
+
+    #[Test]
+    public function initialer_get_darf_ohne_clientroute_starten_und_einzelne_passende_route_mitbringen(): void
+    {
+        foreach ([[], ['kPlugin' => '17'], ['kPluginAdminMenu' => '9']] as $route) {
+            $_SERVER['REQUEST_METHOD'] = 'GET';
+            $_GET = $route + ['view' => 'list'];
+            $_POST = [];
+
+            $request = (new JtlHttpRequestAdapter())->capture(17, 9);
+            self::assertSame(['view' => 'list'], $request->query);
+        }
+    }
+
+    #[Test]
+    public function jeder_vorhandene_get_routenwert_wird_auch_ohne_den_anderen_exakt_validiert(): void
+    {
+        foreach ([['kPlugin' => '18'], ['kPluginAdminMenu' => '10'], ['kPlugin' => '017']] as $route) {
+            $_SERVER['REQUEST_METHOD'] = 'GET';
+            $_GET = $route + ['view' => 'list'];
+            $_POST = [];
+
+            try {
+                (new JtlHttpRequestAdapter())->capture(17, 9);
+                self::fail('Jeder vorhandene GET-Routenwert muss exakt zum JTL-Kontext passen.');
+            } catch (ValidationException) {
+                self::addToAssertionCount(1);
+            }
+        }
+    }
 }

@@ -19,7 +19,7 @@ final class JtlHttpRequestAdapter
         }
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         $normalizedMethod = is_string($method) ? strtoupper($method) : 'GET';
-        $this->assertRoute($_GET, $pluginId, $adminMenuId, $normalizedMethod === 'GET');
+        $this->assertRoute($_GET, $pluginId, $adminMenuId, false);
         $this->assertRoute($_POST, $pluginId, $adminMenuId, $normalizedMethod === 'POST');
 
         return new AdminHttpRequest(
@@ -39,12 +39,11 @@ final class JtlHttpRequestAdapter
     {
         $hasPlugin = array_key_exists('kPlugin', $input);
         $hasMenu = array_key_exists('kPluginAdminMenu', $input);
-        if (!$required && !$hasPlugin && !$hasMenu) {
-            return;
+        if ($required && (!$hasPlugin || !$hasMenu)) {
+            throw new ValidationException('Die JTL-Administrationsroute ist ungültig.');
         }
-        if (!$hasPlugin || !$hasMenu
-            || !$this->matchesCanonicalId($input['kPlugin'], $pluginId)
-            || !$this->matchesCanonicalId($input['kPluginAdminMenu'], $adminMenuId)
+        if (($hasPlugin && !$this->matchesCanonicalId($input['kPlugin'], $pluginId))
+            || ($hasMenu && !$this->matchesCanonicalId($input['kPluginAdminMenu'], $adminMenuId))
         ) {
             throw new ValidationException('Die JTL-Administrationsroute ist ungültig.');
         }

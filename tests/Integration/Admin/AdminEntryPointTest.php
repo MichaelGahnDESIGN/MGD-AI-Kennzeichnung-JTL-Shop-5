@@ -37,8 +37,6 @@ final class AdminEntryPointTest extends TestCase
         $_SESSION = ['jtl_token' => 'csrf'];
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_GET = [
-            'kPlugin' => '17',
-            'kPluginAdminMenu' => '9',
             'view' => 'list',
             'status' => 'generated',
             'sort' => 'status',
