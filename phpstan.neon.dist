@@ -1,0 +1,8 @@
+parameters:
+    level: max
+    paths:
+        - plugin
+        - tests
+    scanFiles:
+        - tests/Stubs/JtlPluginStubs.php
+    tmpDir: .phpstan.cache

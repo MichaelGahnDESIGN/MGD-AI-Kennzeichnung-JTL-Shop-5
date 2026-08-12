@@ -1,0 +1,41 @@
+{
+    "name": "michael-gahn-design/mgd-ai-kennzeichnung-jtl-shop-5",
+    "description": "JTL-Shop-Plugin zur transparenten Kennzeichnung KI-generierter Inhalte.",
+    "type": "project",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Michael Gahn DESIGN",
+            "homepage": "https://Michael-Gahn.de"
+        }
+    ],
+    "require": {
+        "php": "^8.1"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.68",
+        "phpstan/phpstan": "^2.0",
+        "phpunit/phpunit": "^10.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Plugin\\MGD_AI_Kennzeichnung\\": "plugin/MGD_AI_Kennzeichnung/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "analyse": "phpstan analyse",
+        "style": "php-cs-fixer fix --dry-run --diff"
+    },
+    "config": {
+        "platform": {
+            "php": "8.1.0"
+        },
+        "sort-packages": true
+    }
+}
