@@ -36,7 +36,7 @@ final class AssetRepository
         mixed $theme = null,
     ): void {
         $this->ownership->assertOwned(self::TABLE);
-        $normalKey = $this->boundedText($assetKey, 191);
+        $normalKey = $this->canonicalAssetKey($assetKey);
         $normalPath = $this->normalPath($localPath);
         if ($normalKey === '' || $normalPath === '') {
             throw new RuntimeException('Asset-Schlüssel und lokaler Pfad dürfen nicht leer sein.');
@@ -79,12 +79,39 @@ final class AssetRepository
         }
 
         try {
+            /** @var list<array{asset_key: string, status: mixed, position?: mixed, theme?: mixed}> $normalizedAssets */
+            $normalizedAssets = [];
+            $uniqueKeys = [];
             foreach ($assets as $asset) {
-                $assetKey = $this->boundedText($asset['asset_key'], 191);
+                $assetKey = $this->canonicalAssetKey($asset['asset_key']);
                 if ($assetKey === '') {
                     throw new RuntimeException('Ein Asset-Schlüssel darf nicht leer sein.');
                 }
+                $normalizedAssets[] = [...$asset, 'asset_key' => $assetKey];
+                $uniqueKeys[$assetKey] = true;
+            }
 
+            /*
+             * Alle angeforderten Datensätze werden vor der ersten Änderung
+             * gesperrt und validiert. Einzelabfragen halten Identifier fest und
+             * binden jeden Hash; dynamisch interpolierte IN-Listen entfallen.
+             */
+            foreach (array_keys($uniqueKeys) as $assetKey) {
+                $vorhanden = $this->db->getSingleObject(
+                    <<<'SQL'
+                        SELECT `id`
+                          FROM `xplugin_mgd_ai_asset`
+                         WHERE `asset_key` = :asset_key
+                         FOR UPDATE
+                        SQL,
+                    ['asset_key' => $assetKey],
+                );
+                if ($vorhanden === null) {
+                    throw new RuntimeException(sprintf('Asset %s wurde nicht gefunden.', $assetKey));
+                }
+            }
+
+            foreach ($normalizedAssets as $asset) {
                 $this->db->getAffectedRows(
                     <<<'SQL'
                         UPDATE `xplugin_mgd_ai_asset`
@@ -98,7 +125,7 @@ final class AssetRepository
                         'status' => LabelStatus::fromInput($asset['status'])->value,
                         'position' => LabelPosition::fromInput($asset['position'] ?? null)->value,
                         'theme' => LabelTheme::fromInput($asset['theme'] ?? null)->value,
-                        'asset_key' => $assetKey,
+                        'asset_key' => $asset['asset_key'],
                     ],
                 );
             }
@@ -108,25 +135,30 @@ final class AssetRepository
             }
         } catch (Throwable $fehler) {
             try {
-                $this->db->rollback();
-            } catch (Throwable) {
-                /*
-                 * Der ursprüngliche Schreibfehler bleibt für Diagnose und
-                 * Sicherheitslogik maßgeblich. Ein zusätzlicher Rollbackfehler
-                 * darf ihn nicht verdecken; der Shop kann ihn zentral melden.
-                 */
+                if (!$this->db->rollback()) {
+                    throw new RuntimeException('Datenbank-Rollback meldete false.');
+                }
+            } catch (Throwable $rollbackFehler) {
+                throw new RuntimeException(
+                    'Rollback nach fehlgeschlagener Asset-Aktualisierung ist ebenfalls fehlgeschlagen: '
+                    . $rollbackFehler->getMessage(),
+                    0,
+                    $fehler,
+                );
             }
             throw $fehler;
         }
     }
 
-    private function boundedText(mixed $input, int $maximum): string
+    private function canonicalAssetKey(mixed $input): string
     {
-        if (!is_string($input)) {
+        if (!is_string($input) || $input === '') {
             return '';
         }
 
-        return mb_substr(trim(str_replace("\0", '', $input)), 0, $maximum);
+        return preg_match('/^[a-f0-9]{64}$/i', $input) === 1
+            ? strtolower($input)
+            : hash('sha256', $input);
     }
 
     private function normalPath(mixed $input): string
@@ -136,6 +168,9 @@ final class AssetRepository
         }
 
         $path = str_replace(['\\', "\0"], ['/', ''], trim($input));
+        if (mb_strlen($path) > 1024) {
+            throw new RuntimeException('Der lokale Rohpfad ist zu lang.');
+        }
         if (preg_match('#^[a-z][a-z0-9+.-]*://#i', $path) === 1) {
             return '';
         }
@@ -155,6 +190,7 @@ final class AssetRepository
             return '';
         }
 
-        return mb_substr('/' . implode('/', $segments), 0, 1024);
+        $normalized = '/' . implode('/', $segments);
+        return $normalized;
     }
 }

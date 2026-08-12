@@ -78,12 +78,35 @@ final class RepositoryTransactionTest extends TestCase
         $db->failOnAssetKey = 'eins';
         $db->failRollback = true;
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Erzwungener Fehler beim dritten Asset.');
+        try {
+            (new AssetRepository($db))->bulkUpdate([
+                ['asset_key' => 'eins', 'status' => 'generated'],
+            ]);
+            self::fail('Der Rollback-Fehler muss sichtbar eskalieren.');
+        } catch (RuntimeException $fehler) {
+            self::assertStringContainsString('Rollback', $fehler->getMessage());
+            self::assertInstanceOf(RuntimeException::class, $fehler->getPrevious());
+            self::assertSame('Erzwungener Fehler beim dritten Asset.', $fehler->getPrevious()->getMessage());
+        }
+    }
 
-        (new AssetRepository($db))->bulkUpdate([
-            ['asset_key' => 'eins', 'status' => 'generated'],
-        ]);
+    #[Test]
+    public function bulk_update_meldet_auch_rollback_false_mit_urspruenglichem_fehler_als_previous(): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->setMarker('xplugin_mgd_ai_asset', self::MARKER);
+        $db->seedAssets(['eins' => 'none']);
+        $db->failOnAssetKey = 'eins';
+        $db->returnFalseOnRollback = true;
+
+        try {
+            (new AssetRepository($db))->bulkUpdate([['asset_key' => 'eins', 'status' => 'generated']]);
+            self::fail('Rollback false muss sichtbar eskalieren.');
+        } catch (RuntimeException $fehler) {
+            self::assertStringContainsString('Rollback', $fehler->getMessage());
+            self::assertInstanceOf(RuntimeException::class, $fehler->getPrevious());
+            self::assertSame('Erzwungener Fehler beim dritten Asset.', $fehler->getPrevious()->getMessage());
+        }
     }
 
     #[Test]
@@ -92,12 +115,12 @@ final class RepositoryTransactionTest extends TestCase
         $db = new TransactionalDatabaseFake();
         $db->setMarker('xplugin_mgd_ai_asset', self::MARKER);
         $repository = new AssetRepository($db);
-        $langerPfad = '/media//produkte/../bilder/' . str_repeat('a', 1200) . '.jpg';
+        $lokalerEingabepfad = '/media//produkte/../bilder/bild.jpg';
 
-        $repository->upsert(' sha256:ABCDEF ', $langerPfad, 'NICHT-BEKANNT', 'TOP-LEFT', 'DARK');
+        $repository->upsert('sha256:ABCDEF', $lokalerEingabepfad, 'NICHT-BEKANNT', 'TOP-LEFT', 'DARK');
 
         $aufruf = $this->schreibAufrufe($db)[0];
-        self::assertSame('sha256:ABCDEF', $aufruf['params']['asset_key']);
+        self::assertSame(hash('sha256', 'sha256:ABCDEF'), $aufruf['params']['asset_key']);
         self::assertSame('unreviewed', $aufruf['params']['status']);
         self::assertSame('top-left', $aufruf['params']['position']);
         self::assertSame('dark', $aufruf['params']['theme']);
@@ -107,7 +130,47 @@ final class RepositoryTransactionTest extends TestCase
         self::assertStringNotContainsString('//', $lokalerPfad);
         self::assertStringNotContainsString('/../', $lokalerPfad);
         self::assertStringNotContainsString('sha256:ABCDEF', $aufruf['sql']);
-        self::assertStringNotContainsString($langerPfad, $aufruf['sql']);
+        self::assertStringNotContainsString($lokalerEingabepfad, $aufruf['sql']);
+    }
+
+    #[Test]
+    public function asset_upsert_akzeptiert_exakten_sha256_case_normalisiert_ohne_kuerzung(): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->setMarker('xplugin_mgd_ai_asset', self::MARKER);
+        $hash = str_repeat('A', 64);
+
+        (new AssetRepository($db))->upsert($hash, '/media/a.jpg');
+
+        $aufruf = $this->schreibAufrufe($db)[0];
+        self::assertSame(strtolower($hash), $aufruf['params']['asset_key']);
+        self::assertSame(64, strlen((string) $aufruf['params']['asset_key']));
+    }
+
+    #[Test]
+    public function asset_hash_unterscheidet_rohe_case_akzent_und_nachlaufende_leerzeichen(): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->setMarker('xplugin_mgd_ai_asset', self::MARKER);
+        $repository = new AssetRepository($db);
+
+        foreach (['Bild', 'bild', 'Bíld', 'Bild '] as $index => $assetKey) {
+            $repository->upsert($assetKey, '/media/' . $index . '.jpg');
+        }
+
+        self::assertSame(4, $db->assetCount());
+    }
+
+    #[Test]
+    public function asset_upsert_weist_ueberlangen_pfad_ab_statt_identitaeten_zu_verschmelzen(): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->setMarker('xplugin_mgd_ai_asset', self::MARKER);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('zu lang');
+
+        (new AssetRepository($db))->upsert('asset-a', '/' . str_repeat('p', 1025));
     }
 
     #[Test]
@@ -150,6 +213,7 @@ final class RepositoryTransactionTest extends TestCase
         self::assertSame(1, $db->begins);
         self::assertSame(1, $db->commits);
         self::assertSame(0, $db->rollbacks);
+        self::assertSame(2, $db->forUpdateSelections);
         foreach ($this->schreibAufrufe($db) as $aufruf) {
             $assetKey = $aufruf['params']['asset_key'] ?? null;
             self::assertIsString($assetKey);
@@ -159,16 +223,50 @@ final class RepositoryTransactionTest extends TestCase
     }
 
     #[Test]
+    public function bulk_update_rollt_zurueck_wenn_ein_angefordertes_asset_fehlt(): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->setMarker('xplugin_mgd_ai_asset', self::MARKER);
+        $db->seedAssets(['vorhanden' => 'none']);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('nicht gefunden');
+
+        try {
+            (new AssetRepository($db))->bulkUpdate([
+                ['asset_key' => 'vorhanden', 'status' => 'none'],
+                ['asset_key' => 'fehlt', 'status' => 'generated'],
+            ]);
+        } finally {
+            self::assertSame(['vorhanden' => 'none'], $db->assetStatuses());
+            self::assertSame(1, $db->rollbacks);
+        }
+    }
+
+    #[Test]
+    public function bulk_update_zaehlt_auch_unveraendertes_asset_als_vorhanden(): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->setMarker('xplugin_mgd_ai_asset', self::MARKER);
+        $db->seedAssets(['gleich' => 'none']);
+
+        (new AssetRepository($db))->bulkUpdate([['asset_key' => 'gleich', 'status' => 'none']]);
+
+        self::assertSame(1, $db->commits);
+        self::assertSame(1, $db->forUpdateSelections);
+    }
+
+    #[Test]
     public function usage_upsert_ist_idempotent_und_begrenzt_freie_minimierte_werte(): void
     {
         $db = new TransactionalDatabaseFake();
         $db->setMarker('xplugin_mgd_ai_usage', self::MARKER);
         $repository = new UsageRepository($db);
-        $langeReferenz = str_repeat('r', 600);
+        $referenz = 'produkt:42';
         $unsichererKontext = '<script>alert(1)</script>' . str_repeat('k', 900);
 
-        $repository->upsert(7, 'PRODUCT', $langeReferenz, $unsichererKontext, true);
-        $repository->upsert(7, 'product', $langeReferenz, $unsichererKontext, false);
+        $repository->upsert(7, 'PRODUCT', $referenz, $unsichererKontext, true);
+        $repository->upsert(7, 'product', $referenz, $unsichererKontext, false);
 
         self::assertSame(1, $db->usageCount());
         $aufruf = $this->schreibAufrufe($db)[1];
@@ -180,7 +278,80 @@ final class RepositoryTransactionTest extends TestCase
         self::assertLessThanOrEqual(255, mb_strlen($referenz));
         self::assertLessThanOrEqual(500, mb_strlen($kontext));
         self::assertStringNotContainsString('<script', $kontext);
-        self::assertStringNotContainsString($langeReferenz, $aufruf['sql']);
+        self::assertSame(hash('sha256', $referenz), $aufruf['params']['source_reference_hash']);
+        self::assertStringNotContainsString($referenz, $aufruf['sql']);
+    }
+
+    #[Test]
+    public function usage_weist_ueberlange_referenz_ab_ohne_gleiche_praefixe_zu_verschmelzen(): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->setMarker('xplugin_mgd_ai_usage', self::MARKER);
+        $repository = new UsageRepository($db);
+        $prefix = str_repeat('x', 255);
+
+        foreach ([$prefix . 'a', $prefix . 'b'] as $referenz) {
+            try {
+                $repository->upsert(7, 'product', $referenz);
+                self::fail('Überlange Referenzen müssen abgewiesen werden.');
+            } catch (RuntimeException $fehler) {
+                self::assertStringContainsString('zu lang', $fehler->getMessage());
+            }
+        }
+        self::assertSame(0, $db->usageCount());
+    }
+
+    #[Test]
+    public function usage_hash_unterscheidet_case_akzent_und_nachlaufendes_leerzeichen(): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->setMarker('xplugin_mgd_ai_usage', self::MARKER);
+        $repository = new UsageRepository($db);
+
+        foreach (['Bild', 'bild', 'Bíld', 'Bild '] as $referenz) {
+            $repository->upsert(7, 'product', $referenz);
+        }
+
+        self::assertSame(4, $db->usageCount());
+    }
+
+    #[Test]
+    public function usage_kontext_entfernt_entity_kodierte_aktive_bloecke_tags_und_eventattribute(): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->setMarker('xplugin_mgd_ai_usage', self::MARKER);
+        $repository = new UsageRepository($db);
+        $angriffe = [
+            '&lt;img src=x onerror=alert(1)&gt;Sicher',
+            '&amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt;Sicher',
+            '&lt;style&gt;body{display:none}&lt;/style&gt;Sicher',
+        ];
+
+        foreach ($angriffe as $index => $kontext) {
+            $repository->upsert(7, 'product', 'ref-' . $index, $kontext);
+        }
+
+        foreach ($this->schreibAufrufe($db) as $aufruf) {
+            $kontext = $aufruf['params']['context'] ?? null;
+            self::assertIsString($kontext);
+            self::assertSame('Sicher', $kontext);
+        }
+    }
+
+    #[Test]
+    public function usage_kontext_weist_tief_kodiertes_rest_markup_fail_closed_ab(): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->setMarker('xplugin_mgd_ai_usage', self::MARKER);
+        $kontext = '<img src="x" onerror="alert(1)">';
+        for ($durchlauf = 0; $durchlauf < 12; ++$durchlauf) {
+            $kontext = htmlspecialchars($kontext, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        }
+
+        (new UsageRepository($db))->upsert(7, 'product', 'tief', $kontext);
+
+        $aufruf = $this->schreibAufrufe($db)[0];
+        self::assertNull($aufruf['params']['context']);
     }
 
     #[Test]
@@ -281,6 +452,16 @@ final class RepositoryTransactionTest extends TestCase
         $this->expectExceptionMessage('darf nicht leer sein');
 
         (new PhilosophyRepository($db))->upsert('de', $inhalt);
+    }
+
+    #[Test]
+    public function philosophy_neutralisiert_semikolonlose_numerische_tag_entities(): void
+    {
+        foreach (['&#60script&#62alert(1)&#60/script&#62', '&#x3cscript&#x3ealert(1)&#x3c/script&#x3e'] as $angriff) {
+            $inhalt = $this->speicherePhilosophie($angriff . ' Sicher');
+            self::assertSame('Sicher', $inhalt);
+            $this->assertKeinMarkup($inhalt);
+        }
     }
 
     private function speicherePhilosophie(string $inhalt): string

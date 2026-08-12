@@ -60,7 +60,11 @@ final class PhilosophyRepository
          */
         $decoded = mb_substr(str_replace("\0", '', $input), 0, 50000);
         for ($durchlauf = 0; $durchlauf < 10; ++$durchlauf) {
-            $next = html_entity_decode($decoded, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $next = html_entity_decode(
+                $this->decodeNumericTagEntities($decoded),
+                ENT_QUOTES | ENT_HTML5,
+                'UTF-8',
+            );
             if ($next === $decoded) {
                 break;
             }
@@ -72,7 +76,7 @@ final class PhilosophyRepository
          * Dekodieren neutralisiert. Dadurch kann auch eine spätere Anzeige,
          * die irrtümlich nochmals Entities dekodiert, kein Tag rekonstruieren.
          */
-        $markupEntity = '/&(?:(?:amp|#0*38|#x0*26);)*(?:lt|gt|#0*(?:60|62)|#x0*(?:3c|3e));/iu';
+        $markupEntity = '/&(?:(?:amp|#0*38|#x0*26);)*(?:lt|gt|#0*(?:60|62);?|#x0*(?:3c|3e);?)/iu';
         if (preg_match($markupEntity, $decoded) === 1) {
             /*
              * Nach zehn Durchläufen verbliebenes potenzielles Markup ist eine
@@ -94,5 +98,16 @@ final class PhilosophyRepository
 
         /* Nach strip_tags() darf bewusst keine Entity-Dekodierung mehr folgen. */
         return mb_substr(trim($text), 0, 10000);
+    }
+
+    /** Dekodiert ausschließlich semikolonlose numerische Winkelklammern. */
+    private function decodeNumericTagEntities(string $text): string
+    {
+        return preg_replace_callback(
+            '/&#0*60(?![0-9])|&#x0*3c;?|&#0*62(?![0-9])|&#x0*3e;?/iu',
+            static fn(array $match): string => str_contains(strtolower($match[0]), '3c')
+                || preg_match('/60/', $match[0]) === 1 ? '<' : '>',
+            $text,
+        ) ?? '';
     }
 }
