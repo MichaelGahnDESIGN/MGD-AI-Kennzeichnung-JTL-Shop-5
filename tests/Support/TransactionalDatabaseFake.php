@@ -197,6 +197,20 @@ final class TransactionalDatabaseFake implements DbInterface
         return $this->assets[$assetKey]['local_path'] ?? null;
     }
 
+    /** @return array{status: string, position: string, theme: string}|null */
+    public function presentationForAsset(string $assetKey): ?array
+    {
+        if (!isset($this->assets[$assetKey])) {
+            return null;
+        }
+
+        return [
+            'status' => $this->assets[$assetKey]['status'],
+            'position' => $this->assets[$assetKey]['position'],
+            'theme' => $this->assets[$assetKey]['theme'],
+        ];
+    }
+
     public function usageIsPresent(string $sourceReference): bool
     {
         foreach ($this->usages as $usage) {
@@ -272,6 +286,16 @@ final class TransactionalDatabaseFake implements DbInterface
         }
         if (str_contains($stmt, 'FOR UPDATE')) {
             ++$this->forUpdateSelections;
+            $id = $params['id'] ?? null;
+            if (is_int($id)) {
+                foreach ($this->assets as $asset) {
+                    if ($asset['id'] === $id) {
+                        return (object) ['id' => $id];
+                    }
+                }
+
+                return null;
+            }
             $assetKey = $params['asset_key'] ?? null;
 
             return is_string($assetKey) && isset($this->assets[$assetKey]) ? (object) ['id' => 1] : null;
@@ -422,6 +446,25 @@ final class TransactionalDatabaseFake implements DbInterface
         }
 
         if (str_contains($stmt, 'UPDATE `xplugin_mgd_ai_asset`')) {
+            $id = $params['id'] ?? null;
+            if (is_int($id)) {
+                foreach ($this->assets as &$asset) {
+                    if ($asset['id'] !== $id) {
+                        continue;
+                    }
+                    foreach (['status', 'position', 'theme'] as $field) {
+                        if (isset($params[$field]) && is_string($params[$field])) {
+                            $asset[$field] = $params[$field];
+                        }
+                    }
+                    unset($asset);
+
+                    return 1;
+                }
+                unset($asset);
+
+                return 0;
+            }
             $assetKey = $params['asset_key'] ?? null;
             if (!is_string($assetKey)) {
                 throw new RuntimeException('Asset-Schlüssel fehlt im Binding.');

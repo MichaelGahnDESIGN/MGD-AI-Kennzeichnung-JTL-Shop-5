@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database;
 
 use JTL\DB\DbInterface;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\AssetNotFoundException;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Port\CleanupRepositoryInterface;
 use Plugin\MGD_AI_Kennzeichnung\Domain\AssetSource;
 use RuntimeException;
 use Throwable;
 
 /** Speichert minimierte technische Fundstellen eines Assets idempotent. */
-final class UsageRepository
+final class UsageRepository implements CleanupRepositoryInterface
 {
     private const TABLE = 'xplugin_mgd_ai_usage';
     private readonly SchemaOwnershipGuard $ownership;
@@ -204,6 +206,68 @@ final class UsageRepository
         }
 
         return $outcome['value'];
+    }
+
+    /** @param list<int> $usageIds */
+    public function countOwnedStaleUsageIds(array $usageIds): int
+    {
+        $this->ownership->assertOwned(self::TABLE);
+        $count = 0;
+        foreach ($usageIds as $id) {
+            $row = $this->db->getSingleObject(
+                'SELECT `id` FROM `xplugin_mgd_ai_usage` WHERE `id` = :id AND `is_present` = 0',
+                ['id' => $id],
+            );
+            if ($row !== null) {
+                ++$count;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * Entfernt atomar ausschließlich explizit gewählte, bereits als fehlend
+     * markierte Fundstellen. Assets, JTL-Kerndaten und Bilddateien bleiben unberührt.
+     *
+     * @param list<int> $usageIds
+     */
+    public function cleanupOwnedStaleUsages(array $usageIds): void
+    {
+        $this->ownership->assertOwned(self::TABLE);
+        if ($this->db->getPDO()->inTransaction()) {
+            throw new RuntimeException('Die Bereinigung darf nicht in einer bereits aktiven Transaktion starten.');
+        }
+        if (!$this->db->beginTransaction()) {
+            throw new RuntimeException('Die sichere Bereinigung konnte nicht gestartet werden.');
+        }
+        try {
+            foreach ($usageIds as $id) {
+                $row = $this->db->getSingleObject(
+                    'SELECT `id` FROM `xplugin_mgd_ai_usage` WHERE `id` = :id AND `is_present` = 0 FOR UPDATE',
+                    ['id' => $id],
+                );
+                if ($row === null) {
+                    throw new AssetNotFoundException('Mindestens eine Fundstelle ist nicht mehr bereinigungsfähig.');
+                }
+            }
+            foreach ($usageIds as $id) {
+                $this->db->getAffectedRows(
+                    'DELETE FROM `xplugin_mgd_ai_usage` WHERE `id` = :id AND `is_present` = 0',
+                    ['id' => $id],
+                );
+            }
+            if (!$this->db->commit()) {
+                throw new RuntimeException('Die sichere Bereinigung konnte nicht bestätigt werden.');
+            }
+        } catch (Throwable $error) {
+            try {
+                $this->db->rollback();
+            } catch (Throwable) {
+                throw new RuntimeException('Die Bereinigung und ihre Rücknahme sind fehlgeschlagen.', 0, $error);
+            }
+            throw $error;
+        }
     }
 
     /** @param list<AssetSource> $sources */

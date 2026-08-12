@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database;
 
 use JTL\DB\DbInterface;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\AssetNotFoundException;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Port\AdminAssetRepositoryInterface;
 use Plugin\MGD_AI_Kennzeichnung\Domain\LabelPosition;
 use Plugin\MGD_AI_Kennzeichnung\Domain\LabelStatus;
 use Plugin\MGD_AI_Kennzeichnung\Domain\LabelTheme;
@@ -12,7 +14,7 @@ use RuntimeException;
 use Throwable;
 
 /** Speichert technische Bildkennzeichnungen ohne frei zusammengesetzte SQL-Werte. */
-final class AssetRepository
+final class AssetRepository implements AdminAssetRepositoryInterface
 {
     private const TABLE = 'xplugin_mgd_ai_asset';
 
@@ -215,6 +217,197 @@ final class AssetRepository
             }
             throw $fehler;
         }
+    }
+
+    /** @param list<int> $ids */
+    public function countExistingIds(array $ids): int
+    {
+        $this->ownership->assertOwned(self::TABLE);
+        $count = 0;
+        foreach ($ids as $id) {
+            $row = $this->db->getSingleObject(
+                'SELECT `id` FROM `xplugin_mgd_ai_asset` WHERE `id` = :id',
+                ['id' => $id],
+            );
+            if ($row !== null) {
+                ++$count;
+            }
+        }
+
+        return $count;
+    }
+
+    /** @param array<string, string> $changes */
+    public function updateOneById(int $id, array $changes): void
+    {
+        $this->updateManyByIds([$id], $changes);
+    }
+
+    /**
+     * Ändert eine vollständige ID-Auswahl atomar. Feldnamen gelangen niemals
+     * aus Eingaben ins SQL, sondern wählen eine von sieben festen Anweisungen.
+     *
+     * @param list<int> $ids
+     * @param array<string, string> $changes
+     */
+    public function updateManyByIds(array $ids, array $changes): void
+    {
+        $this->ownership->assertOwned(self::TABLE);
+        if ($this->db->getPDO()->inTransaction()) {
+            throw new RuntimeException('Die Bildänderung darf nicht in einer bereits aktiven Transaktion starten.');
+        }
+        $statement = $this->maskedUpdateStatement(array_keys($changes));
+        if (!$this->db->beginTransaction()) {
+            throw new RuntimeException('Die sichere Bildänderung konnte nicht gestartet werden.');
+        }
+        try {
+            foreach ($ids as $id) {
+                $existing = $this->db->getSingleObject(
+                    'SELECT `id` FROM `xplugin_mgd_ai_asset` WHERE `id` = :id FOR UPDATE',
+                    ['id' => $id],
+                );
+                if ($existing === null) {
+                    throw new AssetNotFoundException('Mindestens ein ausgewähltes Asset ist nicht mehr vorhanden.');
+                }
+            }
+            foreach ($ids as $id) {
+                $this->db->getAffectedRows($statement, [...$changes, 'id' => $id]);
+            }
+            if (!$this->db->commit()) {
+                throw new RuntimeException('Die sichere Bildänderung konnte nicht bestätigt werden.');
+            }
+        } catch (Throwable $error) {
+            try {
+                $this->db->rollback();
+            } catch (Throwable) {
+                throw new RuntimeException('Die Bildänderung und ihre Rücknahme sind fehlgeschlagen.', 0, $error);
+            }
+            throw $error;
+        }
+    }
+
+    /**
+     * @param array<string, string|bool> $filters
+     * @return list<array<string, scalar|null>>
+     */
+    public function listPage(int $offset, int $limit, array $filters, string $sort, string $direction): array
+    {
+        $this->ownership->assertOwned(self::TABLE);
+        [$where, $params] = $this->listWhere($filters);
+        $sortSql = match ($sort) {
+            'id' => '`asset`.`id`',
+            'status' => '`asset`.`status`',
+            'updated_at' => '`asset`.`updated_at`',
+            default => throw new RuntimeException('Die Sortierung ist nicht freigegeben.'),
+        };
+        $directionSql = match ($direction) {
+            'asc' => 'ASC',
+            'desc' => 'DESC',
+            default => throw new RuntimeException('Die Sortierrichtung ist nicht freigegeben.'),
+        };
+        $rows = $this->db->getObjects(
+            'SELECT `asset`.`id`, `asset`.`local_path`, `asset`.`status`, `asset`.`position`, `asset`.`theme`, '
+            . 'COUNT(`usage`.`id`) AS `usage_count` '
+            . 'FROM `xplugin_mgd_ai_asset` AS `asset` '
+            . 'LEFT JOIN `xplugin_mgd_ai_usage` AS `usage` ON `usage`.`asset_id` = `asset`.`id` '
+            . $where . ' GROUP BY `asset`.`id`, `asset`.`local_path`, `asset`.`status`, `asset`.`position`, `asset`.`theme`, `asset`.`updated_at` '
+            . 'ORDER BY ' . $sortSql . ' ' . $directionSql . ' LIMIT :limit OFFSET :offset',
+            [...$params, 'limit' => $limit, 'offset' => $offset],
+        );
+
+        return array_values(array_map(static fn(object $row): array => [
+            'id' => is_numeric($row->id ?? null) ? (int) $row->id : 0,
+            'local_path' => is_string($row->local_path ?? null) ? $row->local_path : '',
+            'status' => is_string($row->status ?? null) ? $row->status : '',
+            'position' => is_string($row->position ?? null) ? $row->position : '',
+            'theme' => is_string($row->theme ?? null) ? $row->theme : '',
+            'usage_count' => is_numeric($row->usage_count ?? null) ? (int) $row->usage_count : 0,
+        ], $rows));
+    }
+
+    /** @param array<string, string|bool> $filters */
+    public function countForList(array $filters): int
+    {
+        $this->ownership->assertOwned(self::TABLE);
+        [$where, $params] = $this->listWhere($filters);
+        $row = $this->db->getSingleObject(
+            'SELECT COUNT(DISTINCT `asset`.`id`) AS `total` FROM `xplugin_mgd_ai_asset` AS `asset` '
+            . 'LEFT JOIN `xplugin_mgd_ai_usage` AS `usage` ON `usage`.`asset_id` = `asset`.`id` ' . $where,
+            $params,
+        );
+
+        return $row !== null && is_numeric($row->total ?? null) ? max(0, (int) $row->total) : 0;
+    }
+
+    /** @return array<string, scalar|null>|null */
+    public function detailById(int $id): ?array
+    {
+        $this->ownership->assertOwned(self::TABLE);
+        $row = $this->db->getSingleObject(
+            <<<'SQL'
+                SELECT `asset`.`id`, `asset`.`local_path`, `asset`.`status`, `asset`.`position`, `asset`.`theme`,
+                       COUNT(`usage`.`id`) AS `usage_count`,
+                       SUM(CASE WHEN `usage`.`is_present` = 1 THEN 1 ELSE 0 END) AS `present_usage_count`
+                  FROM `xplugin_mgd_ai_asset` AS `asset`
+                  LEFT JOIN `xplugin_mgd_ai_usage` AS `usage` ON `usage`.`asset_id` = `asset`.`id`
+                  WHERE `asset`.`id` = :id
+                  GROUP BY `asset`.`id`, `asset`.`local_path`, `asset`.`status`, `asset`.`position`, `asset`.`theme`
+                SQL,
+            ['id' => $id],
+        );
+        if ($row === null) {
+            return null;
+        }
+
+        return [
+            'id' => is_numeric($row->id ?? null) ? (int) $row->id : 0,
+            'local_path' => is_string($row->local_path ?? null) ? $row->local_path : '',
+            'status' => is_string($row->status ?? null) ? $row->status : '',
+            'position' => is_string($row->position ?? null) ? $row->position : '',
+            'theme' => is_string($row->theme ?? null) ? $row->theme : '',
+            'usage_count' => is_numeric($row->usage_count ?? null) ? (int) $row->usage_count : 0,
+            'present_usage_count' => is_numeric($row->present_usage_count ?? null) ? (int) $row->present_usage_count : 0,
+        ];
+    }
+
+    /** @param list<string> $fields */
+    private function maskedUpdateStatement(array $fields): string
+    {
+        sort($fields, SORT_STRING);
+        return match ($fields) {
+            ['status'] => 'UPDATE `xplugin_mgd_ai_asset` SET `status` = :status, `updated_at` = CURRENT_TIMESTAMP WHERE `id` = :id',
+            ['position'] => 'UPDATE `xplugin_mgd_ai_asset` SET `position` = :position, `updated_at` = CURRENT_TIMESTAMP WHERE `id` = :id',
+            ['theme'] => 'UPDATE `xplugin_mgd_ai_asset` SET `theme` = :theme, `updated_at` = CURRENT_TIMESTAMP WHERE `id` = :id',
+            ['position', 'status'] => 'UPDATE `xplugin_mgd_ai_asset` SET `position` = :position, `status` = :status, `updated_at` = CURRENT_TIMESTAMP WHERE `id` = :id',
+            ['status', 'theme'] => 'UPDATE `xplugin_mgd_ai_asset` SET `status` = :status, `theme` = :theme, `updated_at` = CURRENT_TIMESTAMP WHERE `id` = :id',
+            ['position', 'theme'] => 'UPDATE `xplugin_mgd_ai_asset` SET `position` = :position, `theme` = :theme, `updated_at` = CURRENT_TIMESTAMP WHERE `id` = :id',
+            ['position', 'status', 'theme'] => 'UPDATE `xplugin_mgd_ai_asset` SET `position` = :position, `status` = :status, `theme` = :theme, `updated_at` = CURRENT_TIMESTAMP WHERE `id` = :id',
+            default => throw new RuntimeException('Die Änderungsfelder sind nicht freigegeben.'),
+        };
+    }
+
+    /**
+     * @param array<string, string|bool> $filters
+     * @return array{0: string, 1: array<string, mixed>}
+     */
+    private function listWhere(array $filters): array
+    {
+        $clauses = [];
+        $params = [];
+        if (isset($filters['status'])) {
+            $clauses[] = '`asset`.`status` = :filter_status';
+            $params['filter_status'] = $filters['status'];
+        }
+        if (isset($filters['source'])) {
+            $clauses[] = '`usage`.`source_type` = :filter_source';
+            $params['filter_source'] = $filters['source'];
+        }
+        if (isset($filters['present'])) {
+            $clauses[] = '`usage`.`is_present` = :filter_present';
+            $params['filter_present'] = $filters['present'] ? 1 : 0;
+        }
+
+        return [$clauses === [] ? '' : 'WHERE ' . implode(' AND ', $clauses), $params];
     }
 
     private function canonicalAssetKey(mixed $input): string
