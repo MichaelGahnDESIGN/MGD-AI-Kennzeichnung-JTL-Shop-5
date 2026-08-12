@@ -15,7 +15,7 @@ final class UsageRepository
     private const TABLE = 'xplugin_mgd_ai_usage';
     private readonly SchemaOwnershipGuard $ownership;
     private bool $reconciling = false;
-    private bool $scanOwnershipConfirmed = false;
+    private bool $scanSessionActive = false;
 
     public function __construct(private readonly DbInterface $db)
     {
@@ -105,7 +105,9 @@ final class UsageRepository
     public function reconcile(array $scannedSources, callable $scan): mixed
     {
         $this->assertAutomaticSourceScope($scannedSources);
-        $this->assertReadyForScan();
+        if (!$this->scanSessionActive) {
+            $this->ownership->assertOwned(self::TABLE);
+        }
         if ($this->reconciling) {
             throw new RuntimeException('Ein Bildabgleich darf nicht verschachtelt gestartet werden.');
         }
@@ -226,13 +228,20 @@ final class UsageRepository
         }
     }
 
-    /** Prüft den Usage-Tabellenvertrag einmal vor dem atomaren Scanlauf. */
-    public function assertReadyForScan(): void
+    /** Öffnet nach einer frischen Ownership-Prüfung genau eine Scan-Session. */
+    public function beginScanSession(): void
     {
-        if (!$this->scanOwnershipConfirmed) {
-            $this->ownership->assertOwned(self::TABLE);
-            $this->scanOwnershipConfirmed = true;
+        if ($this->scanSessionActive) {
+            throw new RuntimeException('Eine Usage-Scan-Session ist bereits aktiv.');
         }
+        $this->ownership->assertOwned(self::TABLE);
+        $this->scanSessionActive = true;
+    }
+
+    /** Beendet die kurzlebige Ownership-Freigabe auch auf Fehlerpfaden. */
+    public function endScanSession(): void
+    {
+        $this->scanSessionActive = false;
     }
 
     /**

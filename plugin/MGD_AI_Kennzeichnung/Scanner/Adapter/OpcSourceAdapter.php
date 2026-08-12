@@ -56,25 +56,28 @@ final class OpcSourceAdapter implements SourceAdapterInterface, SourceAdapterPag
 
         $references = [];
         foreach ($rows as $row) {
-            $pageId = filter_var($row->page_id ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
             $json = $row->areas_json ?? null;
-            if ($pageId === false || !is_string($json) || strlen($json) > self::MAXIMUM_JSON_BYTES) {
+            if ($json === null || (is_string($json) && trim($json) === '')) {
                 continue;
+            }
+            $pageId = filter_var($row->page_id ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            if ($pageId === false || !is_string($json) || strlen($json) > self::MAXIMUM_JSON_BYTES) {
+                throw self::incompleteRow();
             }
 
             try {
                 $tree = json_decode($json, true, self::MAXIMUM_JSON_DEPTH, JSON_THROW_ON_ERROR);
             } catch (JsonException) {
-                continue;
+                throw self::incompleteRow();
             }
             if (!is_array($tree)) {
-                continue;
+                throw self::incompleteRow();
             }
 
             $visited = 0;
             $candidates = [];
             if (!$this->collectImageFields($tree, '$', 0, $visited, $candidates)) {
-                continue;
+                throw self::incompleteRow();
             }
             foreach ($candidates as $candidate) {
                 /*
@@ -104,6 +107,12 @@ final class OpcSourceAdapter implements SourceAdapterInterface, SourceAdapterPag
         }
 
         return new SourceScanPage($references, count($rows));
+    }
+
+    /** Liefert absichtlich weder JSON-Inhalt noch Parserdetails für Logs. */
+    private static function incompleteRow(): RuntimeException
+    {
+        return new RuntimeException('Eine OPC-Seite konnte nicht vollständig und sicher verarbeitet werden.');
     }
 
     public function source(): AssetSource

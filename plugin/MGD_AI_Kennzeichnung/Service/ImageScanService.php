@@ -33,71 +33,86 @@ final class ImageScanService
             return new ImageScanResult(0, 0);
         }
 
-        $this->assets->assertReadyForScan();
-        return $this->usages->reconcile($scannedSources, function (): ImageScanResult {
-            $createdAssets = 0;
-            $recordedUsages = 0;
+        $assetSessionStarted = false;
+        $usageSessionStarted = false;
+        try {
+            $this->assets->beginScanSession();
+            $assetSessionStarted = true;
+            $this->usages->beginScanSession();
+            $usageSessionStarted = true;
 
-            foreach ($this->adapters as $adapter) {
-                if (!$adapter instanceof SourceAdapterPageInterface) {
-                    throw new RuntimeException('Der Quellenadapter meldet die Zahl gelesener Datenbankzeilen nicht.');
-                }
-                $offset = 0;
-                $previousFullPage = null;
+            return $this->usages->reconcile($scannedSources, function (): ImageScanResult {
+                $createdAssets = 0;
+                $recordedUsages = 0;
 
-                for ($pageNumber = 1; $pageNumber <= self::MAXIMUM_PAGES_PER_ADAPTER; ++$pageNumber) {
-                    $page = $adapter->scanPage($offset, self::PAGE_SIZE);
-                    $this->assertPage($page, $adapter);
-                    if ($page->rowsRead === 0) {
-                        break;
+                foreach ($this->adapters as $adapter) {
+                    if (!$adapter instanceof SourceAdapterPageInterface) {
+                        throw new RuntimeException('Der Quellenadapter meldet die Zahl gelesener Datenbankzeilen nicht.');
                     }
+                    $offset = 0;
+                    $previousFullPage = null;
 
-                    $fingerprint = $page->references === [] ? null : $this->pageFingerprint($page->references);
-                    if ($page->rowsRead === self::PAGE_SIZE
-                        && $fingerprint !== null
-                        && $fingerprint === $previousFullPage
-                    ) {
-                        throw new RuntimeException('Ein Quellenadapter lieferte erneut eine identische Seite.');
-                    }
-                    $previousFullPage = $page->rowsRead === self::PAGE_SIZE ? $fingerprint : null;
-
-                    /*
-                     * Eine hundertste volle DB-Seite besitzt kein nachweisbares
-                     * natürliches Ende. Wir brechen vor ihrer Verarbeitung ab;
-                     * der Repository-Callback rollt dadurch den gesamten Lauf
-                     * zurück und markiert insbesondere keine alte Nutzung als
-                     * fehlend.
-                     */
-                    if ($pageNumber === self::MAXIMUM_PAGES_PER_ADAPTER
-                        && $page->rowsRead === self::PAGE_SIZE
-                    ) {
-                        throw new RuntimeException('Ein Quellenadapter überschritt die harte Grenze von 100 vollen Seiten.');
-                    }
-
-                    foreach ($page->references as $reference) {
-                        $asset = $this->assets->ensureUnreviewed($reference->assetKey, $reference->localPath);
-                        if ($asset['created']) {
-                            ++$createdAssets;
+                    for ($pageNumber = 1; $pageNumber <= self::MAXIMUM_PAGES_PER_ADAPTER; ++$pageNumber) {
+                        $page = $adapter->scanPage($offset, self::PAGE_SIZE);
+                        $this->assertPage($page, $adapter);
+                        if ($page->rowsRead === 0) {
+                            break;
                         }
-                        if ($this->usages->upsert(
-                            $asset['id'],
-                            $reference->source,
-                            $reference->sourceReference,
-                            $reference->context,
-                        )) {
-                            ++$recordedUsages;
+
+                        $fingerprint = $page->references === [] ? null : $this->pageFingerprint($page->references);
+                        if ($page->rowsRead === self::PAGE_SIZE
+                            && $fingerprint !== null
+                            && $fingerprint === $previousFullPage
+                        ) {
+                            throw new RuntimeException('Ein Quellenadapter lieferte erneut eine identische Seite.');
+                        }
+                        $previousFullPage = $page->rowsRead === self::PAGE_SIZE ? $fingerprint : null;
+
+                        /*
+                         * Eine hundertste volle DB-Seite besitzt kein nachweisbares
+                         * natürliches Ende. Wir brechen vor ihrer Verarbeitung ab;
+                         * der Repository-Callback rollt dadurch den gesamten Lauf
+                         * zurück und markiert insbesondere keine alte Nutzung als
+                         * fehlend.
+                         */
+                        if ($pageNumber === self::MAXIMUM_PAGES_PER_ADAPTER
+                            && $page->rowsRead === self::PAGE_SIZE
+                        ) {
+                            throw new RuntimeException('Ein Quellenadapter überschritt die harte Grenze von 100 vollen Seiten.');
+                        }
+
+                        foreach ($page->references as $reference) {
+                            $asset = $this->assets->ensureUnreviewed($reference->assetKey, $reference->localPath);
+                            if ($asset['created']) {
+                                ++$createdAssets;
+                            }
+                            if ($this->usages->upsert(
+                                $asset['id'],
+                                $reference->source,
+                                $reference->sourceReference,
+                                $reference->context,
+                            )) {
+                                ++$recordedUsages;
+                            }
+                        }
+
+                        $offset += $page->rowsRead;
+                        if ($page->rowsRead < self::PAGE_SIZE) {
+                            break;
                         }
                     }
-
-                    $offset += $page->rowsRead;
-                    if ($page->rowsRead < self::PAGE_SIZE) {
-                        break;
-                    }
                 }
+
+                return new ImageScanResult($createdAssets, $recordedUsages);
+            });
+        } finally {
+            if ($usageSessionStarted) {
+                $this->usages->endScanSession();
             }
-
-            return new ImageScanResult($createdAssets, $recordedUsages);
-        });
+            if ($assetSessionStarted) {
+                $this->assets->endScanSession();
+            }
+        }
     }
 
     /**

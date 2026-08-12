@@ -7,6 +7,7 @@ namespace Tests\Unit\Service;
 require_once __DIR__ . '/../../Stubs/JtlDatabaseStubs.php';
 
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Plugin\MGD_AI_Kennzeichnung\Domain\AssetSource;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\AssetRepository;
@@ -631,6 +632,48 @@ final class ImageScanServiceTest extends TestCase
     }
 
     #[Test]
+    public function ownership_freigabe_endet_nach_erfolgreichem_scan_und_schema_mutation_stoppt_folgelauf(): void
+    {
+        $db = $this->scannerDatabase();
+        $normalizer = new LocalPathNormalizer();
+        $service = new ImageScanService(
+            [new RecordingAdapter(AssetSource::Product, [self::reference($normalizer, '/bilder/a.jpg', 'artikel:1')])],
+            new AssetRepository($db),
+            new UsageRepository($db),
+        );
+        $service->scan();
+        $writesBeforeMutation = $db->assetCount();
+        $db->setColumnType('xplugin_mgd_ai_asset', 'asset_key', 'varchar(64)');
+
+        $this->expectException(RuntimeException::class);
+        try {
+            $service->scan();
+        } finally {
+            self::assertSame($writesBeforeMutation, $db->assetCount());
+        }
+    }
+
+    #[Test]
+    public function ownership_freigabe_endet_auch_nach_adapterfehler(): void
+    {
+        $db = $this->scannerDatabase();
+        $adapter = new FailOnceAdapter();
+        $service = new ImageScanService(
+            [$adapter],
+            new AssetRepository($db),
+            new UsageRepository($db),
+        );
+        try {
+            $service->scan();
+        } catch (RuntimeException) {
+        }
+        $db->setColumnType('xplugin_mgd_ai_usage', 'source_type', 'varchar(31)');
+
+        $this->expectException(RuntimeException::class);
+        $service->scan();
+    }
+
+    #[Test]
     public function opc_json_extrahiert_nur_offizielle_bildfelder_bounded_und_eindeutig(): void
     {
         $db = $this->scannerDatabase();
@@ -674,32 +717,61 @@ final class ImageScanServiceTest extends TestCase
     }
 
     #[Test]
-    public function opc_json_verwirft_malformed_tief_oder_uebergross_fail_closed(): void
-    {
+    #[DataProvider('unvollstaendigesOpcJson')]
+    public function opc_unvollstaendig_interpretierbare_zeile_bricht_scan_ab_und_erhaelt_missing(
+        string $json,
+    ): void {
         $db = $this->scannerDatabase();
-        $db->scannerRows['topcpage'] = [
-            (object) ['page_id' => 1, 'context' => 'kaputt', 'areas_json' => '{'],
-            (object) ['page_id' => 2, 'context' => 'tief', 'areas_json' => str_repeat('[', 70) . '"bilder/a.jpg"' . str_repeat(']', 70)],
-            (object) ['page_id' => 3, 'context' => 'groß', 'areas_json' => str_repeat(' ', 1048577)],
-        ];
+        $db->seedScanUsage(hash('sha256', 'bilder/alt.jpg'), 'bilder/alt.jpg', 'opc:alt', 'opc');
+        $db->scannerRows['topcpage'] = [(object) ['page_id' => 1, 'context' => 'kaputt', 'areas_json' => $json]];
+        $service = new ImageScanService(
+            [new OpcSourceAdapter($db, new LocalPathNormalizer())],
+            new AssetRepository($db),
+            new UsageRepository($db),
+        );
 
-        self::assertSame([], self::collect((new OpcSourceAdapter($db, new LocalPathNormalizer()))->scan(0, 100)));
+        try {
+            $service->scan();
+            self::fail('Nicht vollständig interpretierbares OPC-JSON muss den Scan abbrechen.');
+        } catch (RuntimeException $exception) {
+            self::assertStringContainsString('OPC', $exception->getMessage());
+            self::assertStringNotContainsString($json, $exception->getMessage());
+        }
+        self::assertTrue($db->usageIsPresent('opc:alt'));
+
+        $db->scannerRows['topcpage'] = [(object) [
+            'page_id' => 1,
+            'context' => 'gültig',
+            'areas_json' => '{"properties":{"src":"neu.jpg"}}',
+        ]];
+        $result = $service->scan();
+        self::assertSame(1, $result->createdAssets);
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function unvollstaendigesOpcJson(): iterable
+    {
+        yield 'malformed' => ['{'];
+        yield 'scalar string' => ['"text"'];
+        yield 'scalar number' => ['42'];
+        yield 'json null' => ['null'];
+        yield 'excessive depth' => [str_repeat('[', 70) . '[]' . str_repeat(']', 70)];
+        yield 'excessive nodes' => [json_encode(array_fill(0, 10001, []), JSON_THROW_ON_ERROR)];
+        yield 'over 100 KiB valid' => [json_encode([
+            'padding' => str_repeat('x', 102400),
+            'properties' => ['src' => 'muss-verworfen-werden.jpg'],
+        ], JSON_THROW_ON_ERROR)];
     }
 
     #[Test]
-    public function opc_json_verwirft_bereits_eine_gueltige_zeile_ueber_hundert_kibibyte(): void
+    public function opc_leeres_oder_null_datenbank_json_darf_vertrauenswuerdig_null_referenzen_liefern(): void
     {
-        $db = $this->scannerDatabase();
-        $db->scannerRows['topcpage'] = [(object) [
-            'page_id' => 9,
-            'context' => 'Groß',
-            'areas_json' => json_encode([
-                'padding' => str_repeat('x', 102400),
-                'properties' => ['src' => 'muss-verworfen-werden.jpg'],
-            ], JSON_THROW_ON_ERROR),
-        ]];
+        foreach ([null, ''] as $json) {
+            $db = $this->scannerDatabase();
+            $db->scannerRows['topcpage'] = [(object) ['page_id' => 1, 'context' => null, 'areas_json' => $json]];
 
-        self::assertSame([], self::collect((new OpcSourceAdapter($db, new LocalPathNormalizer()))->scan(0, 100)));
+            self::assertSame([], self::collect((new OpcSourceAdapter($db, new LocalPathNormalizer()))->scan(0, 100)));
+        }
     }
 
     private function scannerDatabase(): TransactionalDatabaseFake
@@ -799,6 +871,32 @@ final class ThrowingAdapter implements SourceAdapterInterface, SourceAdapterPage
     public function scanPage(int $offset, int $limit): SourceScanPage
     {
         throw new RuntimeException('Erzwungener Scannerfehler.');
+    }
+}
+
+/** Fehleradapter, dessen zweiter Lauf nur die Session-Rücksetzung prüft. */
+final class FailOnceAdapter implements SourceAdapterInterface, SourceAdapterPageInterface
+{
+    private bool $failed = false;
+
+    public function scan(int $offset, int $limit): iterable
+    {
+        yield from $this->scanPage($offset, $limit)->references;
+    }
+
+    public function scanPage(int $offset, int $limit): SourceScanPage
+    {
+        if (!$this->failed) {
+            $this->failed = true;
+            throw new RuntimeException('Einmaliger Scannerfehler.');
+        }
+
+        return new SourceScanPage([], 0);
+    }
+
+    public function source(): AssetSource
+    {
+        return AssetSource::Product;
     }
 }
 
