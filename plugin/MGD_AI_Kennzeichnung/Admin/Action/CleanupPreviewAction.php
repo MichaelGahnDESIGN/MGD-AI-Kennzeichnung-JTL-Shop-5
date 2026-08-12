@@ -9,6 +9,7 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\Port\AuthorizationPortInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Port\CleanupRepositoryInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Port\ConfirmationPortInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Result\CleanupPreviewResult;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Value\StoredOperation;
 
 /** Prüft Besitz und Veraltung, ohne Daten zu ändern. */
 final class CleanupPreviewAction
@@ -27,8 +28,11 @@ final class CleanupPreviewAction
         if ($this->usages->countOwnedStaleUsageIds($ids) !== count($ids)) {
             throw new AssetNotFoundException('Mindestens eine Fundstelle ist nicht bereinigungsfähig.');
         }
-        $digest = AdminInputValidator::operationDigest($ids, [], 'cleanup-stale-usages');
+        $operation = new StoredOperation('cleanup-stale-usages', $ids, []);
 
-        return new CleanupPreviewResult(count($ids), $this->confirmation->issue($this->authorization->subjectKey(), $digest));
+        return new CleanupPreviewResult(
+            count($ids),
+            $this->confirmation->issue($this->authorization->subjectKey(), $operation),
+        );
     }
 }

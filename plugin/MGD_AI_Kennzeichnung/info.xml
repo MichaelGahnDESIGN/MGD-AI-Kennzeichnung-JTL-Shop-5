@@ -9,4 +9,10 @@
     <PluginID>MGD_AI_Kennzeichnung</PluginID>
     <CreateDate>2026-08-12</CreateDate>
     <Version>1.0.0</Version>
+    <Adminmenu>
+        <Customlink sort="1">
+            <Name>Bildverwaltung</Name>
+            <Filename>assets.php</Filename>
+        </Customlink>
+    </Adminmenu>
 </jtlshopplugin>

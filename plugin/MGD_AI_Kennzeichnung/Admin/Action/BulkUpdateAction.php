@@ -21,28 +21,21 @@ final class BulkUpdateAction
         private readonly AdminAssetRepositoryInterface $assets,
     ) {}
 
-    /**
-     * @param array<mixed> $ids
-     * @param array<string, mixed> $mask
-     * @param array<string, mixed> $values
-     */
-    public function execute(string $csrfToken, array $ids, array $mask, array $values, string $confirmationToken): BulkUpdateResult
+    public function execute(string $csrfToken, string $confirmationToken): BulkUpdateResult
     {
         /* Diese Reihenfolge ist Teil des Sicherheitsvertrags und darf nicht vertauscht werden. */
         $this->authorization->assertCanManageAssets();
         $this->csrf->assertValid($csrfToken);
-        $normalIds = AdminInputValidator::ids($ids);
-        $changes = AdminInputValidator::changes($mask, $values);
-        $validConfirmation = $this->confirmation->consume(
-            $this->authorization->subjectKey(),
-            AdminInputValidator::operationDigest($normalIds, $changes),
-            $confirmationToken,
-        );
-        if (!$validConfirmation) {
+        $operation = $this->confirmation->consume($this->authorization->subjectKey(), $confirmationToken);
+        if ($operation === null || $operation->name !== 'asset-bulk-update') {
             throw new ConfirmationException('Die Vorschau-Bestätigung ist ungültig oder abgelaufen.');
         }
-        $this->assets->updateManyByIds($normalIds, $changes);
+        /* Auch serverseitige Sitzungsdaten werden vor der Mutation erneut geschlossen validiert. */
+        $ids = AdminInputValidator::ids($operation->ids);
+        $mask = array_fill_keys(array_keys($operation->changes), true);
+        $changes = AdminInputValidator::changes($mask, $operation->changes);
+        $this->assets->updateManyByIds($ids, $changes);
 
-        return new BulkUpdateResult(count($normalIds));
+        return new BulkUpdateResult(count($ids));
     }
 }

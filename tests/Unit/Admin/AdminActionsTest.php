@@ -16,6 +16,7 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\Port\CleanupRepositoryInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Port\LogPortInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Port\ScanPortInterface;
 use Plugin\MGD_AI_Kennzeichnung\Service\ImageScanResult;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Value\StoredOperation;
 use RuntimeException;
 
 final class AdminActionsTest extends TestCase
@@ -31,7 +32,7 @@ final class AdminActionsTest extends TestCase
             $repository,
         );
 
-        $action->execute('csrf', 7, ['theme' => true, 'status' => false], ['theme' => 'dark', 'status' => 'none']);
+        $action->execute('csrf', 7, ['theme' => true, 'status' => false], ['theme' => 'dark']);
 
         self::assertSame([[[7], ['theme' => 'dark']]], $repository->writes);
         self::assertSame(['permission', 'csrf'], $trace);
@@ -93,6 +94,7 @@ final class AdminActionsTest extends TestCase
             $repository,
         );
         $previewResult = $preview->preview([9, 4]);
+        $confirmation->operationToConsume = new StoredOperation('cleanup-stale-usages', [4, 9], []);
         $action = new CleanupAction(
             new RecordingAuthorization($trace, true),
             new RecordingCsrf($trace, true),
@@ -100,7 +102,7 @@ final class AdminActionsTest extends TestCase
             $repository,
         );
 
-        $result = $action->execute('csrf', [9, 4], $previewResult->confirmationToken);
+        $result = $action->execute('csrf', $previewResult->confirmationToken);
 
         self::assertSame(2, $result->cleanedCount);
         self::assertSame([[4, 9]], $repository->cleanedUsageIds);
@@ -157,6 +159,16 @@ final class RecordingCleanupRepository implements CleanupRepositoryInterface
         $this->trace[] = 'cleanup-count';
 
         return count($usageIds);
+    }
+
+    public function listOwnedStaleUsages(int $offset, int $limit): array
+    {
+        return [];
+    }
+
+    public function countOwnedStaleUsages(): int
+    {
+        return 0;
     }
 
     public function cleanupOwnedStaleUsages(array $usageIds): void

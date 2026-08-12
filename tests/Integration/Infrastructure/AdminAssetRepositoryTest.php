@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\AssetNotFoundException;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\AssetRepository;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\SchemaOwnershipGuard;
+use RuntimeException;
 use Tests\Support\TransactionalDatabaseFake;
 
 final class AdminAssetRepositoryTest extends TestCase
@@ -54,6 +55,55 @@ final class AdminAssetRepositoryTest extends TestCase
             );
             self::assertSame(1, $db->begins);
             self::assertSame(0, $db->commits);
+            self::assertSame(1, $db->rollbacks);
+        }
+    }
+
+    #[Test]
+    public function rollback_false_wird_mit_urspruenglichem_fehler_eskaliert(): void
+    {
+        $db = $this->database();
+        $db->returnFalseOnRollback = true;
+        $repository = new AssetRepository($db);
+
+        try {
+            $repository->updateManyByIds([99], ['theme' => 'dark']);
+            self::fail('Rollback false muss als eigener Betriebsfehler eskalieren.');
+        } catch (RuntimeException $error) {
+            self::assertSame('Die Bildänderung und ihre Rücknahme sind fehlgeschlagen.', $error->getMessage());
+            self::assertInstanceOf(AssetNotFoundException::class, $error->getPrevious());
+        }
+    }
+
+    #[Test]
+    public function rollback_throw_wird_mit_urspruenglichem_fehler_eskaliert(): void
+    {
+        $db = $this->database();
+        $db->failRollback = true;
+        $repository = new AssetRepository($db);
+
+        try {
+            $repository->updateManyByIds([99], ['theme' => 'dark']);
+            self::fail('Rollback throw muss als eigener Betriebsfehler eskalieren.');
+        } catch (RuntimeException $error) {
+            self::assertSame('Die Bildänderung und ihre Rücknahme sind fehlgeschlagen.', $error->getMessage());
+            self::assertInstanceOf(AssetNotFoundException::class, $error->getPrevious());
+        }
+    }
+
+    #[Test]
+    public function commit_false_rollt_die_bereits_geschriebene_aenderung_zurueck(): void
+    {
+        $db = $this->database();
+        $db->seedAssets(['bild-a' => 'unreviewed']);
+        $db->returnFalseOnCommit = true;
+
+        try {
+            (new AssetRepository($db))->updateManyByIds([1], ['status' => 'generated']);
+            self::fail('Commit false muss die Mutation abbrechen.');
+        } catch (RuntimeException $error) {
+            self::assertSame('Die sichere Bildänderung konnte nicht bestätigt werden.', $error->getMessage());
+            self::assertSame('unreviewed', $db->statusForAsset(hash('sha256', 'bild-a')));
             self::assertSame(1, $db->rollbacks);
         }
     }

@@ -48,6 +48,7 @@ final class TransactionalDatabaseFake implements DbInterface
     private array $scanUsages = [];
 
     private int $nextAssetId = 1;
+    private int $nextUsageId = 1;
 
     /** @var array<string, string> */
     private array $philosophies = [];
@@ -178,6 +179,7 @@ final class TransactionalDatabaseFake implements DbInterface
         $assetId = $this->assets[$assetKey]['id'];
         $key = implode('|', [(string) $assetId, $sourceType, hash('sha256', $sourceReference)]);
         $this->usages[$key] = [
+            'id' => $this->nextUsageId++,
             'asset_id' => $assetId,
             'source_type' => $sourceType,
             'source_reference' => $sourceReference,
@@ -185,6 +187,25 @@ final class TransactionalDatabaseFake implements DbInterface
             'context' => null,
             'is_present' => 1,
         ];
+    }
+
+    /** Erzeugt eine explizit als veraltet markierte Plugin-Fundstelle für Bereinigungstests. */
+    public function seedStaleUsage(string $sourceReference = 'veraltet'): int
+    {
+        $this->seedScanUsage('cleanup-asset', '/media/cleanup.jpg', $sourceReference);
+        foreach ($this->usages as &$usage) {
+            if (($usage['source_reference'] ?? null) !== $sourceReference) {
+                continue;
+            }
+            $usage['is_present'] = 0;
+            $id = $usage['id'] ?? 0;
+            unset($usage);
+
+            return is_int($id) ? $id : 0;
+        }
+        unset($usage);
+
+        return 0;
     }
 
     public function statusForAsset(string $assetKey): ?string
@@ -288,6 +309,15 @@ final class TransactionalDatabaseFake implements DbInterface
             ++$this->forUpdateSelections;
             $id = $params['id'] ?? null;
             if (is_int($id)) {
+                if (str_contains($stmt, 'xplugin_mgd_ai_usage')) {
+                    foreach ($this->usages as $usage) {
+                        if (($usage['id'] ?? null) === $id && ($usage['is_present'] ?? null) === 0) {
+                            return (object) ['id' => $id];
+                        }
+                    }
+
+                    return null;
+                }
                 foreach ($this->assets as $asset) {
                     if ($asset['id'] === $id) {
                         return (object) ['id' => $id];
@@ -553,6 +583,19 @@ final class TransactionalDatabaseFake implements DbInterface
             unset($usage);
 
             return $affected;
+        }
+
+        if (str_contains($stmt, 'DELETE FROM `xplugin_mgd_ai_usage`')) {
+            $id = $params['id'] ?? null;
+            foreach ($this->usages as $key => $usage) {
+                if (($usage['id'] ?? null) === $id && ($usage['is_present'] ?? null) === 0) {
+                    unset($this->usages[$key]);
+
+                    return 1;
+                }
+            }
+
+            return 0;
         }
 
         if (str_contains($stmt, 'INSERT INTO `xplugin_mgd_ai_philosophy`')) {

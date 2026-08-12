@@ -21,16 +21,15 @@ final class CleanupAction
         private readonly CleanupRepositoryInterface $usages,
     ) {}
 
-    /** @param array<mixed> $usageIds */
-    public function execute(string $csrfToken, array $usageIds, string $confirmationToken): CleanupResult
+    public function execute(string $csrfToken, string $confirmationToken): CleanupResult
     {
         $this->authorization->assertCanManageAssets();
         $this->csrf->assertValid($csrfToken);
-        $ids = AdminInputValidator::ids($usageIds);
-        $digest = AdminInputValidator::operationDigest($ids, [], 'cleanup-stale-usages');
-        if (!$this->confirmation->consume($this->authorization->subjectKey(), $digest, $confirmationToken)) {
+        $operation = $this->confirmation->consume($this->authorization->subjectKey(), $confirmationToken);
+        if ($operation === null || $operation->name !== 'cleanup-stale-usages' || $operation->changes !== []) {
             throw new ConfirmationException('Die Bereinigungsbestätigung ist ungültig oder abgelaufen.');
         }
+        $ids = AdminInputValidator::ids($operation->ids);
         $this->usages->cleanupOwnedStaleUsages($ids);
 
         return new CleanupResult(count($ids));

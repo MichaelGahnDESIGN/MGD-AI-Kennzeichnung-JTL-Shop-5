@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 /** @var array<string, scalar|null> $detail */
 /** @var string $csrfToken */
+/** @var string $assetScriptUrl */
 $escapedCsrf = htmlspecialchars($csrfToken, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$escapedScriptUrl = htmlspecialchars($assetScriptUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $escapedId = htmlspecialchars((string) ($detail['id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $escapedPath = htmlspecialchars((string) ($detail['local_path'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $escapedStatus = htmlspecialchars((string) ($detail['status'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -21,7 +23,7 @@ $escapedStatus = htmlspecialchars((string) ($detail['status'] ?? ''), ENT_QUOTES
         <input type="hidden" name="asset_id" value="<?= $escapedId ?>">
         <label><input type="checkbox" name="mask[status]" value="1"> Status ändern</label>
         <label for="mgd-status">Neuer Status</label>
-        <select id="mgd-status" name="values[status]">
+        <select id="mgd-status" name="values[status]" disabled>
             <option value="unreviewed">Ungeprüft</option>
             <option value="none">Keine KI-Kennzeichnung</option>
             <option value="generated">KI-generiert</option>
@@ -29,6 +31,18 @@ $escapedStatus = htmlspecialchars((string) ($detail['status'] ?? ''), ENT_QUOTES
             <option value="modified">KI-bearbeitet</option>
             <option value="deepfake">Deepfake</option>
         </select>
+        <label><input type="checkbox" name="mask[position]" value="1"> Position ändern</label>
+        <label for="mgd-position">Neue Position</label>
+        <select id="mgd-position" name="values[position]" disabled>
+            <option value="top-left">Oben links</option><option value="top-right">Oben rechts</option>
+            <option value="bottom-left">Unten links</option><option value="bottom-right">Unten rechts</option>
+        </select>
+        <label><input type="checkbox" name="mask[theme]" value="1"> Darstellung ändern</label>
+        <label for="mgd-theme">Neue Darstellung</label>
+        <select id="mgd-theme" name="values[theme]" disabled>
+            <option value="auto">Automatisch</option><option value="light">Hell</option><option value="dark">Dunkel</option>
+        </select>
         <button type="submit" name="action" value="single-update">Speichern</button>
     </form>
 </section>
+<script src="<?= $escapedScriptUrl ?>" defer></script>

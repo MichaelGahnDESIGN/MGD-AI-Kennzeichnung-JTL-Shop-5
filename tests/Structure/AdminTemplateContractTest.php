@@ -18,13 +18,15 @@ final class AdminTemplateContractTest extends TestCase
             $root . '/adminmenu/templates/asset-detail.php',
             $root . '/adminmenu/templates/bulk-preview.php',
             $root . '/adminmenu/templates/messages.php',
+            $root . '/adminmenu/templates/cleanup-list.php',
+            $root . '/adminmenu/templates/cleanup-preview.php',
         ];
 
         foreach ($files as $file) {
             self::assertFileExists($file);
             $source = (string) file_get_contents($file);
             self::assertStringContainsString('htmlspecialchars', $source);
-            self::assertDoesNotMatchRegularExpression('/<script|<style|\$_(?:GET|POST|REQUEST)|echo\s+\$(?!escaped)/i', $source);
+            self::assertDoesNotMatchRegularExpression('/<script(?![^>]+src=)|<style|\$_(?:GET|POST|REQUEST)|echo\s+\$(?!escaped)/i', $source);
         }
 
         $combined = implode("\n", array_map(static fn(string $file): string => (string) file_get_contents($file), $files));
@@ -34,6 +36,13 @@ final class AdminTemplateContractTest extends TestCase
         self::assertStringContainsString('aria-label', $combined);
         self::assertStringContainsString('confirmation_token', $combined);
         self::assertStringContainsString('Betroffene Datensätze', $combined);
+        self::assertStringContainsString('name="mask[position]"', $combined);
+        self::assertStringContainsString('name="mask[theme]"', $combined);
+        self::assertStringContainsString('value="scan"', $combined);
+        self::assertStringContainsString('value="cleanup-preview"', $combined);
+        self::assertStringContainsString('value="cleanup-execute"', $combined);
+        self::assertStringContainsString('Vorherige Seite', $combined);
+        self::assertStringContainsString('Nächste Seite', $combined);
     }
 
     #[Test]
@@ -44,7 +53,12 @@ final class AdminTemplateContractTest extends TestCase
         $source = (string) file_get_contents($file);
 
         self::assertStringContainsString('defined(', $source);
+        self::assertStringContainsString('AdminRuntimeFactory', $source);
+        self::assertStringContainsString('AdminAssetController', (string) file_get_contents(
+            dirname(__DIR__, 2) . '/plugin/MGD_AI_Kennzeichnung/Admin/Factory/AdminRuntimeFactory.php',
+        ));
         self::assertStringNotContainsString('$_GET', $source);
+        self::assertStringNotContainsString('$_POST', $source);
         self::assertStringNotContainsString('UPDATE ', strtoupper($source));
         self::assertStringNotContainsString('DELETE ', strtoupper($source));
     }

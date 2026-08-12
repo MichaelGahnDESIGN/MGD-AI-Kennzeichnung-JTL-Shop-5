@@ -49,6 +49,11 @@ final class AdminInputValidator
                 throw new ValidationException('Die Auswahl der Änderungsfelder ist ungültig.');
             }
         }
+        foreach (array_keys($values) as $field) {
+            if (!in_array($field, $allowed, true) || ($mask[$field] ?? false) !== true) {
+                throw new ValidationException('Die Zielwerte entsprechen nicht exakt den ausgewählten Änderungsfeldern.');
+            }
+        }
         $changes = [];
         foreach ($allowed as $field) {
             if (($mask[$field] ?? false) !== true) {
@@ -59,9 +64,9 @@ final class AdminInputValidator
                 throw new ValidationException('Ein ausgewählter Zielwert fehlt oder ist ungültig.');
             }
             $normal = match ($field) {
-                'status' => LabelStatus::tryFrom(strtolower(trim($value))),
-                'position' => LabelPosition::tryFrom(strtolower(trim($value))),
-                'theme' => LabelTheme::tryFrom(strtolower(trim($value))),
+                'status' => LabelStatus::tryFrom($value),
+                'position' => LabelPosition::tryFrom($value),
+                'theme' => LabelTheme::tryFrom($value),
             };
             if ($normal === null) {
                 throw new ValidationException('Ein Zielwert gehört nicht zur erlaubten Auswahl.');

@@ -278,7 +278,9 @@ final class AssetRepository implements AdminAssetRepositoryInterface
             }
         } catch (Throwable $error) {
             try {
-                $this->db->rollback();
+                if (!$this->db->rollback()) {
+                    throw new RuntimeException('Datenbank-Rollback meldete false.');
+                }
             } catch (Throwable) {
                 throw new RuntimeException('Die Bildänderung und ihre Rücknahme sind fehlgeschlagen.', 0, $error);
             }

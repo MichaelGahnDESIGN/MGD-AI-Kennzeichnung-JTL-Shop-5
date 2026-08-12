@@ -16,6 +16,7 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\Port\AdminAssetRepositoryInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Port\AuthorizationPortInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Port\ConfirmationPortInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Port\CsrfPortInterface;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Value\StoredOperation;
 
 final class BulkUpdateActionTest extends TestCase
 {
@@ -32,7 +33,7 @@ final class BulkUpdateActionTest extends TestCase
 
         $this->expectException(AccessDeniedException::class);
         try {
-            $action->execute('csrf', [1], ['status' => true], ['status' => 'generated'], 'token');
+            $action->execute('csrf', 'token');
         } finally {
             self::assertSame(['permission'], $trace);
         }
@@ -51,7 +52,7 @@ final class BulkUpdateActionTest extends TestCase
 
         $this->expectException(CsrfException::class);
         try {
-            $action->execute('falsch', ['1'], ['status' => true], ['status' => 'generated'], 'token');
+            $action->execute('falsch', 'token');
         } finally {
             self::assertSame(['permission', 'csrf'], $trace);
         }
@@ -62,13 +63,17 @@ final class BulkUpdateActionTest extends TestCase
     {
         foreach ([[1, 1], ['1'], [0], range(1, 501)] as $ids) {
             $trace = [];
-            $action = $this->action($trace);
+            $preview = new BulkUpdatePreviewAction(
+                new RecordingAuthorization($trace, true),
+                new RecordingConfirmation($trace),
+                new RecordingAssetRepository($trace),
+            );
 
             try {
-                $action->execute('csrf', $ids, ['status' => true], ['status' => 'generated'], 'token');
+                $preview->preview($ids, ['status' => true], ['status' => 'generated']);
                 self::fail('Ungültige IDs müssen vor der Bestätigung abgelehnt werden.');
             } catch (ValidationException) {
-                self::assertSame(['permission', 'csrf'], $trace);
+                self::assertSame(['permission'], $trace);
             }
         }
     }
@@ -82,10 +87,32 @@ final class BulkUpdateActionTest extends TestCase
             [['status' => false], ['status' => 'generated']],
         ] as [$mask, $values]) {
             $trace = [];
-            $action = $this->action($trace);
+            $preview = new BulkUpdatePreviewAction(
+                new RecordingAuthorization($trace, true),
+                new RecordingConfirmation($trace),
+                new RecordingAssetRepository($trace),
+            );
 
-            $this->expectValidation(static fn() => $action->execute('csrf', [1], $mask, $values, 'token'));
-            self::assertSame(['permission', 'csrf'], $trace);
+            $this->expectValidation(static fn() => $preview->preview([1], $mask, $values));
+            self::assertSame(['permission'], $trace);
+        }
+    }
+
+    #[Test]
+    public function adminwerte_werden_exakt_und_ohne_zusaetzliche_schluessel_validiert(): void
+    {
+        foreach ([
+            [['status' => true], ['status' => ' GENERATED ']],
+            [['status' => true], ['status' => 'generated', 'evil' => 'x']],
+            [['status' => true, 'theme' => false], ['status' => 'generated', 'theme' => 'dark']],
+        ] as [$mask, $values]) {
+            $trace = [];
+            $preview = new BulkUpdatePreviewAction(
+                new RecordingAuthorization($trace, true),
+                new RecordingConfirmation($trace),
+                new RecordingAssetRepository($trace),
+            );
+            $this->expectValidation(fn() => $preview->preview([1], $mask, $values));
         }
     }
 
@@ -110,7 +137,11 @@ final class BulkUpdateActionTest extends TestCase
         self::assertSame([], $repository->writes);
         self::assertSame(['permission', 'count', 'issue'], $trace);
         self::assertSame('administrator', $confirmation->lastSubject);
-        self::assertNotSame('', $confirmation->lastDigest);
+        if ($confirmation->lastOperation === null) {
+            self::fail('Die bestätigte Serveroperation fehlt.');
+        }
+        self::assertSame([1, 2], $confirmation->lastOperation->ids);
+        self::assertSame(['status' => 'generated'], $confirmation->lastOperation->changes);
     }
 
     #[Test]
@@ -118,20 +149,16 @@ final class BulkUpdateActionTest extends TestCase
     {
         $trace = [];
         $repository = new RecordingAssetRepository($trace);
+        $confirmation = new RecordingConfirmation($trace);
+        $confirmation->operationToConsume = new StoredOperation('asset-bulk-update', [1, 2], ['status' => 'generated']);
         $action = new BulkUpdateAction(
             new RecordingAuthorization($trace, true),
             new RecordingCsrf($trace, true),
-            new RecordingConfirmation($trace),
+            $confirmation,
             $repository,
         );
 
-        $result = $action->execute(
-            'csrf',
-            [2, 1],
-            ['status' => true, 'theme' => false],
-            ['status' => 'generated', 'theme' => 'dark'],
-            'confirmation-token',
-        );
+        $result = $action->execute('csrf', 'confirmation-token');
 
         self::assertSame(2, $result->updatedCount);
         self::assertSame([[1, 2], ['status' => 'generated']], $repository->writes[0]);
@@ -154,22 +181,38 @@ final class BulkUpdateActionTest extends TestCase
 
         $this->expectException(ConfirmationException::class);
         try {
-            $action->execute('csrf', [1], ['status' => true], ['status' => 'generated'], 'manipuliert');
+            $action->execute('csrf', 'manipuliert');
         } finally {
             self::assertSame([], $repository->writes);
             self::assertSame(['permission', 'csrf', 'consume'], $trace);
         }
     }
 
-    /** @param list<string> $trace */
-    private function action(array &$trace): BulkUpdateAction
+    #[Test]
+    public function beschaedigte_serveroperation_wird_vor_dem_repository_abgelehnt(): void
     {
-        return new BulkUpdateAction(
+        $trace = [];
+        $confirmation = new RecordingConfirmation($trace);
+        $confirmation->operationToConsume = new StoredOperation(
+            'asset-bulk-update',
+            [1],
+            [],
+        );
+        $repository = new RecordingAssetRepository($trace);
+        $action = new BulkUpdateAction(
             new RecordingAuthorization($trace, true),
             new RecordingCsrf($trace, true),
-            new RecordingConfirmation($trace),
-            new RecordingAssetRepository($trace),
+            $confirmation,
+            $repository,
         );
+
+        $this->expectException(ValidationException::class);
+        try {
+            $action->execute('csrf', 'confirmation-token');
+        } finally {
+            self::assertSame([], $repository->writes);
+            self::assertSame(['permission', 'csrf', 'consume'], $trace);
+        }
     }
 
     private function expectValidation(callable $operation): void
@@ -232,25 +275,30 @@ final class RecordingConfirmation implements ConfirmationPortInterface
 {
     public bool $accept = true;
     public string $lastSubject = '';
-    public string $lastDigest = '';
+    public ?StoredOperation $lastOperation = null;
+    public ?StoredOperation $operationToConsume = null;
 
     /** @param list<string> $trace */
     public function __construct(private array &$trace) {}
 
-    public function issue(string $subjectKey, string $operationDigest): string
+    public function issue(string $subjectKey, StoredOperation $operation): string
     {
         $this->trace[] = 'issue';
         $this->lastSubject = $subjectKey;
-        $this->lastDigest = $operationDigest;
+        $this->lastOperation = $operation;
 
         return 'confirmation-token';
     }
 
-    public function consume(string $subjectKey, string $operationDigest, string $token): bool
+    public function consume(string $subjectKey, string $token): ?StoredOperation
     {
         $this->trace[] = 'consume';
 
-        return $this->accept && $token === 'confirmation-token';
+        if (!$this->accept || $token !== 'confirmation-token') {
+            return null;
+        }
+
+        return $this->operationToConsume ?? $this->lastOperation;
     }
 
     /** @return list<string> */

@@ -9,6 +9,7 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\Port\AdminAssetRepositoryInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Port\AuthorizationPortInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Port\ConfirmationPortInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Result\BulkUpdatePreviewResult;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Value\StoredOperation;
 
 /** Erstellt eine schreibfreie, serverseitig gebundene Stapelvorschau. */
 final class BulkUpdatePreviewAction
@@ -34,7 +35,7 @@ final class BulkUpdatePreviewAction
         }
         $token = $this->confirmation->issue(
             $this->authorization->subjectKey(),
-            AdminInputValidator::operationDigest($normalIds, $changes),
+            new StoredOperation('asset-bulk-update', $normalIds, $changes),
         );
 
         return new BulkUpdatePreviewResult(count($normalIds), array_keys($changes), $changes, $token);

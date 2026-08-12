@@ -226,6 +226,39 @@ final class UsageRepository implements CleanupRepositoryInterface
         return $count;
     }
 
+    public function listOwnedStaleUsages(int $offset, int $limit): array
+    {
+        $this->ownership->assertOwned(self::TABLE);
+        $rows = $this->db->getObjects(
+            <<<'SQL'
+                SELECT `id`, `asset_id`, `source_type`, `source_reference`, `last_seen_at`
+                  FROM `xplugin_mgd_ai_usage`
+                  WHERE `is_present` = 0
+                  ORDER BY `id` ASC
+                  LIMIT :limit OFFSET :offset
+                SQL,
+            ['limit' => $limit, 'offset' => $offset],
+        );
+
+        return array_values(array_map(static fn(object $row): array => [
+            'id' => is_numeric($row->id ?? null) ? (int) $row->id : 0,
+            'asset_id' => is_numeric($row->asset_id ?? null) ? (int) $row->asset_id : 0,
+            'source_type' => is_string($row->source_type ?? null) ? $row->source_type : '',
+            'source_reference' => is_string($row->source_reference ?? null) ? $row->source_reference : '',
+            'last_seen_at' => is_string($row->last_seen_at ?? null) ? $row->last_seen_at : '',
+        ], $rows));
+    }
+
+    public function countOwnedStaleUsages(): int
+    {
+        $this->ownership->assertOwned(self::TABLE);
+        $row = $this->db->getSingleObject(
+            'SELECT COUNT(*) AS `total` FROM `xplugin_mgd_ai_usage` WHERE `is_present` = 0',
+        );
+
+        return $row !== null && is_numeric($row->total ?? null) ? max(0, (int) $row->total) : 0;
+    }
+
     /**
      * Entfernt atomar ausschließlich explizit gewählte, bereits als fehlend
      * markierte Fundstellen. Assets, JTL-Kerndaten und Bilddateien bleiben unberührt.
@@ -262,7 +295,9 @@ final class UsageRepository implements CleanupRepositoryInterface
             }
         } catch (Throwable $error) {
             try {
-                $this->db->rollback();
+                if (!$this->db->rollback()) {
+                    throw new RuntimeException('Datenbank-Rollback meldete false.');
+                }
             } catch (Throwable) {
                 throw new RuntimeException('Die Bereinigung und ihre Rücknahme sind fehlgeschlagen.', 0, $error);
             }
