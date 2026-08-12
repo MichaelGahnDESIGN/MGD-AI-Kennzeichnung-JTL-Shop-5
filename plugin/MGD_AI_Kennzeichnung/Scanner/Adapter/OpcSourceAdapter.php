@@ -133,7 +133,11 @@ final class OpcSourceAdapter implements SourceAdapterInterface, SourceAdapterPag
         if (is_array($properties)) {
             foreach (['src', 'still-src', 'video-poster'] as $key) {
                 if (isset($properties[$key]) && is_string($properties[$key])) {
-                    $candidates[] = ['path' => $path . '.properties.' . $key, 'value' => $properties[$key]];
+                    $this->addCandidate(
+                        $candidates,
+                        $path . '.properties.' . $key,
+                        $properties[$key],
+                    );
                 }
             }
             foreach (['images', 'slides'] as $collectionKey) {
@@ -143,13 +147,11 @@ final class OpcSourceAdapter implements SourceAdapterInterface, SourceAdapterPag
                 }
                 foreach ($items as $index => $item) {
                     if (is_array($item) && isset($item['url']) && is_string($item['url'])) {
-                        $candidates[] = [
-                            'path' => sprintf('%s.properties.%s[%s].url', $path, $collectionKey, (string) $index),
-                            'value' => $item['url'],
-                        ];
-                    }
-                    if (count($candidates) > self::MAXIMUM_REFERENCES_PER_ROW) {
-                        throw new RuntimeException('Eine OPC-Datenbankzeile enthält mehr als 100 Bildreferenzen.');
+                        $this->addCandidate(
+                            $candidates,
+                            sprintf('%s.properties.%s[%s].url', $path, $collectionKey, (string) $index),
+                            $item['url'],
+                        );
                     }
                 }
             }
@@ -164,6 +166,21 @@ final class OpcSourceAdapter implements SourceAdapterInterface, SourceAdapterPag
         }
 
         return true;
+    }
+
+    /**
+     * Zählt jeden rohen erlaubten JSON-Kandidaten vor Normalisierung oder einer
+     * möglichen späteren Deduplizierung. Auch hundertfach derselbe Wert kostet
+     * damit hundert Einträge und kann das Ressourcenlimit nicht umgehen.
+     *
+     * @param list<array{path: string, value: string}> $candidates
+     */
+    private function addCandidate(array &$candidates, string $path, string $value): void
+    {
+        if (count($candidates) >= self::MAXIMUM_REFERENCES_PER_ROW) {
+            throw new RuntimeException('Eine OPC-Datenbankzeile enthält mehr als 100 Bildreferenzen.');
+        }
+        $candidates[] = ['path' => $path, 'value' => $value];
     }
 
     private static function assertPage(int $offset, int $limit): void

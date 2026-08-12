@@ -23,6 +23,7 @@ use Plugin\MGD_AI_Kennzeichnung\Scanner\SourceAdapterPageInterface;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\SourceScanPage;
 use Plugin\MGD_AI_Kennzeichnung\Service\ImageScanService;
 use RuntimeException;
+use stdClass;
 use Tests\Support\TransactionalDatabaseFake;
 
 final class ImageScanServiceTest extends TestCase
@@ -534,6 +535,79 @@ final class ImageScanServiceTest extends TestCase
     }
 
     #[Test]
+    public function opc_zaehlt_auch_hunderteins_direkte_src_kandidaten_und_rollt_missing_zurueck(): void
+    {
+        $db = $this->scannerDatabase();
+        $db->seedScanUsage(hash('sha256', 'bilder/alt.jpg'), 'bilder/alt.jpg', 'opc:alt', 'opc');
+        $db->scannerRows['topcpage'] = [$this->opcRowWithProperties(
+            array_map(static fn(int $index): array => ['src' => 'bild-' . $index . '.jpg'], range(1, 101)),
+        )];
+
+        try {
+            (new ImageScanService(
+                [new OpcSourceAdapter($db, new LocalPathNormalizer())],
+                new AssetRepository($db),
+                new UsageRepository($db),
+            ))->scan();
+            self::fail('Auch direkte src-Felder müssen unter das rohe 100er-Limit fallen.');
+        } catch (RuntimeException $exception) {
+            self::assertStringContainsString('100', $exception->getMessage());
+        }
+
+        self::assertTrue($db->usageIsPresent('opc:alt'));
+        self::assertSame(1, $db->rollbacks);
+    }
+
+    #[Test]
+    public function opc_zaehlt_gemischte_direkte_und_array_kandidaten_gemeinsam(): void
+    {
+        $db = $this->scannerDatabase();
+        $properties = array_map(
+            static fn(int $index): array => ['still-src' => 'direkt-' . $index . '.jpg'],
+            range(1, 60),
+        );
+        $properties[] = ['images' => array_map(
+            static fn(int $index): array => ['url' => 'array-' . $index . '.jpg'],
+            range(1, 41),
+        )];
+        $db->scannerRows['topcpage'] = [$this->opcRowWithProperties($properties)];
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('100');
+        $unexpected = self::collect((new OpcSourceAdapter($db, new LocalPathNormalizer()))->scan(0, 100));
+        self::fail('Gemischte Kandidaten wurden unerwartet akzeptiert: ' . count($unexpected));
+    }
+
+    #[Test]
+    public function opc_zaehlt_hunderteins_identische_rohe_src_kandidaten_vor_jeder_deduplizierung(): void
+    {
+        $db = $this->scannerDatabase();
+        $db->scannerRows['topcpage'] = [$this->opcRowWithProperties(array_fill(0, 101, ['src' => 'gleich.jpg']))];
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('100');
+        $unexpected = self::collect((new OpcSourceAdapter($db, new LocalPathNormalizer()))->scan(0, 100));
+        self::fail('Doppelte Kandidaten wurden unerwartet akzeptiert: ' . count($unexpected));
+    }
+
+    #[Test]
+    public function opc_akzeptiert_exakt_hundert_rohe_direkte_kandidaten(): void
+    {
+        $db = $this->scannerDatabase();
+        $db->scannerRows['topcpage'] = [$this->opcRowWithProperties(
+            array_map(static fn(int $index): array => ['video-poster' => 'bild-' . $index . '.jpg'], range(1, 100)),
+        )];
+
+        $references = self::collect((new OpcSourceAdapter($db, new LocalPathNormalizer()))->scan(0, 100));
+
+        self::assertCount(100, $references);
+        self::assertCount(100, array_unique(array_map(
+            static fn(LocalImageReference $reference): string => $reference->sourceReference,
+            $references,
+        )));
+    }
+
+    #[Test]
     public function ownership_wird_pro_repository_und_scan_nur_einmal_geprueft(): void
     {
         $db = $this->scannerDatabase();
@@ -635,6 +709,18 @@ final class ImageScanServiceTest extends TestCase
         $db->setMarker('xplugin_mgd_ai_usage', self::MARKER);
 
         return $db;
+    }
+
+    /** @param list<array<string, mixed>> $properties */
+    private function opcRowWithProperties(array $properties): stdClass
+    {
+        return (object) [
+            'page_id' => 88,
+            'context' => 'Grenztest',
+            'areas_json' => json_encode([
+                'content' => array_map(static fn(array $values): array => ['properties' => $values], $properties),
+            ], JSON_THROW_ON_ERROR),
+        ];
     }
 
     private static function reference(LocalPathNormalizer $normalizer, string $path, string $reference): LocalImageReference
