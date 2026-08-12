@@ -34,6 +34,7 @@ use Plugin\MGD_AI_Kennzeichnung\Scanner\Adapter\OpcSourceAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\Adapter\ProductSourceAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\LocalPathNormalizer;
 use Plugin\MGD_AI_Kennzeichnung\Service\ImageScanService;
+use Plugin\MGD_AI_Kennzeichnung\Admin\ViewModel\AdminRoute;
 use Psr\Log\LoggerInterface;
 
 /** Erstellt den vollständigen Admin-Laufzeitgraphen ohne Service-Locator in Fachklassen. */
@@ -47,6 +48,7 @@ final class AdminRuntimeFactory
         LoggerInterface $logger,
         array &$session,
         string $sessionId,
+        int $adminMenuId,
     ): AdminAssetController {
         $authorization = new JtlAuthorizationAdapter($account, $plugin->getID(), $sessionId);
         $csrf = new JtlCsrfAdapter($session);
@@ -77,6 +79,7 @@ final class AdminRuntimeFactory
             new CleanupAction($authorization, $csrf, $confirmation, $usages),
             $csrf,
             $plugin->getPaths()->getAdminURL() . 'assets.js',
+            new AdminRoute($plugin->getID(), $adminMenuId),
         );
 
         return new AdminAssetController($authorization, $csrf, new AdminRequestNormalizer(), $handler);

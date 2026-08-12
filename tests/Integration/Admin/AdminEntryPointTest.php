@@ -10,6 +10,7 @@ require_once __DIR__ . '/../../Stubs/JtlPluginStubs.php';
 use JTL\Backend\AdminAccount;
 use JTL\DB\DbInterface;
 use JTL\Plugin\Data\Paths;
+use JTL\Plugin\Data\AdminMenu;
 use JTL\Plugin\PluginInterface;
 use JTL\Services\DefaultServicesInterface;
 use JTL\Shop;
@@ -35,7 +36,14 @@ final class AdminEntryPointTest extends TestCase
         }
         $_SESSION = ['jtl_token' => 'csrf'];
         $_SERVER['REQUEST_METHOD'] = 'GET';
-        $_GET = ['kPlugin' => '17', 'view' => 'list'];
+        $_GET = [
+            'kPlugin' => '17',
+            'kPluginAdminMenu' => '9',
+            'view' => 'list',
+            'status' => 'generated',
+            'sort' => 'status',
+            'direction' => 'desc',
+        ];
         $_POST = [];
 
         $db = new TransactionalDatabaseFake();
@@ -76,14 +84,24 @@ final class AdminEntryPointTest extends TestCase
             {
                 return new Paths('/plugin/17/adminmenu/');
             }
+
+            public function getAdminMenu(): AdminMenu
+            {
+                return new AdminMenu([9]);
+            }
         };
+        $menu = (object) ['kPluginAdminMenu' => 9];
 
         ob_start();
         include dirname(__DIR__, 3) . '/plugin/MGD_AI_Kennzeichnung/adminmenu/assets.php';
         $html = ob_get_clean();
 
         self::assertIsString($html);
-        self::assertStringContainsString('Bildverwaltung', $html);
-        self::assertStringNotContainsString('kPlugin', $html);
+        self::assertStringContainsString('KI-Bildkennzeichnungen', $html);
+        self::assertStringContainsString('name="kPlugin" value="17"', $html);
+        self::assertStringContainsString('name="kPluginAdminMenu" value="9"', $html);
+        self::assertStringContainsString('kPlugin=17&amp;kPluginAdminMenu=9&amp;view=cleanup', $html);
+        self::assertStringContainsString('sort=status&amp;direction=desc&amp;status=generated', $html);
+        self::assertStringNotContainsString('evil=', $html);
     }
 }

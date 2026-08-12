@@ -2,14 +2,19 @@
 
 declare(strict_types=1);
 
+use Plugin\MGD_AI_Kennzeichnung\Admin\ViewModel\AdminRoute;
+
 /** @var array<string, scalar|null> $detail */
 /** @var string $csrfToken */
 /** @var string $assetScriptUrl */
+/** @var AdminRoute $route */
 $escapedCsrf = htmlspecialchars($csrfToken, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $escapedScriptUrl = htmlspecialchars($assetScriptUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $escapedId = htmlspecialchars((string) ($detail['id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $escapedPath = htmlspecialchars((string) ($detail['local_path'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $escapedStatus = htmlspecialchars((string) ($detail['status'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$escapedPluginId = htmlspecialchars((string) $route->pluginId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$escapedAdminMenuId = htmlspecialchars((string) $route->adminMenuId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 ?>
 <section aria-labelledby="mgd-detail-heading">
     <h2 id="mgd-detail-heading">Bilddetails</h2>
@@ -19,6 +24,8 @@ $escapedStatus = htmlspecialchars((string) ($detail['status'] ?? ''), ENT_QUOTES
         <dt>Status</dt><dd><?= $escapedStatus ?></dd>
     </dl>
     <form method="post" aria-label="Bildkennzeichnung speichern">
+        <input type="hidden" name="kPlugin" value="<?= $escapedPluginId ?>">
+        <input type="hidden" name="kPluginAdminMenu" value="<?= $escapedAdminMenuId ?>">
         <input type="hidden" name="csrf_token" value="<?= $escapedCsrf ?>">
         <input type="hidden" name="asset_id" value="<?= $escapedId ?>">
         <label><input type="checkbox" name="mask[status]" value="1"> Status ändern</label>
@@ -44,5 +51,6 @@ $escapedStatus = htmlspecialchars((string) ($detail['status'] ?? ''), ENT_QUOTES
         </select>
         <button type="submit" name="action" value="single-update">Speichern</button>
     </form>
+    <p><a href="<?= htmlspecialchars($route->query(['view' => 'list']), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Zurück zur Bildliste</a></p>
 </section>
 <script src="<?= $escapedScriptUrl ?>" defer></script>

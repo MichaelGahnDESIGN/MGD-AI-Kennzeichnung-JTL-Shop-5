@@ -20,8 +20,9 @@ final class JtlAuthorizationAdapter implements AuthorizationPortInterface
 
     public function assertCanManageAssets(): void
     {
-        $allowed = $this->account->permission(Permissions::PLUGIN_DETAIL_VIEW_ALL)
-            || $this->account->permission(Permissions::PLUGIN_DETAIL_VIEW_ID . $this->pluginId);
+        $allowed = $this->account->logged()
+            && ($this->account->permission(Permissions::PLUGIN_DETAIL_VIEW_ALL)
+                || $this->account->permission(Permissions::PLUGIN_DETAIL_VIEW_ID . $this->pluginId));
         if (!$allowed) {
             throw new AccessDeniedException('Keine Berechtigung für die Bildverwaltung.');
         }

@@ -16,6 +16,7 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\Request\CleanupPreviewRequest;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Request\ScanRequest;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Request\SingleUpdateRequest;
 use Plugin\MGD_AI_Kennzeichnung\Admin\ViewModel\AdminPage;
+use Plugin\MGD_AI_Kennzeichnung\Admin\ViewModel\AdminRoute;
 
 /** Verbindet jedes typisierte DTO mit genau einer fachlichen Aktion. */
 final class AdminActionHandler implements AdminActionHandlerInterface
@@ -32,6 +33,7 @@ final class AdminActionHandler implements AdminActionHandlerInterface
         private readonly CleanupAction $cleanup,
         private readonly CsrfTokenPortInterface $csrf,
         private readonly string $assetScriptUrl,
+        private readonly AdminRoute $route,
     ) {}
 
     public function list(AssetListRequest $request): AdminPage
@@ -42,6 +44,7 @@ final class AdminActionHandler implements AdminActionHandlerInterface
             'view' => $view,
             'csrfToken' => $this->csrf->token(),
             'assetScriptUrl' => $this->assetScriptUrl,
+            'route' => $this->route,
         ]);
     }
 
@@ -51,6 +54,7 @@ final class AdminActionHandler implements AdminActionHandlerInterface
             'detail' => $this->detail->load($request->assetId),
             'csrfToken' => $this->csrf->token(),
             'assetScriptUrl' => $this->assetScriptUrl,
+            'route' => $this->route,
         ]);
     }
 
@@ -59,6 +63,7 @@ final class AdminActionHandler implements AdminActionHandlerInterface
         return new AdminPage('cleanup-list', [
             'view' => $this->cleanupList->load($request->page, $request->pageSize),
             'csrfToken' => $this->csrf->token(),
+            'route' => $this->route,
         ]);
     }
 
@@ -67,6 +72,7 @@ final class AdminActionHandler implements AdminActionHandlerInterface
         return new AdminPage('bulk-preview', [
             'preview' => $this->bulkPreview->preview($request->assetIds, $request->mask, $request->values),
             'csrfToken' => $this->csrf->token(),
+            'route' => $this->route,
         ]);
     }
 
@@ -88,7 +94,11 @@ final class AdminActionHandler implements AdminActionHandlerInterface
     {
         $result = $this->scanAction->execute($request->csrfToken);
 
-        return new AdminPage('messages', ['message' => $result->message, 'csrfToken' => $this->csrf->token()]);
+        return new AdminPage('messages', [
+            'message' => $result->message,
+            'csrfToken' => $this->csrf->token(),
+            'route' => $this->route,
+        ]);
     }
 
     public function cleanupPreview(CleanupPreviewRequest $request): AdminPage
@@ -96,6 +106,7 @@ final class AdminActionHandler implements AdminActionHandlerInterface
         return new AdminPage('cleanup-preview', [
             'preview' => $this->cleanupPreview->preview($request->usageIds),
             'csrfToken' => $this->csrf->token(),
+            'route' => $this->route,
         ]);
     }
 
@@ -108,6 +119,10 @@ final class AdminActionHandler implements AdminActionHandlerInterface
 
     private function message(string $message): AdminPage
     {
-        return new AdminPage('messages', ['message' => $message, 'csrfToken' => $this->csrf->token()]);
+        return new AdminPage('messages', [
+            'message' => $message,
+            'csrfToken' => $this->csrf->token(),
+            'route' => $this->route,
+        ]);
     }
 }

@@ -32,9 +32,22 @@ interface PluginInterface
     public function getID(): int;
 
     public function getPaths(): \JTL\Plugin\Data\Paths;
+
+    public function getAdminMenu(): \JTL\Plugin\Data\AdminMenu;
 }
 
 namespace JTL\Plugin\Data;
+
+class AdminMenu
+{
+    /** @param list<int> $ids */
+    public function __construct(private readonly array $ids = []) {}
+
+    public function getItemByID(int $menuID): ?\stdClass
+    {
+        return in_array($menuID, $this->ids, true) ? (object) ['kPluginAdminMenu' => $menuID] : null;
+    }
+}
 
 class Paths
 {
@@ -56,11 +69,24 @@ class Permissions
 
 class AdminAccount
 {
+    public int $permissionCalls = 0;
+
     /** @param list<string> $permissions */
-    public function __construct(private readonly array $permissions = [], private readonly int $id = 1) {}
+    public function __construct(
+        private readonly array $permissions = [],
+        private readonly int $id = 1,
+        private readonly bool $logged = true,
+    ) {}
+
+    public function logged(): bool
+    {
+        return $this->logged;
+    }
 
     public function permission(string $permission, bool $redirectToLogin = false, bool $showNoAccessPage = false): bool
     {
+        ++$this->permissionCalls;
+
         return in_array($permission, $this->permissions, true);
     }
 

@@ -19,14 +19,17 @@ if (!defined('PFAD_ROOT') || !isset($oPlugin) || !$oPlugin instanceof PluginInte
 }
 
 $container = Shop::Container();
-$session = &JtlSessionContext::current();
-$request = (new JtlHttpRequestAdapter())->capture();
-$sessionId = session_id();
-
 try {
+    $session = &JtlSessionContext::current();
+    $sessionId = session_id();
     if (!is_string($sessionId) || $sessionId === '') {
         throw new RuntimeException('Die JTL-Admin-Session ist nicht verfügbar.');
     }
+    $adminMenuId = is_object($menu ?? null) ? ($menu->kPluginAdminMenu ?? null) : null;
+    if (!is_int($adminMenuId) || $adminMenuId < 1 || $oPlugin->getAdminMenu()->getItemByID($adminMenuId) === null) {
+        throw new RuntimeException('Der JTL-Admin-Menükontext ist nicht verfügbar.');
+    }
+    $request = (new JtlHttpRequestAdapter())->capture($oPlugin->getID(), $adminMenuId);
     $controller = (new AdminRuntimeFactory())->create(
         $oPlugin,
         $container->getDB(),
@@ -34,6 +37,7 @@ try {
         $container->getLogService(),
         $session,
         $sessionId,
+        $adminMenuId,
     );
     $page = $controller->handle($request->method, $request->query, $request->post);
     (new AdminTemplateRenderer(__DIR__ . '/templates'))->render($page);

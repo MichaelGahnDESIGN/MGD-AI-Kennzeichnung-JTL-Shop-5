@@ -43,6 +43,10 @@ final class AdminTemplateContractTest extends TestCase
         self::assertStringContainsString('value="cleanup-execute"', $combined);
         self::assertStringContainsString('Vorherige Seite', $combined);
         self::assertStringContainsString('Nächste Seite', $combined);
+        self::assertStringContainsString('name="kPlugin"', $combined);
+        self::assertStringContainsString('name="kPluginAdminMenu"', $combined);
+        self::assertStringContainsString("'view' => 'detail'", $combined);
+        self::assertStringContainsString("'view' => 'cleanup'", $combined);
     }
 
     #[Test]

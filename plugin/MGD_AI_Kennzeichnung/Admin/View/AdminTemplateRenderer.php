@@ -23,7 +23,10 @@ final class AdminTemplateRenderer
             'messages' => 'messages.php',
             default => throw new ValidationException('Das Ausgabetemplate ist nicht freigegeben.'),
         };
-        extract($page->variables, EXTR_SKIP);
+        /* extract() arbeitet intern mit Referenzen und darf deshalb nie direkt
+         * auf einer readonly-Property ausgeführt werden. */
+        $variables = $page->variables;
+        extract($variables, EXTR_SKIP);
         require $this->templateDirectory . '/' . $file;
     }
 }

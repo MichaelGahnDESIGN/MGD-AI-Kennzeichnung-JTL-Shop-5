@@ -3,16 +3,22 @@
 declare(strict_types=1);
 
 use Plugin\MGD_AI_Kennzeichnung\Admin\ViewModel\AssetListView;
+use Plugin\MGD_AI_Kennzeichnung\Admin\ViewModel\AdminRoute;
 
 /** @var AssetListView $view */
 /** @var string $csrfToken Das Token wird vom JTL-Adapter injiziert. */
 /** @var string $assetScriptUrl */
+/** @var AdminRoute $route */
 $escapedCsrf = htmlspecialchars($csrfToken, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $escapedScriptUrl = htmlspecialchars($assetScriptUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$escapedPluginId = htmlspecialchars((string) $route->pluginId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$escapedAdminMenuId = htmlspecialchars((string) $route->adminMenuId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 ?>
 <section aria-labelledby="mgd-assets-heading">
     <h1 id="mgd-assets-heading">KI-Bildkennzeichnungen</h1>
     <form method="get" aria-label="Bildliste filtern">
+        <input type="hidden" name="kPlugin" value="<?= $escapedPluginId ?>">
+        <input type="hidden" name="kPluginAdminMenu" value="<?= $escapedAdminMenuId ?>">
         <input type="hidden" name="view" value="list">
         <label for="mgd-filter-status">Status</label>
         <select id="mgd-filter-status" name="status">
@@ -57,6 +63,8 @@ $escapedScriptUrl = htmlspecialchars($assetScriptUrl, ENT_QUOTES | ENT_SUBSTITUT
         <button type="submit">Liste anwenden</button>
     </form>
     <form method="post" aria-label="Ausgewählte Bilder bearbeiten">
+        <input type="hidden" name="kPlugin" value="<?= $escapedPluginId ?>">
+        <input type="hidden" name="kPluginAdminMenu" value="<?= $escapedAdminMenuId ?>">
         <input type="hidden" name="csrf_token" value="<?= $escapedCsrf ?>">
         <table>
             <thead>
@@ -75,11 +83,13 @@ $escapedScriptUrl = htmlspecialchars($assetScriptUrl, ENT_QUOTES | ENT_SUBSTITUT
                 $escapedPath = htmlspecialchars((string) ($item['local_path'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
                 $escapedStatus = htmlspecialchars((string) ($item['status'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
                 $escapedUsageCount = htmlspecialchars((string) ($item['usage_count'] ?? 0), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                $detailUrl = $route->query(['view' => 'detail', 'asset_id' => (int) ($item['id'] ?? 0)]);
+                $escapedDetailUrl = htmlspecialchars($detailUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
                 ?>
                 <tr>
                     <td><input type="checkbox" name="asset_ids[]" value="<?= $escapedId ?>" aria-label="Asset <?= $escapedId ?> auswählen"></td>
-                    <td><?= $escapedId ?></td>
-                    <td><?= $escapedPath ?></td>
+                    <td><a href="<?= $escapedDetailUrl ?>"><?= $escapedId ?></a></td>
+                    <td><a href="<?= $escapedDetailUrl ?>"><?= $escapedPath ?></a></td>
                     <td><?= $escapedStatus ?></td>
                     <td><?= $escapedUsageCount ?></td>
                 </tr>
@@ -110,10 +120,12 @@ $escapedScriptUrl = htmlspecialchars($assetScriptUrl, ENT_QUOTES | ENT_SUBSTITUT
         <button type="submit" name="action" value="bulk-preview">Änderung prüfen</button>
     </form>
     <form method="post" aria-label="Bildquellen neu scannen">
+        <input type="hidden" name="kPlugin" value="<?= $escapedPluginId ?>">
+        <input type="hidden" name="kPluginAdminMenu" value="<?= $escapedAdminMenuId ?>">
         <input type="hidden" name="csrf_token" value="<?= $escapedCsrf ?>">
         <button type="submit" name="action" value="scan">Sicheren Bildscan starten</button>
     </form>
-    <p><a href="?view=cleanup">Veraltete Fundstellen bereinigen</a></p>
+    <p><a href="<?= htmlspecialchars($route->query(['view' => 'cleanup']), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Veraltete Fundstellen bereinigen</a></p>
     <?php
     $escapedPage = htmlspecialchars((string) $view->page, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $escapedTotal = htmlspecialchars((string) $view->total, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -126,8 +138,8 @@ $pagination = ['view' => 'list', 'page_size' => $view->pageSize, 'sort' => $view
 foreach ($view->filters as $name => $value) {
     $pagination[$name] = is_bool($value) ? ($value ? '1' : '0') : $value;
 }
-$previousUrl = '?' . http_build_query(['page' => $previousPage] + $pagination, '', '&', PHP_QUERY_RFC3986);
-$nextUrl = '?' . http_build_query(['page' => $nextPage] + $pagination, '', '&', PHP_QUERY_RFC3986);
+$previousUrl = $route->query(['page' => $previousPage] + $pagination);
+$nextUrl = $route->query(['page' => $nextPage] + $pagination);
 ?>
     <nav aria-label="Seitennavigation">
         <a href="<?= htmlspecialchars($previousUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Vorherige Seite</a>

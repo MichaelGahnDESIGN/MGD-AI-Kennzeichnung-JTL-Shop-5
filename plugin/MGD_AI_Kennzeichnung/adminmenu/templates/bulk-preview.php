@@ -3,12 +3,16 @@
 declare(strict_types=1);
 
 use Plugin\MGD_AI_Kennzeichnung\Admin\Result\BulkUpdatePreviewResult;
+use Plugin\MGD_AI_Kennzeichnung\Admin\ViewModel\AdminRoute;
 
 /** @var BulkUpdatePreviewResult $preview */
 /** @var string $csrfToken */
+/** @var AdminRoute $route */
 $escapedCsrf = htmlspecialchars($csrfToken, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $escapedConfirmation = htmlspecialchars($preview->confirmationToken, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $escapedCount = htmlspecialchars((string) $preview->count, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$escapedPluginId = htmlspecialchars((string) $route->pluginId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$escapedAdminMenuId = htmlspecialchars((string) $route->adminMenuId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 ?>
 <section aria-labelledby="mgd-preview-heading">
     <h2 id="mgd-preview-heading">Stapeländerung prüfen</h2>
@@ -26,8 +30,11 @@ $escapedCount = htmlspecialchars((string) $preview->count, ENT_QUOTES | ENT_SUBS
         </tbody>
     </table>
     <form method="post" aria-label="Vorschau bestätigen">
+        <input type="hidden" name="kPlugin" value="<?= $escapedPluginId ?>">
+        <input type="hidden" name="kPluginAdminMenu" value="<?= $escapedAdminMenuId ?>">
         <input type="hidden" name="csrf_token" value="<?= $escapedCsrf ?>">
         <input type="hidden" name="confirmation_token" value="<?= $escapedConfirmation ?>">
         <button type="submit" name="action" value="bulk-update">Verbindlich speichern</button>
     </form>
+    <p><a href="<?= htmlspecialchars($route->query(['view' => 'list']), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Zurück zur Bildliste</a></p>
 </section>
