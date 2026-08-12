@@ -28,6 +28,9 @@ final class TransactionalDatabaseFake implements DbInterface
 
     /** @var array<string, list<stdClass>> Seitenweise Rückgaben der fünf JTL-Scannerquellen. */
     public array $scannerRows = [];
+    public int $scannerPayloadsSuppressed = 0;
+    /** @var list<stdClass> */
+    public array $lastScannerResult = [];
 
     /** @var array<string, string> */
     private array $markers = [];
@@ -303,7 +306,24 @@ final class TransactionalDatabaseFake implements DbInterface
                 $offset = $params['offset'] ?? 0;
                 $limit = $params['limit'] ?? 100;
 
-                return is_int($offset) && is_int($limit) ? array_slice($rows, $offset, $limit) : [];
+                $result = is_int($offset) && is_int($limit) ? array_slice($rows, $offset, $limit) : [];
+                if ($table === 'topcpage' && isset($params['max_json_bytes']) && is_int($params['max_json_bytes'])) {
+                    $result = array_map(function (stdClass $row) use ($params): stdClass {
+                        $copy = clone $row;
+                        $json = $row->areas_json ?? null;
+                        $bytes = $row->json_bytes ?? (is_string($json) ? strlen($json) : null);
+                        $copy->json_bytes = $bytes;
+                        if (is_int($bytes) && $bytes > $params['max_json_bytes']) {
+                            $copy->areas_json = null;
+                            ++$this->scannerPayloadsSuppressed;
+                        }
+
+                        return $copy;
+                    }, $result);
+                }
+                $this->lastScannerResult = $result;
+
+                return $result;
             }
         }
         $table = $params['table_name'] ?? null;

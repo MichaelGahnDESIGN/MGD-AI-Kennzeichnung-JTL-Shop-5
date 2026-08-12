@@ -72,12 +72,17 @@ final class ImageScanServiceTest extends TestCase
             self::assertSame(1, $page->rowsRead);
         }
 
-        foreach (array_slice($db->statements, -5) as $statement) {
+        $scannerStatements = array_slice($db->statements, -5);
+        foreach (array_slice($scannerStatements, 0, 4) as $statement) {
             self::assertSame(['offset' => 0, 'limit' => 100], $statement['params']);
             self::assertStringContainsString(':offset', $statement['sql']);
             self::assertStringContainsString(':limit', $statement['sql']);
             self::assertStringNotContainsString('fremd.example', $statement['sql']);
         }
+        self::assertSame(
+            ['offset' => 0, 'limit' => 100, 'max_json_bytes' => 102400],
+            $scannerStatements[4]['params'],
+        );
     }
 
     #[Test]
@@ -118,10 +123,19 @@ final class ImageScanServiceTest extends TestCase
         self::assertStringContainsString('ORDER BY `b`.`kImageMap`', $sql[3]);
         self::assertStringContainsString('FROM `topcpage`', $sql[4]);
         self::assertStringContainsString('`p`.`cAreasJson`', $sql[4]);
+        self::assertStringContainsString('OCTET_LENGTH(`p`.`cAreasJson`) AS `json_bytes`', $sql[4]);
+        self::assertStringContainsString(
+            'CASE WHEN OCTET_LENGTH(`p`.`cAreasJson`) <= :max_json_bytes THEN `p`.`cAreasJson` ELSE NULL END',
+            $sql[4],
+        );
         self::assertStringContainsString('ORDER BY `p`.`kPage`', $sql[4]);
-        foreach (array_slice($db->statements, -5) as $statement) {
+        $scannerStatements = array_slice($db->statements, -5);
+        $opcStatement = array_pop($scannerStatements);
+        self::assertNotNull($opcStatement);
+        foreach ($scannerStatements as $statement) {
             self::assertSame(['offset' => 7, 'limit' => 11], $statement['params']);
         }
+        self::assertSame(['offset' => 7, 'limit' => 11, 'max_json_bytes' => 102400], $opcStatement['params']);
     }
 
     #[Test]
@@ -536,6 +550,44 @@ final class ImageScanServiceTest extends TestCase
     }
 
     #[Test]
+    public function opc_hundert_uebergrosse_longtext_zeilen_werden_serverseitig_gekappt_und_atomar_abgebrochen(): void
+    {
+        $db = $this->scannerDatabase();
+        $db->seedScanUsage(hash('sha256', 'bilder/alt.jpg'), 'bilder/alt.jpg', 'opc:alt', 'opc');
+        $db->scannerRows['topcpage'] = array_fill(0, 100, (object) [
+            'page_id' => 1,
+            'context' => 'Groß',
+            'areas_json' => 'DIESER_SENTINEL_DARF_NICHT_MATERIALISIERT_WERDEN',
+            'json_bytes' => 102401,
+        ]);
+
+        try {
+            (new ImageScanService(
+                [new OpcSourceAdapter($db, new LocalPathNormalizer())],
+                new AssetRepository($db),
+                new UsageRepository($db),
+            ))->scan();
+            self::fail('Eine übergroße OPC-Zeile muss den vollständigen Scan abbrechen.');
+        } catch (RuntimeException $exception) {
+            self::assertStringContainsString('OPC', $exception->getMessage());
+        }
+
+        self::assertTrue($db->usageIsPresent('opc:alt'));
+        $opcQuery = array_values(array_filter(
+            $db->statements,
+            static fn(array $statement): bool => str_contains($statement['sql'], 'FROM `topcpage`'),
+        ))[0];
+        self::assertSame(102400, $opcQuery['params']['max_json_bytes']);
+        self::assertStringNotContainsString('DIESER_SENTINEL', $opcQuery['sql']);
+        self::assertSame(100, $db->scannerPayloadsSuppressed);
+        self::assertStringNotContainsString(
+            'DIESER_SENTINEL',
+            serialize($db->lastScannerResult),
+            'Der Fake bildet die serverseitige CASE-Kappung vor dem PHP-Transfer ab.',
+        );
+    }
+
+    #[Test]
     public function opc_zaehlt_auch_hunderteins_direkte_src_kandidaten_und_rollt_missing_zurueck(): void
     {
         $db = $this->scannerDatabase();
@@ -754,7 +806,7 @@ final class ImageScanServiceTest extends TestCase
         yield 'malformed' => ['{'];
         yield 'scalar string' => ['"text"'];
         yield 'scalar number' => ['42'];
-        yield 'json null' => ['null'];
+        yield 'scalar boolean' => ['true'];
         yield 'excessive depth' => [str_repeat('[', 70) . '[]' . str_repeat(']', 70)];
         yield 'excessive nodes' => [json_encode(array_fill(0, 10001, []), JSON_THROW_ON_ERROR)];
         yield 'over 100 KiB valid' => [json_encode([
@@ -796,7 +848,7 @@ final class ImageScanServiceTest extends TestCase
     #[Test]
     public function opc_gueltige_leere_json_struktur_darf_null_referenzen_liefern(): void
     {
-        foreach (['{}', '[]'] as $json) {
+        foreach (['null', '{}', '[]'] as $json) {
             $db = $this->scannerDatabase();
             $db->scannerRows['topcpage'] = [(object) ['page_id' => 1, 'context' => null, 'areas_json' => $json]];
 

@@ -42,26 +42,41 @@ final class OpcSourceAdapter implements SourceAdapterInterface, SourceAdapterPag
     public function scanPage(int $offset, int $limit): SourceScanPage
     {
         self::assertPage($offset, $limit);
+        /*
+         * cAreasJson ist LONGTEXT. Die CASE-Abfrage kappt übergroße Inhalte
+         * bereits im Datenbankserver, damit selbst eine volle 100er-Seite
+         * niemals bis zu 100 unbeschränkte JSON-Payloads nach PHP überträgt.
+         * json_bytes bleibt separat sichtbar und unterscheidet eine gekappte
+         * Zeile sicher von einem zulässigen JSON-Wert.
+         */
         $rows = $this->db->getObjects(
             <<<'SQL'
                 SELECT `p`.`kPage` AS `page_id`,
-                       `p`.`cAreasJson` AS `areas_json`,
+                       OCTET_LENGTH(`p`.`cAreasJson`) AS `json_bytes`,
+                       CASE WHEN OCTET_LENGTH(`p`.`cAreasJson`) <= :max_json_bytes THEN `p`.`cAreasJson` ELSE NULL END AS `areas_json`,
                        `p`.`cName` AS `context`
                   FROM `topcpage` AS `p`
                  ORDER BY `p`.`kPage`
                  LIMIT :limit OFFSET :offset
                 SQL,
-            ['offset' => $offset, 'limit' => $limit],
+            ['offset' => $offset, 'limit' => $limit, 'max_json_bytes' => self::MAXIMUM_JSON_BYTES],
         );
 
         $references = [];
         foreach ($rows as $row) {
+            $jsonBytes = filter_var(
+                $row->json_bytes ?? null,
+                FILTER_VALIDATE_INT,
+                ['options' => ['min_range' => 0]],
+            );
             $json = $row->areas_json ?? null;
             $pageId = filter_var($row->page_id ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
             if ($pageId === false
+                || $jsonBytes === false
+                || $jsonBytes > self::MAXIMUM_JSON_BYTES
                 || !is_string($json)
                 || trim($json) === ''
-                || strlen($json) > self::MAXIMUM_JSON_BYTES
+                || strlen($json) !== $jsonBytes
             ) {
                 throw self::incompleteRow();
             }
@@ -70,6 +85,10 @@ final class OpcSourceAdapter implements SourceAdapterInterface, SourceAdapterPag
                 $tree = json_decode($json, true, self::MAXIMUM_JSON_DEPTH, JSON_THROW_ON_ERROR);
             } catch (JsonException) {
                 throw self::incompleteRow();
+            }
+            /* JTLs AreaList-Saver verwendet `[]`, toleriert beim Laden aber auch das gültige JSON-Literal `null`. */
+            if ($tree === null && trim($json) === 'null') {
+                continue;
             }
             if (!is_array($tree)) {
                 throw self::incompleteRow();
