@@ -10,6 +10,8 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\Port\CleanupRepositoryInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Port\ConfirmationPortInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Port\CsrfPortInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Result\CleanupResult;
+use RuntimeException;
+use Throwable;
 
 /** Entfernt nur ausgewählte veraltete Nutzungszeilen, niemals Assets oder Bilddateien. */
 final class CleanupAction
@@ -25,13 +27,35 @@ final class CleanupAction
     {
         $this->authorization->assertCanManageAssets();
         $this->csrf->assertValid($csrfToken);
-        $operation = $this->confirmation->consume($this->authorization->subjectKey(), $confirmationToken);
-        if ($operation === null || $operation->name !== 'cleanup-stale-usages' || $operation->changes !== []) {
+        $lease = $this->confirmation->consume($this->authorization->subjectKey(), $confirmationToken);
+        if ($lease === null) {
             throw new ConfirmationException('Die Bereinigungsbestätigung ist ungültig oder abgelaufen.');
         }
-        $ids = AdminInputValidator::ids($operation->ids);
-        $this->usages->cleanupOwnedStaleUsages($ids);
-
-        return new CleanupResult(count($ids));
+        $error = null;
+        $result = null;
+        try {
+            $operation = $lease->operation;
+            if ($operation->name !== 'cleanup-stale-usages' || $operation->changes !== []) {
+                throw new ConfirmationException('Die Bereinigungsbestätigung ist ungültig oder abgelaufen.');
+            }
+            $ids = AdminInputValidator::ids($operation->ids);
+            $this->usages->cleanupOwnedStaleUsages($ids);
+            $result = new CleanupResult(count($ids));
+        } catch (Throwable $caught) {
+            $error = $caught;
+        }
+        try {
+            $lease->release();
+        } catch (Throwable $releaseError) {
+            throw new RuntimeException(
+                'Die Bestätigungsreservierung konnte nach der Bereinigung nicht freigegeben werden.',
+                0,
+                $error ?? $releaseError,
+            );
+        }
+        if ($error !== null) {
+            throw $error;
+        }
+        return $result;
     }
 }

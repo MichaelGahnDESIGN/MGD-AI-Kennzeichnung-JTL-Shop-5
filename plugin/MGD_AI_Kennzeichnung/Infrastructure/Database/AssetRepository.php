@@ -223,18 +223,27 @@ final class AssetRepository implements AdminAssetRepositoryInterface
     public function countExistingIds(array $ids): int
     {
         $this->ownership->assertOwned(self::TABLE);
-        $count = 0;
-        foreach ($ids as $id) {
-            $row = $this->db->getSingleObject(
-                'SELECT `id` FROM `xplugin_mgd_ai_asset` WHERE `id` = :id',
-                ['id' => $id],
+        $found = [];
+        foreach (array_chunk(array_values(array_unique($ids)), 100) as $chunk) {
+            $params = [];
+            $placeholders = [];
+            foreach ($chunk as $index => $id) {
+                $name = 'preview_id_' . $index;
+                $placeholders[] = ':' . $name;
+                $params[$name] = $id;
+            }
+            $rows = $this->db->getObjects(
+                'SELECT `id` FROM `xplugin_mgd_ai_asset` WHERE `id` IN (' . implode(', ', $placeholders) . ')',
+                $params,
             );
-            if ($row !== null) {
-                ++$count;
+            foreach ($rows as $row) {
+                if (is_numeric($row->id ?? null)) {
+                    $found[(int) $row->id] = true;
+                }
             }
         }
 
-        return $count;
+        return count($found);
     }
 
     /** @param array<string, string> $changes */

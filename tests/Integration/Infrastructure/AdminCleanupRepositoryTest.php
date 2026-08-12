@@ -63,6 +63,28 @@ final class AdminCleanupRepositoryTest extends TestCase
         }
     }
 
+    #[Test]
+    public function cleanup_preview_zaehlt_500_ids_in_hoechstens_fuenf_gebundenen_abfragen(): void
+    {
+        $db = $this->database();
+        $ids = [];
+        for ($index = 1; $index <= 500; ++$index) {
+            $ids[] = $db->seedStaleUsage('veraltet-' . $index);
+        }
+
+        $count = (new UsageRepository($db))->countOwnedStaleUsageIds($ids);
+        $queries = array_values(array_filter(
+            $db->statements,
+            static fn(array $statement): bool => str_contains($statement['sql'], 'FROM `xplugin_mgd_ai_usage`')
+                && str_contains($statement['sql'], ' IN ('),
+        ));
+
+        self::assertSame(500, $count);
+        self::assertLessThanOrEqual(5, count($queries));
+        self::assertCount(100, $queries[0]['params']);
+        self::assertStringNotContainsString('500', $queries[0]['sql']);
+    }
+
     private function database(): TransactionalDatabaseFake
     {
         $db = new TransactionalDatabaseFake();

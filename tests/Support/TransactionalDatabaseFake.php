@@ -355,6 +355,30 @@ final class TransactionalDatabaseFake implements DbInterface
     public function getObjects(string $stmt, array $params = []): array
     {
         $this->statements[] = ['sql' => $stmt, 'params' => $params];
+        if (str_contains($stmt, 'FROM `xplugin_mgd_ai_asset`') && str_contains($stmt, ' IN (')) {
+            $requested = $this->integerParameterSet($params);
+
+            return array_values(array_map(
+                static fn(array $asset): stdClass => (object) ['id' => $asset['id']],
+                array_filter($this->assets, static fn(array $asset): bool => isset($requested[$asset['id']])),
+            ));
+        }
+        if (str_contains($stmt, 'FROM `xplugin_mgd_ai_usage`') && str_contains($stmt, ' IN (')) {
+            $requested = $this->integerParameterSet($params);
+
+            return array_values(array_map(
+                static fn(array $usage): stdClass => (object) ['id' => $usage['id']],
+                array_filter(
+                    $this->usages,
+                    static function (array $usage) use ($requested): bool {
+                        $id = $usage['id'] ?? null;
+
+                        return is_int($id) && isset($requested[$id])
+                            && ($usage['is_present'] ?? null) === 0;
+                    },
+                ),
+            ));
+        }
         foreach ($this->scannerRows as $table => $rows) {
             if (str_contains($stmt, 'FROM `' . $table . '`')) {
                 $offset = $params['offset'] ?? 0;
@@ -395,6 +419,23 @@ final class TransactionalDatabaseFake implements DbInterface
         }
 
         return array_map(static fn(array $row): stdClass => (object) $row, $this->metadataRows($table, $kind));
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     *
+     * @return array<int, true>
+     */
+    private function integerParameterSet(array $params): array
+    {
+        $result = [];
+        foreach ($params as $value) {
+            if (is_int($value)) {
+                $result[$value] = true;
+            }
+        }
+
+        return $result;
     }
 
     public function getAffectedRows(string $stmt, array $params = []): int

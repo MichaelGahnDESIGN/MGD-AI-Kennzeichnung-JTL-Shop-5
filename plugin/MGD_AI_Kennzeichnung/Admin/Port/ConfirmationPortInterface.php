@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugin\MGD_AI_Kennzeichnung\Admin\Port;
 
+use Plugin\MGD_AI_Kennzeichnung\Admin\Value\ConfirmationLease;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Value\StoredOperation;
 
 /**
@@ -14,5 +15,5 @@ interface ConfirmationPortInterface
 {
     public function issue(string $subjectKey, StoredOperation $operation): string;
 
-    public function consume(string $subjectKey, string $token): ?StoredOperation;
+    public function consume(string $subjectKey, string $token): ?ConfirmationLease;
 }

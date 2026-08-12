@@ -7,6 +7,7 @@ namespace Plugin\MGD_AI_Kennzeichnung\Admin\Adapter;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Port\ConfirmationPortInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Port\ConfirmationStoreInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Value\StoredOperation;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Value\ConfirmationLease;
 
 /** Erzeugt kryptografische Einmaltokens; gespeichert werden nur Hash und unveränderlicher Vorgang. */
 final class OneTimeConfirmationAdapter implements ConfirmationPortInterface
@@ -23,18 +24,18 @@ final class OneTimeConfirmationAdapter implements ConfirmationPortInterface
         return $token;
     }
 
-    public function consume(string $subjectKey, string $token): ?StoredOperation
+    public function consume(string $subjectKey, string $token): ?ConfirmationLease
     {
         if (preg_match('/^[a-f0-9]{64}$/D', $token) !== 1) {
             return null;
         }
         $entry = $this->store->take($this->key($subjectKey, $token));
 
-        if ($entry === null || $entry['expires_at'] < time()) {
+        if ($entry === null || $entry['expires_at'] <= time()) {
             return null;
         }
 
-        return $entry['operation'];
+        return new ConfirmationLease($entry['operation'], static function (): void {});
     }
 
     private function key(string $subjectKey, string $token): string

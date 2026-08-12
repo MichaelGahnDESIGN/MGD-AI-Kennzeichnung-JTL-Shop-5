@@ -22,7 +22,10 @@ final class OneTimeConfirmationTest extends TestCase
 
         self::assertMatchesRegularExpression('/^[a-f0-9]{64}$/D', $token);
         self::assertNull($confirmation->consume('sitzung-b', $token));
-        self::assertEquals($operation, $confirmation->consume('sitzung-a', $token));
+        $lease = $confirmation->consume('sitzung-a', $token);
+        self::assertNotNull($lease);
+        self::assertEquals($operation, $lease->operation);
+        $lease->release();
         self::assertNull($confirmation->consume('sitzung-a', $token));
     }
 
@@ -38,6 +41,20 @@ final class OneTimeConfirmationTest extends TestCase
         $store->expireAll();
 
         self::assertNull($confirmation->consume('sitzung-a', $token));
+        self::assertNull($confirmation->consume('sitzung-a', $token));
+    }
+
+    #[Test]
+    public function exakt_jetzt_ablaufende_bestaetigung_ist_bereits_ungueltig(): void
+    {
+        $store = new MemoryConfirmationStore();
+        $confirmation = new OneTimeConfirmationAdapter($store);
+        $token = $confirmation->issue(
+            'sitzung-a',
+            new StoredOperation('asset-bulk-update', [1], ['status' => 'generated']),
+        );
+        $store->expireAt(time());
+
         self::assertNull($confirmation->consume('sitzung-a', $token));
     }
 }
@@ -64,6 +81,14 @@ final class MemoryConfirmationStore implements ConfirmationStoreInterface
     {
         foreach ($this->entries as &$entry) {
             $entry['expires_at'] = 1;
+        }
+        unset($entry);
+    }
+
+    public function expireAt(int $timestamp): void
+    {
+        foreach ($this->entries as &$entry) {
+            $entry['expires_at'] = $timestamp;
         }
         unset($entry);
     }

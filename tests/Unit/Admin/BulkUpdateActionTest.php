@@ -17,6 +17,8 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\Port\AuthorizationPortInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Port\ConfirmationPortInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Port\CsrfPortInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Value\StoredOperation;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Value\ConfirmationLease;
+use RuntimeException;
 
 final class BulkUpdateActionTest extends TestCase
 {
@@ -215,6 +217,29 @@ final class BulkUpdateActionTest extends TestCase
         }
     }
 
+    #[Test]
+    public function lease_freigabefehler_nach_mutation_wird_sichtbar_eskaliert(): void
+    {
+        $trace = [];
+        $confirmation = new RecordingConfirmation($trace);
+        $confirmation->operationToConsume = new StoredOperation('asset-bulk-update', [1], ['status' => 'generated']);
+        $confirmation->releaseFails = true;
+        $repository = new RecordingAssetRepository($trace);
+        $action = new BulkUpdateAction(
+            new RecordingAuthorization($trace, true),
+            new RecordingCsrf($trace, true),
+            $confirmation,
+            $repository,
+        );
+
+        $this->expectException(RuntimeException::class);
+        try {
+            $action->execute('csrf', 'confirmation-token');
+        } finally {
+            self::assertCount(1, $repository->writes);
+        }
+    }
+
     private function expectValidation(callable $operation): void
     {
         try {
@@ -277,6 +302,7 @@ final class RecordingConfirmation implements ConfirmationPortInterface
     public string $lastSubject = '';
     public ?StoredOperation $lastOperation = null;
     public ?StoredOperation $operationToConsume = null;
+    public bool $releaseFails = false;
 
     /** @param list<string> $trace */
     public function __construct(private array &$trace) {}
@@ -290,7 +316,7 @@ final class RecordingConfirmation implements ConfirmationPortInterface
         return 'confirmation-token';
     }
 
-    public function consume(string $subjectKey, string $token): ?StoredOperation
+    public function consume(string $subjectKey, string $token): ?ConfirmationLease
     {
         $this->trace[] = 'consume';
 
@@ -298,7 +324,15 @@ final class RecordingConfirmation implements ConfirmationPortInterface
             return null;
         }
 
-        return $this->operationToConsume ?? $this->lastOperation;
+        $operation = $this->operationToConsume ?? $this->lastOperation;
+
+        return $operation === null
+            ? null
+            : new ConfirmationLease($operation, function (): void {
+                if ($this->releaseFails) {
+                    throw new RuntimeException('Erzwungener Lease-Freigabefehler.');
+                }
+            });
     }
 
     /** @return list<string> */

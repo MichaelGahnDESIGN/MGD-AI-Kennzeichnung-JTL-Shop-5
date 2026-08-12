@@ -108,6 +108,29 @@ final class AdminAssetRepositoryTest extends TestCase
         }
     }
 
+    #[Test]
+    public function preview_zaehlt_500_ids_in_hoechstens_fuenf_gebundenen_abfragen(): void
+    {
+        $db = $this->database();
+        $assets = [];
+        for ($index = 1; $index <= 500; ++$index) {
+            $assets['bild-' . $index] = 'unreviewed';
+        }
+        $db->seedAssets($assets);
+
+        $count = (new AssetRepository($db))->countExistingIds(range(1, 500));
+        $queries = array_values(array_filter(
+            $db->statements,
+            static fn(array $statement): bool => str_contains($statement['sql'], 'FROM `xplugin_mgd_ai_asset`')
+                && str_contains($statement['sql'], ' IN ('),
+        ));
+
+        self::assertSame(500, $count);
+        self::assertLessThanOrEqual(5, count($queries));
+        self::assertCount(100, $queries[0]['params']);
+        self::assertStringNotContainsString('500', $queries[0]['sql']);
+    }
+
     private function database(): TransactionalDatabaseFake
     {
         $db = new TransactionalDatabaseFake();

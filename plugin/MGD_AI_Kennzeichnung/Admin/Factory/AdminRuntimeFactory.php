@@ -21,6 +21,7 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\ImageScanServiceAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlAuthorizationAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlCsrfAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlLogAdapter;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlLockedConfirmationPort;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\OneTimeConfirmationAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\SessionConfirmationStore;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Controller\AdminAssetController;
@@ -40,7 +41,7 @@ use Psr\Log\LoggerInterface;
 /** Erstellt den vollständigen Admin-Laufzeitgraphen ohne Service-Locator in Fachklassen. */
 final class AdminRuntimeFactory
 {
-    /** @param array<string, mixed> $session */
+    /** @param array<mixed> $session */
     public function create(
         PluginInterface $plugin,
         DbInterface $db,
@@ -52,7 +53,10 @@ final class AdminRuntimeFactory
     ): AdminAssetController {
         $authorization = new JtlAuthorizationAdapter($account, $plugin->getID(), $sessionId);
         $csrf = new JtlCsrfAdapter($session);
-        $confirmation = new OneTimeConfirmationAdapter(new SessionConfirmationStore($session));
+        $confirmation = new JtlLockedConfirmationPort(
+            new OneTimeConfirmationAdapter(new SessionConfirmationStore($session)),
+            $db,
+        );
         $assets = new AssetRepository($db);
         $usages = new UsageRepository($db);
         $pathNormalizer = new LocalPathNormalizer();

@@ -16,6 +16,7 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\AccessDeniedException;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\CsrfException;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\ValidationException;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlHttpRequestAdapter;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlSessionContext;
 
 final class JtlRuntimeAdapterTest extends TestCase
 {
@@ -164,5 +165,55 @@ final class JtlRuntimeAdapterTest extends TestCase
                 self::addToAssertionCount(1);
             }
         }
+    }
+
+    #[Test]
+    public function session_context_bewahrt_bestehende_referenzen_und_mutationen_in_beide_richtungen(): void
+    {
+        $_SESSION = ['vorhanden' => 'ja'];
+        $bereitsGehalten = &$_SESSION;
+        $context = &JtlSessionContext::current();
+
+        $context['vom_context'] = 'sichtbar';
+        $bereitsGehalten['von_referenz'] = 'sichtbar';
+        self::assertSame([
+            'vorhanden' => 'ja',
+            'vom_context' => 'sichtbar',
+            'von_referenz' => 'sichtbar',
+        ], $context);
+        self::assertSame($context, $bereitsGehalten);
+    }
+
+    #[Test]
+    public function session_context_initialisiert_nur_einen_ungueltigen_sessionwert(): void
+    {
+        $_SESSION = 'ungueltig';
+
+        $context = &JtlSessionContext::current();
+
+        self::assertSame([], $context);
+        self::assertSame([], $_SESSION);
+    }
+
+    #[Test]
+    public function numerische_http_hauptschluessel_werden_nicht_stillschweigend_verworfen(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_GET = [0 => ['zu' => ['tief' => ['und' => ['gross' => str_repeat('x', 1000)]]]]];
+        $_POST = [];
+
+        $this->expectException(ValidationException::class);
+        (new JtlHttpRequestAdapter())->capture(17, 9);
+    }
+
+    #[Test]
+    public function http_adapter_begrenzt_verschachtelung_bevor_der_fachnormalizer_laeuft(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_GET = ['view' => 'list', 'nested' => ['a' => ['b' => ['c' => ['d' => 'zu tief']]]]];
+        $_POST = [];
+
+        $this->expectException(ValidationException::class);
+        (new JtlHttpRequestAdapter())->capture(17, 9);
     }
 }

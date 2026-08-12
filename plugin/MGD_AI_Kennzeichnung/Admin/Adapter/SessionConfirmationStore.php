@@ -15,10 +15,10 @@ final class SessionConfirmationStore implements ConfirmationStoreInterface
 {
     private const SESSION_KEY = 'mgd_ai_confirmations';
 
-    /** @var array<string, mixed> */
+    /** @var array<mixed> */
     private array $session;
 
-    /** @param array<string, mixed> $session */
+    /** @param array<mixed> $session */
     public function __construct(array &$session)
     {
         $this->session = &$session;

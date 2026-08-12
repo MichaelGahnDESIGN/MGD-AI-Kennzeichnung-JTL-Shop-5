@@ -212,18 +212,29 @@ final class UsageRepository implements CleanupRepositoryInterface
     public function countOwnedStaleUsageIds(array $usageIds): int
     {
         $this->ownership->assertOwned(self::TABLE);
-        $count = 0;
-        foreach ($usageIds as $id) {
-            $row = $this->db->getSingleObject(
-                'SELECT `id` FROM `xplugin_mgd_ai_usage` WHERE `id` = :id AND `is_present` = 0',
-                ['id' => $id],
+        $found = [];
+        foreach (array_chunk(array_values(array_unique($usageIds)), 100) as $chunk) {
+            $params = [];
+            $placeholders = [];
+            foreach ($chunk as $index => $id) {
+                $name = 'preview_id_' . $index;
+                $placeholders[] = ':' . $name;
+                $params[$name] = $id;
+            }
+            $rows = $this->db->getObjects(
+                'SELECT `id` FROM `xplugin_mgd_ai_usage` WHERE `id` IN ('
+                . implode(', ', $placeholders)
+                . ') AND `is_present` = 0',
+                $params,
             );
-            if ($row !== null) {
-                ++$count;
+            foreach ($rows as $row) {
+                if (is_numeric($row->id ?? null)) {
+                    $found[(int) $row->id] = true;
+                }
             }
         }
 
-        return $count;
+        return count($found);
     }
 
     public function listOwnedStaleUsages(int $offset, int $limit): array

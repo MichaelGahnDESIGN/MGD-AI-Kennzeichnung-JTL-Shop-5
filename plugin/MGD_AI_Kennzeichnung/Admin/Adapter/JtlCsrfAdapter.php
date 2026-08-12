@@ -12,7 +12,7 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\Port\CsrfTokenPortInterface;
 /** Nutzt die explizite Tokenvariante von JTL-Shop 5.7.2 Form::validateToken(). */
 final class JtlCsrfAdapter implements CsrfPortInterface, CsrfTokenPortInterface
 {
-    /** @param array<string, mixed> $session */
+    /** @param array<mixed> $session */
     public function __construct(private readonly array $session) {}
 
     public function assertValid(string $token): void
