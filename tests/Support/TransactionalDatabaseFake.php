@@ -53,9 +53,10 @@ final class TransactionalDatabaseFake implements DbInterface
     /** @var array<string, string> */
     private array $philosophies = [];
 
-    /** @var array<string, true> Persistente Hash-Claims außerhalb der Session. */
+    /** @var array<string, string> Persistente Token-Hashes mit UTC-Ablaufzeit. */
     private array $confirmationClaims = [];
     private bool $confirmationClaimsFail = false;
+    private bool $confirmationClaimPurgeFails = false;
 
     /** @var null|array{assets: array<string, array{id: int, label: string, status: string, position: string, theme: string, local_path: string}>, usages: array<string, array<string, mixed>>, philosophies: array<string, string>} */
     private ?array $snapshot = null;
@@ -296,6 +297,26 @@ final class TransactionalDatabaseFake implements DbInterface
         $this->confirmationClaimsFail = true;
     }
 
+    public function failConfirmationClaimPurgeForTest(): void
+    {
+        $this->confirmationClaimPurgeFails = true;
+    }
+
+    public function seedConfirmationClaimForTest(string $tokenHash, string $expiresAt): void
+    {
+        $this->confirmationClaims[$tokenHash] = $expiresAt;
+    }
+
+    public function hasConfirmationClaimForTest(string $tokenHash): bool
+    {
+        return isset($this->confirmationClaims[$tokenHash]);
+    }
+
+    public function confirmationClaimCountForTest(): int
+    {
+        return count($this->confirmationClaims);
+    }
+
     /** @return list<string> */
     public function existingTables(): array
     {
@@ -526,6 +547,24 @@ final class TransactionalDatabaseFake implements DbInterface
             return 0;
         }
 
+        if (str_starts_with(ltrim($stmt), 'DELETE FROM `xplugin_mgd_ai_confirmation_claim`')) {
+            if ($this->confirmationClaimPurgeFails) {
+                throw new RuntimeException('Erzwungener interner Claim-Purge-Fehler.');
+            }
+            $now = gmdate('Y-m-d H:i:s');
+            asort($this->confirmationClaims, SORT_STRING);
+            $removed = 0;
+            foreach ($this->confirmationClaims as $tokenHash => $expiresAt) {
+                if ($expiresAt > $now || $removed >= 1000) {
+                    continue;
+                }
+                unset($this->confirmationClaims[$tokenHash]);
+                ++$removed;
+            }
+
+            return $removed;
+        }
+
         if (str_contains($stmt, 'INSERT IGNORE INTO `xplugin_mgd_ai_confirmation_claim`')) {
             if ($this->confirmationClaimsFail) {
                 throw new RuntimeException('Erzwungener interner Claim-Datenbankfehler.');
@@ -537,7 +576,11 @@ final class TransactionalDatabaseFake implements DbInterface
             if (isset($this->confirmationClaims[$tokenHash])) {
                 return 0;
             }
-            $this->confirmationClaims[$tokenHash] = true;
+            $expiresAt = $params['expires_at'] ?? null;
+            if (!is_string($expiresAt)) {
+                throw new RuntimeException('Claim ohne gebundene Ablaufzeit.');
+            }
+            $this->confirmationClaims[$tokenHash] = $expiresAt;
 
             return 1;
         }
@@ -801,7 +844,6 @@ final class TransactionalDatabaseFake implements DbInterface
             ],
             'xplugin_mgd_ai_confirmation_claim' => [
                 ['token_hash', 'char(64)', 'NO', null, 'ascii_bin', ''],
-                ['subject_hash', 'char(64)', 'NO', null, 'ascii_bin', ''],
                 ['expires_at', 'datetime(6)', 'NO', null, null, ''],
                 ['claimed_at', 'timestamp(6)', 'NO', 'current_timestamp(6)', null, 'DEFAULT_GENERATED'],
             ],

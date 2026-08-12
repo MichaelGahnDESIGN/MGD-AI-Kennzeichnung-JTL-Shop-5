@@ -79,8 +79,19 @@ class Migration20260812000200CreateConfirmationClaimTable extends Migration impl
         }
     }
 
-    /** Sicherheits-Claims werden nicht automatisch destruktiv entfernt. */
-    public function down(): void {}
+    /**
+     * Entfernt beim Rückbau nur die vollständig geprüfte flüchtige Tabelle.
+     * Eine fremde oder veränderte Namenskollision führt stattdessen zum Abbruch.
+     */
+    public function down(): void
+    {
+        $guard = new ConfirmationClaimSchemaGuard($this->getDB());
+        if (!$guard->exists()) {
+            return;
+        }
+        $guard->assertOwned();
+        $this->getDB()->getAffectedRows('DROP TABLE `xplugin_mgd_ai_confirmation_claim`');
+    }
 
     private function createStatement(): string
     {
@@ -89,7 +100,6 @@ class Migration20260812000200CreateConfirmationClaimTable extends Migration impl
         return <<<SQL
             CREATE TABLE `xplugin_mgd_ai_confirmation_claim` (
                 `token_hash` CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-                `subject_hash` CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
                 `expires_at` DATETIME(6) NOT NULL,
                 `claimed_at` TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
                 PRIMARY KEY (`token_hash`),

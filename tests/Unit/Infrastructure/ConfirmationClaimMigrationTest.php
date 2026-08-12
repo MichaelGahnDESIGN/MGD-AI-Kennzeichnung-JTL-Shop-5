@@ -75,4 +75,47 @@ final class ConfirmationClaimMigrationTest extends TestCase
 
         (new ConfirmationClaimSchemaGuard($db))->assertOwned();
     }
+
+    #[Test]
+    public function down_entfernt_ausschliesslich_die_exakt_eigene_fluechtige_claim_tabelle(): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->setMarker(ConfirmationClaimRepository::TABLE, ConfirmationClaimSchemaGuard::OWNERSHIP_MARKER);
+
+        (new Migration20260812000200CreateConfirmationClaimTable($db))->down();
+
+        self::assertSame([], $db->existingTables());
+        self::assertSame([ConfirmationClaimRepository::TABLE], $db->droppedTables);
+    }
+
+    #[Test]
+    public function down_loescht_keine_fremde_gleichnamige_tabelle(): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->setMarker(ConfirmationClaimRepository::TABLE, 'fremder-marker');
+
+        try {
+            (new Migration20260812000200CreateConfirmationClaimTable($db))->down();
+            self::fail('Eine fremde Tabelle darf nicht gelöscht werden.');
+        } catch (RuntimeException) {
+            self::assertSame([ConfirmationClaimRepository::TABLE], $db->existingTables());
+            self::assertSame([], $db->droppedTables);
+        }
+    }
+
+    #[Test]
+    public function datenschutzlebenszyklus_ist_menschenlesbar_dokumentiert(): void
+    {
+        $path = dirname(__DIR__, 3) . '/Dokumentation/Admin-Sicherheitsbestaetigungen.md';
+
+        self::assertFileExists($path);
+        $documentation = file_get_contents($path);
+        self::assertIsString($documentation);
+        self::assertStringContainsString('10 Minuten', $documentation);
+        self::assertStringContainsString('1.000', $documentation);
+        self::assertStringContainsString('Deinstallation', $documentation);
+        $index = file_get_contents(dirname($path) . '/README.md');
+        self::assertIsString($index);
+        self::assertStringContainsString('Admin-Sicherheitsbestaetigungen.md', $index);
+    }
 }

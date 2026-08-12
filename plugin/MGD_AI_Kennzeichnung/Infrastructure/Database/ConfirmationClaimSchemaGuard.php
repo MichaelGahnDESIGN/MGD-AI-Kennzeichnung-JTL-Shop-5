@@ -129,9 +129,8 @@ final class ConfirmationClaimSchemaGuard
     {
         return [
             '1|token_hash|char(64)|NO||ascii_bin|',
-            '2|subject_hash|char(64)|NO||ascii_bin|',
-            '3|expires_at|datetime(6)|NO|||',
-            '4|claimed_at|timestamp(6)|NO|current_timestamp(6)||',
+            '2|expires_at|datetime(6)|NO|||',
+            '3|claimed_at|timestamp(6)|NO|current_timestamp(6)||',
         ];
     }
 

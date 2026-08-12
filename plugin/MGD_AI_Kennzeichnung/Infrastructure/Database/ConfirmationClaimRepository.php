@@ -22,10 +22,9 @@ final class ConfirmationClaimRepository implements ConfirmationClaimRepositoryIn
         $this->guard = new ConfirmationClaimSchemaGuard($db);
     }
 
-    public function claim(string $subjectKey, string $token, int $expiresAt): void
+    public function claim(string $token, int $expiresAt): void
     {
-        if (preg_match('/^[a-f0-9]{64}$/D', $subjectKey) !== 1
-            || preg_match('/^[a-f0-9]{64}$/D', $token) !== 1
+        if (preg_match('/^[a-f0-9]{64}$/D', $token) !== 1
             || $expiresAt <= time()) {
             throw new ConfirmationException('Die Bestätigung ist ungültig oder abgelaufen.');
         }
@@ -35,15 +34,23 @@ final class ConfirmationClaimRepository implements ConfirmationClaimRepositoryIn
 
         $this->guard->assertOwned();
         try {
+            /* Pro Request höchstens ein fester Batch; kein unbeschränkter Wartungslauf im Admin-Request. */
+            $this->db->getAffectedRows(
+                <<<'SQL'
+                    DELETE FROM `xplugin_mgd_ai_confirmation_claim`
+                     WHERE `expires_at` <= UTC_TIMESTAMP(6)
+                     ORDER BY `expires_at`
+                     LIMIT 1000
+                    SQL,
+            );
             $affected = $this->db->getAffectedRows(
                 <<<'SQL'
                     INSERT IGNORE INTO `xplugin_mgd_ai_confirmation_claim`
-                        (`token_hash`, `subject_hash`, `expires_at`, `claimed_at`)
-                    VALUES (:token_hash, :subject_hash, :expires_at, CURRENT_TIMESTAMP(6))
+                        (`token_hash`, `expires_at`, `claimed_at`)
+                    VALUES (:token_hash, :expires_at, CURRENT_TIMESTAMP(6))
                     SQL,
                 [
                     'token_hash' => hash('sha256', $token),
-                    'subject_hash' => hash('sha256', $subjectKey),
                     'expires_at' => gmdate('Y-m-d H:i:s', $expiresAt),
                 ],
             );

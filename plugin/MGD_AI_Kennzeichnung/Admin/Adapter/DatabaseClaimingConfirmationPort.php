@@ -41,7 +41,7 @@ final class DatabaseClaimingConfirmationPort implements ConfirmationPortInterfac
         }
 
         try {
-            $this->claims->claim($subjectKey, $token, $innerLease->expiresAt);
+            $this->claims->claim($token, $innerLease->expiresAt);
         } catch (Throwable $fehler) {
             try {
                 $innerLease->release();
