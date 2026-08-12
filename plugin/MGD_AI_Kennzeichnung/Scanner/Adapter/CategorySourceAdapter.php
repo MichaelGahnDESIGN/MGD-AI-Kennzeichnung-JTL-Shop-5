@@ -10,32 +10,42 @@ use Plugin\MGD_AI_Kennzeichnung\Domain\AssetSource;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\LocalImageReference;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\LocalPathNormalizer;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\SourceAdapterInterface;
+use Plugin\MGD_AI_Kennzeichnung\Scanner\SourceAdapterPageInterface;
+use Plugin\MGD_AI_Kennzeichnung\Scanner\SourceScanPage;
 
 /** Liest Kategoriebilder aus dem gekapselten tkategoriepict-Vertrag. */
-final class CategorySourceAdapter implements SourceAdapterInterface
+final class CategorySourceAdapter implements SourceAdapterInterface, SourceAdapterPageInterface
 {
     public function __construct(private readonly DbInterface $db, private readonly LocalPathNormalizer $normalizer) {}
 
     public function scan(int $offset, int $limit): iterable
     {
+        yield from $this->scanPage($offset, $limit)->references;
+    }
+
+    public function scanPage(int $offset, int $limit): SourceScanPage
+    {
         $this->assertPage($offset, $limit);
         $rows = $this->db->getObjects(
             <<<'SQL'
-                SELECT CONCAT('media/storage/categories/', `p`.`cPfad`) AS `local_path`,
-                       CONCAT('kategorie:', `p`.`kKategorie`) AS `source_reference`,
-                       NULL AS `context`
+                SELECT CONCAT('media/image/storage/categories/', `p`.`cPfad`) AS `local_path`,
+                       CONCAT('kategoriebild:', `p`.`kKategoriePict`, ':kategorie:', `p`.`kKategorie`) AS `source_reference`,
+                       CONCAT('Kategorie ', `p`.`kKategorie`) AS `context`
                   FROM `tkategoriepict` AS `p`
-                 ORDER BY `p`.`kKategorie`
+                 ORDER BY `p`.`kKategoriePict`
                  LIMIT :limit OFFSET :offset
                 SQL,
             ['offset' => $offset, 'limit' => $limit],
         );
+        $references = [];
         foreach ($rows as $row) {
             $reference = LocalImageReference::fromRaw($row->local_path ?? null, $this->source(), $row->source_reference ?? null, $row->context ?? null, $this->normalizer);
             if ($reference !== null) {
-                yield $reference;
+                $references[] = $reference;
             }
         }
+
+        return new SourceScanPage($references, count($rows));
     }
 
     public function source(): AssetSource

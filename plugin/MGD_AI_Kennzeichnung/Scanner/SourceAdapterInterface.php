@@ -9,7 +9,7 @@ use Plugin\MGD_AI_Kennzeichnung\Domain\AssetSource;
 /** Vertrag einer begrenzt und deterministisch lesenden JTL-Bildquelle. */
 interface SourceAdapterInterface
 {
-    /** @return iterable<mixed> Der Service validiert jede Adaptergrenze erneut. */
+    /** @return iterable<LocalImageReference> */
     public function scan(int $offset, int $limit): iterable;
 
     public function source(): AssetSource;

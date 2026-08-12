@@ -8,12 +8,15 @@ use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\AssetRepository;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\UsageRepository;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\LocalImageReference;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\SourceAdapterInterface;
+use Plugin\MGD_AI_Kennzeichnung\Scanner\SourceAdapterPageInterface;
+use Plugin\MGD_AI_Kennzeichnung\Scanner\SourceScanPage;
 use RuntimeException;
 
 /** Orchestriert den begrenzten, atomaren Abgleich sämtlicher Bildquellen. */
 final class ImageScanService
 {
     private const PAGE_SIZE = 100;
+    private const MAXIMUM_PAGES_PER_ADAPTER = 100;
 
     /** @param list<SourceAdapterInterface> $adapters */
     public function __construct(
@@ -29,25 +32,42 @@ final class ImageScanService
             $recordedUsages = 0;
 
             foreach ($this->adapters as $adapter) {
+                if (!$adapter instanceof SourceAdapterPageInterface) {
+                    throw new RuntimeException('Der Quellenadapter meldet die Zahl gelesener Datenbankzeilen nicht.');
+                }
                 $offset = 0;
                 $previousFullPage = null;
 
-                while (true) {
-                    $page = $this->collectPage($adapter, $offset);
-                    if ($page === []) {
+                for ($pageNumber = 1; $pageNumber <= self::MAXIMUM_PAGES_PER_ADAPTER; ++$pageNumber) {
+                    $page = $adapter->scanPage($offset, self::PAGE_SIZE);
+                    $this->assertPage($page, $adapter);
+                    if ($page->rowsRead === 0) {
                         break;
                     }
 
-                    $fingerprint = $this->pageFingerprint($page);
-                    if (count($page) === self::PAGE_SIZE && $fingerprint === $previousFullPage) {
+                    $fingerprint = $page->references === [] ? null : $this->pageFingerprint($page->references);
+                    if ($page->rowsRead === self::PAGE_SIZE
+                        && $fingerprint !== null
+                        && $fingerprint === $previousFullPage
+                    ) {
                         throw new RuntimeException('Ein Quellenadapter lieferte erneut eine identische Seite.');
                     }
-                    $previousFullPage = count($page) === self::PAGE_SIZE ? $fingerprint : null;
+                    $previousFullPage = $page->rowsRead === self::PAGE_SIZE ? $fingerprint : null;
 
-                    foreach ($page as $reference) {
-                        if ($reference->source !== $adapter->source()) {
-                            throw new RuntimeException('Ein Quellenadapter lieferte eine ungültige oder fremde Referenz.');
-                        }
+                    /*
+                     * Eine hundertste volle DB-Seite besitzt kein nachweisbares
+                     * natürliches Ende. Wir brechen vor ihrer Verarbeitung ab;
+                     * der Repository-Callback rollt dadurch den gesamten Lauf
+                     * zurück und markiert insbesondere keine alte Nutzung als
+                     * fehlend.
+                     */
+                    if ($pageNumber === self::MAXIMUM_PAGES_PER_ADAPTER
+                        && $page->rowsRead === self::PAGE_SIZE
+                    ) {
+                        throw new RuntimeException('Ein Quellenadapter überschritt die harte Grenze von 100 vollen Seiten.');
+                    }
+
+                    foreach ($page->references as $reference) {
                         $asset = $this->assets->ensureUnreviewed($reference->assetKey, $reference->localPath);
                         if ($asset['created']) {
                             ++$createdAssets;
@@ -62,8 +82,10 @@ final class ImageScanService
                         }
                     }
 
-                    /* Der Offset bezieht sich auf gelesene DB-Zeilen, nicht nur auf gültige Fundstellen. */
-                    $offset += self::PAGE_SIZE;
+                    $offset += $page->rowsRead;
+                    if ($page->rowsRead < self::PAGE_SIZE) {
+                        break;
+                    }
                 }
             }
 
@@ -71,21 +93,13 @@ final class ImageScanService
         });
     }
 
-    /** @return list<LocalImageReference> */
-    private function collectPage(SourceAdapterInterface $adapter, int $offset): array
+    private function assertPage(SourceScanPage $page, SourceAdapterInterface $adapter): void
     {
-        $page = [];
-        foreach ($adapter->scan($offset, self::PAGE_SIZE) as $reference) {
-            if (!$reference instanceof LocalImageReference) {
-                throw new RuntimeException('Ein Quellenadapter lieferte keine lokale Bildreferenz.');
-            }
-            $page[] = $reference;
-            if (count($page) > self::PAGE_SIZE) {
-                throw new RuntimeException('Ein Quellenadapter lieferte mehr als 100 Referenzen pro Seite.');
+        foreach ($page->references as $reference) {
+            if ($reference->source !== $adapter->source()) {
+                throw new RuntimeException('Ein Quellenadapter lieferte eine ungültige oder fremde Referenz.');
             }
         }
-
-        return $page;
     }
 
     /** @param list<LocalImageReference> $page */

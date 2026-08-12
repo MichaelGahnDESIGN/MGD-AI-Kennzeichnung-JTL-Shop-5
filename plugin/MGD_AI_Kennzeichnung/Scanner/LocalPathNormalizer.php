@@ -46,14 +46,7 @@ final class LocalPathNormalizer
         }
 
         $reference = trim($reference);
-        if ($reference === ''
-            || preg_match('/[\x00-\x1F\x7F]/u', $reference) === 1
-            || str_contains($reference, '?')
-            || str_contains($reference, '#')
-            || str_starts_with($reference, '//')
-            || str_starts_with($reference, '\\\\')
-            || preg_match('/^[a-z]:[\\\\\/]/i', $reference) === 1
-        ) {
+        if ($reference === '') {
             return null;
         }
 
@@ -63,21 +56,21 @@ final class LocalPathNormalizer
         }
 
         /*
-         * Mehrfaches Dekodieren verhindert doppelt verpacktes Traversal. Eine
-         * verbleibende Escape-Sequenz wird abgelehnt, statt mehrdeutig weiter
-         * interpretiert zu werden.
+         * Vor und nach jeder bounded Dekodierstufe wird dieselbe vollständige
+         * Sicherheitsprüfung ausgeführt. Damit können ein Schema, Host, Query,
+         * NUL oder Traversal nicht erst in einer späteren Stufe entstehen.
          */
-        for ($round = 0; $round < 5; ++$round) {
+        for ($round = 0; $round < 6; ++$round) {
+            if (!$this->isSafeLocalSyntax($path)) {
+                return null;
+            }
             $decoded = rawurldecode($path);
             if ($decoded === $path) {
                 break;
             }
             $path = $decoded;
         }
-        if (preg_match('/%[0-9a-f]{2}/i', $path) === 1
-            || !mb_check_encoding($path, 'UTF-8')
-            || preg_match('/[\\\\\x00-\x1F\x7F\x{2024}\x{2044}\x{2215}\x{29F8}\x{FE52}\x{FF0E}\x{FF0F}]/u', $path) === 1
-        ) {
+        if (!$this->isSafeLocalSyntax($path) || preg_match('/%[0-9a-f]{2}/i', $path) === 1) {
             return null;
         }
 
@@ -124,12 +117,32 @@ final class LocalPathNormalizer
         if (!is_array($parts)
             || !isset($parts['scheme'], $parts['host'], $parts['path'])
             || !in_array(strtolower((string) $parts['scheme']), ['http', 'https'], true)
-            || isset($parts['user'], $parts['pass'], $parts['port'], $parts['query'], $parts['fragment'])
+            || isset($parts['user'])
+            || isset($parts['pass'])
+            || isset($parts['port'])
+            || isset($parts['query'])
+            || isset($parts['fragment'])
         ) {
             return null;
         }
 
         $host = strtolower(rtrim((string) $parts['host'], '.'));
         return isset($this->allowedHosts[$host]) ? (string) $parts['path'] : null;
+    }
+
+    /** Prüft jede dekodierte Zwischenstufe erneut als rein lokalen Pfad. */
+    private function isSafeLocalSyntax(string $path): bool
+    {
+        return $path !== ''
+            && strlen($path) <= self::MAXIMUM_LENGTH
+            && mb_check_encoding($path, 'UTF-8')
+            && !str_contains($path, "\0")
+            && !str_contains($path, '?')
+            && !str_contains($path, '#')
+            && !str_starts_with($path, '//')
+            && !str_starts_with($path, '\\\\')
+            && preg_match('/^[a-z][a-z0-9+.-]*:/i', $path) !== 1
+            && preg_match('/^[a-z]:[\\\\\/]/i', $path) !== 1
+            && preg_match('/[\\\\\x00-\x1F\x7F\x{2024}\x{2044}\x{2215}\x{29F8}\x{FE52}\x{FF0E}\x{FF0F}]/u', $path) !== 1;
     }
 }

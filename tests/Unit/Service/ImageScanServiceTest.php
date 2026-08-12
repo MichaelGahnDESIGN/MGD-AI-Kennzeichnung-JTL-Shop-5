@@ -19,6 +19,8 @@ use Plugin\MGD_AI_Kennzeichnung\Scanner\Adapter\ProductSourceAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\LocalImageReference;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\LocalPathNormalizer;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\SourceAdapterInterface;
+use Plugin\MGD_AI_Kennzeichnung\Scanner\SourceAdapterPageInterface;
+use Plugin\MGD_AI_Kennzeichnung\Scanner\SourceScanPage;
 use Plugin\MGD_AI_Kennzeichnung\Service\ImageScanService;
 use RuntimeException;
 use Tests\Support\TransactionalDatabaseFake;
@@ -32,11 +34,15 @@ final class ImageScanServiceTest extends TestCase
     {
         $db = $this->scannerDatabase();
         $db->scannerRows = [
-            'tartikelpict' => [(object) ['local_path' => '/media/image/storage/a.jpg', 'source_reference' => 'artikel:1:bild:1', 'context' => 'Artikel']],
-            'tkategoriepict' => [(object) ['local_path' => '/media/storage/categories/k.png', 'source_reference' => 'kategorie:2', 'context' => 'Kategorie']],
-            'thersteller' => [(object) ['local_path' => '/bilder/h.webp', 'source_reference' => 'hersteller:3', 'context' => 'Hersteller']],
-            'tbanner' => [(object) ['local_path' => '/bilder/b.gif', 'source_reference' => 'banner:4', 'context' => 'Banner']],
-            'topcarea' => [(object) ['local_path' => '/bilder/o.avif', 'source_reference' => 'opc:5', 'context' => 'OPC']],
+            'tartikelpict' => [(object) ['local_path' => '/media/image/storage/a.jpg', 'source_reference' => 'artikelbild:1:artikel:1', 'context' => 'Artikel']],
+            'tkategoriepict' => [(object) ['local_path' => '/media/image/storage/categories/k.png', 'source_reference' => 'kategoriebild:2:kategorie:2', 'context' => 'Kategorie 2']],
+            'thersteller' => [(object) ['local_path' => '/media/image/storage/manufacturers/h.webp', 'source_reference' => 'hersteller:3', 'context' => 'Hersteller']],
+            'timagemap' => [(object) ['local_path' => '/bilder/banner/b.gif', 'source_reference' => 'banner:4', 'context' => 'Banner']],
+            'topcpage' => [(object) [
+                'page_id' => 5,
+                'areas_json' => '{"properties":{"src":"o.avif"}}',
+                'context' => 'OPC',
+            ]],
         ];
         $normalizer = new LocalPathNormalizer();
         $adapters = [
@@ -56,9 +62,12 @@ final class ImageScanServiceTest extends TestCase
         ], array_map(static fn(SourceAdapterInterface $adapter): AssetSource => $adapter->source(), $adapters));
 
         foreach ($adapters as $adapter) {
-            $rows = self::collect($adapter->scan(0, 100));
+            self::assertInstanceOf(SourceAdapterPageInterface::class, $adapter);
+            $page = $adapter->scanPage(0, 100);
+            $rows = $page->references;
             self::assertCount(1, $rows);
             self::assertInstanceOf(LocalImageReference::class, $rows[0]);
+            self::assertSame(1, $page->rowsRead);
         }
 
         foreach (array_slice($db->statements, -5) as $statement) {
@@ -66,6 +75,50 @@ final class ImageScanServiceTest extends TestCase
             self::assertStringContainsString(':offset', $statement['sql']);
             self::assertStringContainsString(':limit', $statement['sql']);
             self::assertStringNotContainsString('fremd.example', $statement['sql']);
+        }
+    }
+
+    #[Test]
+    public function adapter_sql_verwendet_offizielle_jtl_572_tabellen_primaerschluessel_und_referenzen(): void
+    {
+        $db = $this->scannerDatabase();
+        $normalizer = new LocalPathNormalizer();
+        $adapters = [
+            new ProductSourceAdapter($db, $normalizer),
+            new CategorySourceAdapter($db, $normalizer),
+            new ManufacturerSourceAdapter($db, $normalizer),
+            new BannerSourceAdapter($db, $normalizer),
+            new OpcSourceAdapter($db, $normalizer),
+        ];
+
+        foreach ($adapters as $adapter) {
+            self::assertSame([], self::collect($adapter->scan(7, 11)));
+        }
+        $sql = array_column(array_slice($db->statements, -5), 'sql');
+
+        self::assertStringContainsString('FROM `tartikelpict`', $sql[0]);
+        self::assertStringContainsString('`p`.`kArtikelPict`', $sql[0]);
+        self::assertStringContainsString("CONCAT('media/image/storage/', `p`.`cPfad`)", $sql[0]);
+        self::assertStringContainsString("CONCAT('artikelbild:', `p`.`kArtikelPict`, ':artikel:', `p`.`kArtikel`)", $sql[0]);
+        self::assertStringContainsString('ORDER BY `p`.`kArtikelPict`', $sql[0]);
+        self::assertStringContainsString('FROM `tkategoriepict`', $sql[1]);
+        self::assertStringContainsString('`p`.`kKategoriePict`', $sql[1]);
+        self::assertStringContainsString("CONCAT('media/image/storage/categories/', `p`.`cPfad`)", $sql[1]);
+        self::assertStringContainsString("CONCAT('kategoriebild:', `p`.`kKategoriePict`, ':kategorie:', `p`.`kKategorie`)", $sql[1]);
+        self::assertStringContainsString('ORDER BY `p`.`kKategoriePict`', $sql[1]);
+        self::assertStringContainsString('FROM `thersteller`', $sql[2]);
+        self::assertStringContainsString("CONCAT('media/image/storage/manufacturers/', `h`.`cBildpfad`)", $sql[2]);
+        self::assertStringContainsString("CONCAT('hersteller:', `h`.`kHersteller`)", $sql[2]);
+        self::assertStringContainsString('ORDER BY `h`.`kHersteller`', $sql[2]);
+        self::assertStringContainsString('FROM `timagemap`', $sql[3]);
+        self::assertStringContainsString('`b`.`cBildPfad`', $sql[3]);
+        self::assertStringContainsString("CONCAT('banner:', `b`.`kImageMap`)", $sql[3]);
+        self::assertStringContainsString('ORDER BY `b`.`kImageMap`', $sql[3]);
+        self::assertStringContainsString('FROM `topcpage`', $sql[4]);
+        self::assertStringContainsString('`p`.`cAreasJson`', $sql[4]);
+        self::assertStringContainsString('ORDER BY `p`.`kPage`', $sql[4]);
+        foreach (array_slice($db->statements, -5) as $statement) {
+            self::assertSame(['offset' => 7, 'limit' => 11], $statement['params']);
         }
     }
 
@@ -116,7 +169,7 @@ final class ImageScanServiceTest extends TestCase
         self::assertSame(1, $db->assetCount());
         self::assertSame(101, $db->usageCount());
         self::assertSame('bilder/a.jpg', $db->localPathForAsset(hash('sha256', 'bilder/a.jpg')));
-        self::assertSame([[0, 100], [100, 100], [200, 100], [0, 100], [100, 100], [200, 100]], $adapter->calls);
+        self::assertSame([[0, 100], [100, 100], [0, 100], [100, 100]], $adapter->calls);
     }
 
     #[Test]
@@ -194,6 +247,104 @@ final class ImageScanServiceTest extends TestCase
         $service->scan();
     }
 
+    #[Test]
+    public function hundert_wechselnde_volle_db_seiten_brechen_atomar_ohne_missing_ab(): void
+    {
+        $db = $this->scannerDatabase();
+        $normalizer = new LocalPathNormalizer();
+        $old = self::reference($normalizer, '/bilder/alt.jpg', 'artikel:alt');
+        $db->seedScanUsage($old->assetKey, $old->localPath, $old->sourceReference);
+        $service = new ImageScanService(
+            [new EndlessChangingPageAdapter($normalizer)],
+            new AssetRepository($db),
+            new UsageRepository($db),
+        );
+
+        try {
+            $service->scan();
+            self::fail('Die harte Grenze von 100 vollen DB-Seiten muss abbrechen.');
+        } catch (RuntimeException $exception) {
+            self::assertStringContainsString('100', $exception->getMessage());
+        }
+
+        self::assertTrue($db->usageIsPresent('artikel:alt'));
+        self::assertSame(1, $db->rollbacks);
+    }
+
+    #[Test]
+    public function volle_ungueltige_db_seite_beendet_den_scan_nicht_vor_einer_spaeteren_gueltigen_seite(): void
+    {
+        $db = $this->scannerDatabase();
+        $normalizer = new LocalPathNormalizer();
+        $service = new ImageScanService(
+            [new InvalidThenValidPageAdapter($normalizer)],
+            new AssetRepository($db),
+            new UsageRepository($db),
+        );
+
+        $result = $service->scan();
+
+        self::assertSame(1, $result->createdAssets);
+        self::assertSame(1, $result->recordedUsages);
+        self::assertTrue($db->usageIsPresent('artikel:spät'));
+    }
+
+    #[Test]
+    public function opc_json_extrahiert_nur_offizielle_bildfelder_bounded_und_eindeutig(): void
+    {
+        $db = $this->scannerDatabase();
+        $db->scannerRows['topcpage'] = [(object) [
+            'page_id' => 17,
+            'context' => '<b>Startseite</b>',
+            'areas_json' => json_encode([
+                'area' => ['content' => [[
+                    'properties' => [
+                        'src' => 'bilder/eins.jpg',
+                        'still-src' => 'bilder/zwei.png',
+                        'video-poster' => 'bilder/drei.webp',
+                        'url' => 'https://fremd.example/nicht-bild.jpg',
+                        'text' => '<img src="bilder/versteckt.jpg">',
+                        'images' => [['url' => 'bilder/vier.gif'], ['url' => 'javascript%3Aangriff.jpg']],
+                        'slides' => [['url' => 'bilder/fuenf.avif']],
+                    ],
+                ]]],
+            ], JSON_THROW_ON_ERROR),
+        ]];
+        $adapter = new OpcSourceAdapter($db, new LocalPathNormalizer());
+
+        $references = self::collect($adapter->scan(0, 100));
+
+        self::assertCount(5, $references);
+        self::assertSame([
+            'media/image/storage/opc/bilder/eins.jpg',
+            'media/image/storage/opc/bilder/zwei.png',
+            'media/image/storage/opc/bilder/drei.webp',
+            'media/image/storage/opc/bilder/vier.gif',
+            'media/image/storage/opc/bilder/fuenf.avif',
+        ], array_map(static fn(LocalImageReference $reference): string => $reference->localPath, $references));
+        self::assertCount(5, array_unique(array_map(
+            static fn(LocalImageReference $reference): string => $reference->sourceReference,
+            $references,
+        )));
+        foreach ($references as $reference) {
+            self::assertStringStartsWith('opc-seite:17:json:', $reference->sourceReference);
+            self::assertSame('Startseite', $reference->context);
+        }
+    }
+
+    #[Test]
+    public function opc_json_verwirft_malformed_tief_oder_uebergross_fail_closed(): void
+    {
+        $db = $this->scannerDatabase();
+        $db->scannerRows['topcpage'] = [
+            (object) ['page_id' => 1, 'context' => 'kaputt', 'areas_json' => '{'],
+            (object) ['page_id' => 2, 'context' => 'tief', 'areas_json' => str_repeat('[', 70) . '"bilder/a.jpg"' . str_repeat(']', 70)],
+            (object) ['page_id' => 3, 'context' => 'groß', 'areas_json' => str_repeat(' ', 1048577)],
+        ];
+
+        self::assertSame([], self::collect((new OpcSourceAdapter($db, new LocalPathNormalizer()))->scan(0, 100)));
+    }
+
     private function scannerDatabase(): TransactionalDatabaseFake
     {
         $db = new TransactionalDatabaseFake();
@@ -211,9 +362,18 @@ final class ImageScanServiceTest extends TestCase
         return $result;
     }
 
+    public static function referenceForAdapter(
+        LocalPathNormalizer $normalizer,
+        string $path,
+        string $reference,
+    ): LocalImageReference {
+        return self::reference($normalizer, $path, $reference);
+    }
+
     /**
-     * @param iterable<mixed> $values
-     * @return list<mixed>
+     * @template T
+     * @param iterable<T> $values
+     * @return list<T>
      */
     private static function collect(iterable $values): array
     {
@@ -227,7 +387,7 @@ final class ImageScanServiceTest extends TestCase
 }
 
 /** Begrenzter Testadapter, der echte Referenzobjekte ohne Datenbank-Mock liefert. */
-final class RecordingAdapter implements SourceAdapterInterface
+final class RecordingAdapter implements SourceAdapterInterface, SourceAdapterPageInterface
 {
     /** @var list<array{int, int}> */
     public array $calls = [];
@@ -241,13 +401,21 @@ final class RecordingAdapter implements SourceAdapterInterface
         yield from array_slice($this->references, $offset, $limit);
     }
 
+    public function scanPage(int $offset, int $limit): SourceScanPage
+    {
+        $this->calls[] = [$offset, $limit];
+        $references = array_slice($this->references, $offset, $limit);
+
+        return new SourceScanPage($references, count($references));
+    }
+
     public function source(): AssetSource
     {
         return $this->assetSource;
     }
 }
 
-final class ThrowingAdapter implements SourceAdapterInterface
+final class ThrowingAdapter implements SourceAdapterInterface, SourceAdapterPageInterface
 {
     public function scan(int $offset, int $limit): iterable
     {
@@ -258,9 +426,14 @@ final class ThrowingAdapter implements SourceAdapterInterface
     {
         return AssetSource::Banner;
     }
+
+    public function scanPage(int $offset, int $limit): SourceScanPage
+    {
+        throw new RuntimeException('Erzwungener Scannerfehler.');
+    }
 }
 
-final class RepeatingPageAdapter implements SourceAdapterInterface
+final class RepeatingPageAdapter implements SourceAdapterInterface, SourceAdapterPageInterface
 {
     /** @param list<LocalImageReference> $page */
     public function __construct(private readonly array $page) {}
@@ -268,6 +441,73 @@ final class RepeatingPageAdapter implements SourceAdapterInterface
     public function scan(int $offset, int $limit): iterable
     {
         yield from $this->page;
+    }
+
+    public function source(): AssetSource
+    {
+        return AssetSource::Product;
+    }
+
+    public function scanPage(int $offset, int $limit): SourceScanPage
+    {
+        return new SourceScanPage($this->page, 100);
+    }
+}
+
+final class EndlessChangingPageAdapter implements SourceAdapterInterface, SourceAdapterPageInterface
+{
+    public function __construct(private readonly LocalPathNormalizer $normalizer) {}
+
+    public function scan(int $offset, int $limit): iterable
+    {
+        yield from $this->scanPage($offset, $limit)->references;
+    }
+
+    public function scanPage(int $offset, int $limit): SourceScanPage
+    {
+        $references = [];
+        for ($index = 0; $index < 100; ++$index) {
+            $references[] = ImageScanServiceTest::referenceForAdapter(
+                $this->normalizer,
+                '/bilder/' . $offset . '-' . $index . '.jpg',
+                'artikel:' . $offset . ':' . $index,
+            );
+        }
+
+        return new SourceScanPage($references, 100);
+    }
+
+    public function source(): AssetSource
+    {
+        return AssetSource::Product;
+    }
+}
+
+final class InvalidThenValidPageAdapter implements SourceAdapterInterface, SourceAdapterPageInterface
+{
+    public function __construct(private readonly LocalPathNormalizer $normalizer) {}
+
+    public function scan(int $offset, int $limit): iterable
+    {
+        yield from $this->scanPage($offset, $limit)->references;
+    }
+
+    public function scanPage(int $offset, int $limit): SourceScanPage
+    {
+        if ($offset === 0) {
+            return new SourceScanPage([], 100);
+        }
+        if ($offset === 100) {
+            return new SourceScanPage([
+                ImageScanServiceTest::referenceForAdapter(
+                    $this->normalizer,
+                    '/bilder/spaet.jpg',
+                    'artikel:spät',
+                ),
+            ], 1);
+        }
+
+        return new SourceScanPage([], 0);
     }
 
     public function source(): AssetSource
