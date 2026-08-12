@@ -14,9 +14,11 @@ Sie enthält keine Bild-IDs, Einstellungswerte, Sitzungsschlüssel, Benutzerkenn
 
 ## Replay-Sperrfrist und automatische Löschung
 
-Ein abgelaufener Claim wird nicht sofort entfernt. Er bleibt noch einen vollständigen Tag als Replay-Sperre erhalten. Zusammen mit der Token-Laufzeit von höchstens 10 Minuten beträgt die maximale reguläre Aufbewahrung damit ungefähr **24 Stunden und 10 Minuten**. Diese kurze zusätzliche Frist verhindert, dass eine parallel bereits gelesene Sitzungskopie denselben Claim unmittelbar nach dessen Ablauf erneut einfügen kann.
+Ein abgelaufener Claim wird nicht sofort entfernt. Er bleibt **mindestens einen vollständigen Tag** nach seinem Ablauf als Replay-Sperre erhalten. Diese zusätzliche Frist verhindert, dass eine parallel bereits gelesene Sitzungskopie denselben Claim unmittelbar nach dessen Ablauf erneut einfügen kann.
 
-Vor jedem neuen Claim wird genau ein begrenzter Batch von höchstens **1.000** Zeilen gelöscht, deren Ablaufzeit seit mehr als einem Tag überschritten ist. Es gibt keine unbeschränkte Schleife innerhalb eines Admin-Aufrufs. Schlägt diese Bereinigung fehl, wird auch der neue Claim nicht geschrieben; die Mutation bleibt damit sicher gesperrt.
+Die Bereinigung erfolgt opportunistisch vor dem nächsten bestätigten Adminvorgang: Dann wird genau ein begrenzter Batch von höchstens **1.000** Zeilen gelöscht, deren Ablaufzeit seit mehr als einem Tag überschritten ist. Es gibt keine unbeschränkte Schleife innerhalb eines Admin-Aufrufs. Schlägt diese Bereinigung fehl, wird auch der neue Claim nicht geschrieben; die Mutation bleibt damit sicher gesperrt.
+
+Ohne einen späteren bestätigten Adminvorgang gibt es daher **keine garantierte Höchstdauer** der Speicherung. Ältere Hashzeilen bleiben bis zu einem zukünftigen Claim oder bis zur Deinstallation bestehen. Das verbleibende Datenschutzrisiko ist durch die strikte Datenminimierung begrenzt: Gespeichert werden nur der Hash eines zufälligen Einmaltokens und zwei technische Zeitwerte, niemals Vorgangsdaten oder personenbezogene Zuordnungsmerkmale.
 
 Ob ein neuer Claim noch gültig ist, entscheidet abschließend die UTC-Uhr der Datenbank innerhalb desselben `INSERT`-Befehls. Die vorherige PHP-Prüfung dient nur einer verständlichen, schnellen Rückmeldung. Eine abweichende oder während des Requests fortschreitende PHP-Uhr kann daher keinen abgelaufenen Claim freigeben.
 

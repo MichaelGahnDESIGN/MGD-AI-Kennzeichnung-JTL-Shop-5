@@ -113,7 +113,12 @@ final class ConfirmationClaimMigrationTest extends TestCase
         self::assertIsString($documentation);
         self::assertStringContainsString('10 Minuten', $documentation);
         self::assertStringContainsString('1.000', $documentation);
-        self::assertStringContainsString('24 Stunden und 10 Minuten', $documentation);
+        self::assertStringContainsString('mindestens einen vollständigen Tag', $documentation);
+        self::assertStringContainsString('opportunistisch', $documentation);
+        self::assertStringContainsString('keine garantierte Höchstdauer', $documentation);
+        self::assertStringContainsString('zufälligen Einmaltokens', $documentation);
+        self::assertStringContainsString('keine Bild-IDs', $documentation);
+        self::assertStringNotContainsString('maximale reguläre Aufbewahrung', $documentation);
         self::assertStringContainsString('Deinstallation', $documentation);
         $index = file_get_contents(dirname($path) . '/README.md');
         self::assertIsString($index);
