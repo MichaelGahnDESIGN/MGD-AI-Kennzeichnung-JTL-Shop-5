@@ -27,6 +27,10 @@ jobs:
           coverage: none
       - name: Abhängigkeiten installieren
         run: composer install --no-interaction --no-progress --prefer-dist
+      - name: Composer-Projektdatei streng validieren
+        run: composer validate --strict
+      - name: Pluginmetadaten als XML parsen
+        run: xmllint --noout plugin/MGD_AI_Kennzeichnung/info.xml
       - name: Tests ausführen
         run: composer test
       - name: Statische Analyse ausführen

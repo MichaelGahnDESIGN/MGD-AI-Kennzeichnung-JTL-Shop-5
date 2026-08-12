@@ -6,7 +6,8 @@
     <URL>https://Michael-Gahn.de</URL>
     <XMLVersion>100</XMLVersion>
     <MinShopVersion>5.7.2</MinShopVersion>
+    <PHPVersion>8.1</PHPVersion>
     <PluginID>MGD_AI_Kennzeichnung</PluginID>
     <CreateDate>2026-08-12</CreateDate>
-    <Version>1.0.0</Version>
+    <Version>0.1.0</Version>
 </jtlshopplugin>
