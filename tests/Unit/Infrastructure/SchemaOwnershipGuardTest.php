@@ -67,23 +67,93 @@ final class SchemaOwnershipGuardTest extends TestCase
         self::assertStringContainsString('TABLE_COLLATION', $db->statements[0]['sql']);
         self::assertStringContainsString('ORDINAL_POSITION', $db->statements[0]['sql']);
         self::assertStringContainsString('SEQ_IN_INDEX', $db->statements[0]['sql']);
-        self::assertStringContainsString('SHA2', $db->statements[0]['sql']);
+        self::assertStringContainsString('NON_UNIQUE', $db->statements[0]['sql']);
+        self::assertStringContainsString('SUB_PART', $db->statements[0]['sql']);
+        self::assertStringContainsString('INDEX_TYPE', $db->statements[0]['sql']);
+        self::assertStringContainsString('UPDATE_RULE', $db->statements[0]['sql']);
+        self::assertStringContainsString('DELETE_RULE', $db->statements[0]['sql']);
+        self::assertStringContainsString('JSON_ARRAYAGG', $db->statements[0]['sql']);
         self::assertSame(self::ASSET_TABLE, $db->statements[0]['params']['table_name']);
         self::assertSame(['table_name' => self::ASSET_TABLE], $db->statements[0]['params']);
     }
 
     #[Test]
-    public function marker_ohne_exakten_schema_fingerprint_gilt_nicht_als_eigentum(): void
+    public function marker_ohne_exakten_semantischen_schemavertrag_gilt_nicht_als_eigentum(): void
     {
         $db = new TransactionalDatabaseFake();
         $db->setMarker(self::ASSET_TABLE, self::MARKER);
-        $db->setFingerprint(self::ASSET_TABLE, 'manipuliertes-schema');
+        $db->setColumnType(self::ASSET_TABLE, 'asset_key', 'varchar(64)');
         $guard = new SchemaOwnershipGuard($db);
 
         self::assertFalse($guard->mayMutate(self::ASSET_TABLE));
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Schema');
         $guard->assertOwned(self::ASSET_TABLE);
+    }
+
+    #[Test]
+    public function maria_db_und_mysql_typdarstellungen_gelten_semantisch_als_gleich(): void
+    {
+        foreach (['bigint(20) unsigned', 'bigint unsigned'] as $idType) {
+            $db = new TransactionalDatabaseFake();
+            $db->setMarker(self::ASSET_TABLE, self::MARKER);
+            $db->setColumnType(self::ASSET_TABLE, 'id', $idType);
+            $db->setColumnDefault(self::ASSET_TABLE, 'status', "'unreviewed'");
+            $db->setColumnDefault(self::ASSET_TABLE, 'created_at', 'CURRENT_TIMESTAMP()');
+            $db->setColumnExtra(
+                self::ASSET_TABLE,
+                'updated_at',
+                'DEFAULT_GENERATED on update CURRENT_TIMESTAMP()',
+            );
+
+            self::assertTrue((new SchemaOwnershipGuard($db))->mayMutate(self::ASSET_TABLE));
+        }
+    }
+
+    #[Test]
+    public function gleich_markiertes_myisam_schema_wird_abgewiesen(): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->setMarker(self::ASSET_TABLE, self::MARKER);
+        $db->setEngine(self::ASSET_TABLE, 'MyISAM');
+
+        self::assertFalse((new SchemaOwnershipGuard($db))->mayMutate(self::ASSET_TABLE));
+    }
+
+    #[Test]
+    public function nachtraeglich_zu_myisam_geaenderte_tabelle_wird_beim_cleanup_nie_geloescht(): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->failCreateNumber = 2;
+        $db->alterEngineBeforeCleanup = self::ASSET_TABLE;
+
+        try {
+            (new \Plugin\MGD_AI_Kennzeichnung\Migrations\Migration20260812000100($db))->up();
+            self::fail('Migration und unsicheres Cleanup müssen eskalieren.');
+        } catch (RuntimeException $fehler) {
+            self::assertStringContainsString('Bereinigung', $fehler->getMessage());
+        }
+
+        self::assertSame([], $db->droppedTables);
+        self::assertSame([self::ASSET_TABLE], $db->existingTables());
+    }
+
+    #[Test]
+    public function prefix_unique_index_wird_abgewiesen_und_nie_beim_cleanup_geloescht(): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->failCreateNumber = 2;
+        $db->alterIndexBeforeCleanup = [self::ASSET_TABLE, 'uq_mgd_ai_asset_key', 16];
+
+        try {
+            (new \Plugin\MGD_AI_Kennzeichnung\Migrations\Migration20260812000100($db))->up();
+            self::fail('Migration und unsicheres Cleanup müssen eskalieren.');
+        } catch (RuntimeException $fehler) {
+            self::assertStringContainsString('Bereinigung', $fehler->getMessage());
+        }
+
+        self::assertSame([], $db->droppedTables);
+        self::assertSame([self::ASSET_TABLE], $db->existingTables());
     }
 
     #[Test]

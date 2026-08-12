@@ -23,8 +23,8 @@ final class TransactionalDatabaseFake implements DbInterface
     /** @var array<string, string> */
     private array $markers = [];
 
-    /** @var array<string, string> */
-    private array $fingerprints = [];
+    /** @var array<string, array{engine: string, collation: string, columns: list<array<string, mixed>>, indexes: list<array<string, mixed>>, foreign_keys: list<array<string, mixed>>}> */
+    private array $schemas = [];
 
     /** @var array<string, array{label: string, status: string, position: string, theme: string, local_path: string}> */
     private array $assets = [];
@@ -56,6 +56,9 @@ final class TransactionalDatabaseFake implements DbInterface
     public int $lockReleases = 0;
     public ?int $failCreateNumber = null;
     public ?string $alterFingerprintBeforeCleanup = null;
+    public ?string $alterEngineBeforeCleanup = null;
+    /** @var null|array{string, string, int} */
+    public ?array $alterIndexBeforeCleanup = null;
     public ?string $foreignTableBeforeCreate = null;
     /** @var list<string> */
     public array $droppedTables = [];
@@ -64,12 +67,27 @@ final class TransactionalDatabaseFake implements DbInterface
     public function setMarker(string $table, string $marker): void
     {
         $this->markers[$table] = $marker;
-        $this->fingerprints[$table] = SchemaOwnershipGuard::expectedFingerprint($table);
+        $this->schemas[$table] = $this->defaultSchema($table);
     }
 
-    public function setFingerprint(string $table, string $fingerprint): void
+    public function setColumnType(string $table, string $column, string $type): void
     {
-        $this->fingerprints[$table] = $fingerprint;
+        $this->setColumnValue($table, $column, 'type', $type);
+    }
+
+    public function setColumnDefault(string $table, string $column, mixed $default): void
+    {
+        $this->setColumnValue($table, $column, 'default', $default);
+    }
+
+    public function setColumnExtra(string $table, string $column, string $extra): void
+    {
+        $this->setColumnValue($table, $column, 'extra', $extra);
+    }
+
+    public function setEngine(string $table, string $engine): void
+    {
+        $this->schemas[$table]['engine'] = $engine;
     }
 
     /** @param array<string, string> $statuses */
@@ -151,7 +169,11 @@ final class TransactionalDatabaseFake implements DbInterface
 
         return (object) [
             'ownership_marker' => $this->markers[$table],
-            'calculated_fingerprint' => $this->fingerprints[$table] ?? '',
+            'table_engine' => $this->schemas[$table]['engine'],
+            'table_collation' => $this->schemas[$table]['collation'],
+            'columns_json' => json_encode($this->schemas[$table]['columns'], JSON_THROW_ON_ERROR),
+            'indexes_json' => json_encode($this->schemas[$table]['indexes'], JSON_THROW_ON_ERROR),
+            'foreign_keys_json' => json_encode($this->schemas[$table]['foreign_keys'], JSON_THROW_ON_ERROR),
         ];
     }
 
@@ -164,11 +186,23 @@ final class TransactionalDatabaseFake implements DbInterface
             if ($this->foreignTableBeforeCreate !== null
                 && str_contains($stmt, '`' . $this->foreignTableBeforeCreate . '`')) {
                 $this->markers[$this->foreignTableBeforeCreate] = 'fremder-marker';
-                $this->fingerprints[$this->foreignTableBeforeCreate] = 'fremdes-schema';
+                $this->schemas[$this->foreignTableBeforeCreate] = $this->defaultSchema($this->foreignTableBeforeCreate);
             }
             if ($this->createCount === $this->failCreateNumber) {
                 if ($this->alterFingerprintBeforeCleanup !== null) {
-                    $this->fingerprints[$this->alterFingerprintBeforeCleanup] = 'inzwischen-veraendert';
+                    $this->setColumnType($this->alterFingerprintBeforeCleanup, 'asset_key', 'varchar(64)');
+                }
+                if ($this->alterEngineBeforeCleanup !== null) {
+                    $this->setEngine($this->alterEngineBeforeCleanup, 'MyISAM');
+                }
+                if ($this->alterIndexBeforeCleanup !== null) {
+                    [$table, $index, $subPart] = $this->alterIndexBeforeCleanup;
+                    foreach ($this->schemas[$table]['indexes'] as &$row) {
+                        if (($row['name'] ?? null) === $index) {
+                            $row['sub_part'] = $subPart;
+                        }
+                    }
+                    unset($row);
                 }
                 throw new RuntimeException(sprintf('Erzwungener CREATE-Fehler #%d.', $this->createCount));
             }
@@ -179,7 +213,7 @@ final class TransactionalDatabaseFake implements DbInterface
                     throw new RuntimeException('Tabelle erschien zwischen Preflight und CREATE.');
                 }
                 $this->markers[$table] = $marker[1];
-                $this->fingerprints[$table] = SchemaOwnershipGuard::expectedFingerprint($table);
+                $this->schemas[$table] = $this->defaultSchema($table);
             }
 
             return 0;
@@ -190,7 +224,7 @@ final class TransactionalDatabaseFake implements DbInterface
                 throw new RuntimeException('DROP ohne festen Tabellennamen.');
             }
             $table = $treffer[1];
-            unset($this->markers[$table], $this->fingerprints[$table]);
+            unset($this->markers[$table], $this->schemas[$table]);
             $this->droppedTables[] = $table;
 
             return 0;
@@ -311,5 +345,96 @@ final class TransactionalDatabaseFake implements DbInterface
     private function canonicalAssetKey(string $key): string
     {
         return preg_match('/^[a-f0-9]{64}$/i', $key) === 1 ? strtolower($key) : hash('sha256', $key);
+    }
+
+    private function setColumnValue(string $table, string $column, string $field, mixed $value): void
+    {
+        foreach ($this->schemas[$table]['columns'] as $index => $row) {
+            if (($row['name'] ?? null) === $column) {
+                $this->schemas[$table]['columns'][$index][$field] = $value;
+            }
+        }
+    }
+
+    /** @return array{engine: string, collation: string, columns: list<array<string, mixed>>, indexes: list<array<string, mixed>>, foreign_keys: list<array<string, mixed>>} */
+    private function defaultSchema(string $table): array
+    {
+        $columns = match ($table) {
+            'xplugin_mgd_ai_asset' => [
+                ['id', 'bigint(20) unsigned', 'NO', null, null, 'auto_increment'],
+                ['asset_key', 'char(64)', 'NO', null, 'ascii_bin', ''],
+                ['local_path', 'varchar(1024)', 'NO', null, 'utf8mb4_unicode_ci', ''],
+                ['status', "enum('unreviewed','none','generated','partially-generated','modified','deepfake')", 'NO', 'unreviewed', 'utf8mb4_unicode_ci', ''],
+                ['position', "enum('top-left','top-right','bottom-left','bottom-right')", 'NO', 'bottom-right', 'utf8mb4_unicode_ci', ''],
+                ['theme', "enum('auto','light','dark')", 'NO', 'auto', 'utf8mb4_unicode_ci', ''],
+                ['created_at', 'timestamp', 'NO', 'current_timestamp()', null, ''],
+                ['updated_at', 'timestamp', 'NO', 'current_timestamp()', null, 'on update current_timestamp()'],
+            ],
+            'xplugin_mgd_ai_usage' => [
+                ['id', 'bigint(20) unsigned', 'NO', null, null, 'auto_increment'],
+                ['asset_id', 'bigint(20) unsigned', 'NO', null, null, ''],
+                ['source_type', "enum('product','category','manufacturer','banner','opc','custom-local-manual','unknown')", 'NO', 'unknown', 'utf8mb4_unicode_ci', ''],
+                ['source_reference', 'varchar(255)', 'NO', null, 'utf8mb4_bin', ''],
+                ['source_reference_hash', 'char(64)', 'NO', null, 'ascii_bin', ''],
+                ['context', 'varchar(500)', 'YES', null, 'utf8mb4_unicode_ci', ''],
+                ['last_seen_at', 'timestamp', 'NO', 'current_timestamp()', null, ''],
+                ['is_present', 'tinyint(1) unsigned', 'NO', '1', null, ''],
+            ],
+            'xplugin_mgd_ai_philosophy' => [
+                ['id', 'bigint(20) unsigned', 'NO', null, null, 'auto_increment'],
+                ['language', 'varchar(12)', 'NO', null, 'ascii_bin', ''],
+                ['content', 'text', 'NO', null, 'utf8mb4_unicode_ci', ''],
+                ['created_at', 'timestamp', 'NO', 'current_timestamp()', null, ''],
+                ['updated_at', 'timestamp', 'NO', 'current_timestamp()', null, 'on update current_timestamp()'],
+            ],
+            default => throw new RuntimeException('Unbekanntes Testschema.'),
+        };
+        $columnRows = [];
+        foreach ($columns as $index => [$name, $type, $nullable, $default, $collation, $extra]) {
+            $columnRows[] = compact('name', 'type', 'nullable', 'default', 'collation', 'extra')
+                + ['ordinal' => (string) ($index + 1)];
+        }
+
+        if ($table === 'xplugin_mgd_ai_asset') {
+            $indexes = [
+                ['PRIMARY', '0', '1', 'id'],
+                ['uq_mgd_ai_asset_key', '0', '1', 'asset_key'],
+                ['idx_mgd_ai_asset_status', '1', '1', 'status'],
+            ];
+        } elseif ($table === 'xplugin_mgd_ai_usage') {
+            $indexes = [
+                ['PRIMARY', '0', '1', 'id'],
+                ['uq_mgd_ai_usage_source', '0', '1', 'asset_id'],
+                ['uq_mgd_ai_usage_source', '0', '2', 'source_type'],
+                ['uq_mgd_ai_usage_source', '0', '3', 'source_reference_hash'],
+                ['idx_mgd_ai_usage_present_seen', '1', '1', 'is_present'],
+                ['idx_mgd_ai_usage_present_seen', '1', '2', 'last_seen_at'],
+            ];
+        } else {
+            $indexes = [
+                ['PRIMARY', '0', '1', 'id'],
+                ['uq_mgd_ai_philosophy_language', '0', '1', 'language'],
+            ];
+        }
+        $indexRows = [];
+        foreach ($indexes as $row) {
+            $indexRows[] = [
+                'name' => $row[0], 'non_unique' => $row[1], 'sequence' => $row[2],
+                'column' => $row[3], 'sub_part' => null, 'collation' => 'A', 'type' => 'BTREE',
+            ];
+        }
+        $foreignKeys = $table === 'xplugin_mgd_ai_usage' ? [[
+            'name' => 'fk_mgd_ai_usage_asset', 'column' => 'asset_id',
+            'referenced_table' => 'xplugin_mgd_ai_asset', 'referenced_column' => 'id',
+            'sequence' => '1', 'update_rule' => 'RESTRICT', 'delete_rule' => 'CASCADE',
+        ]] : [];
+
+        return [
+            'engine' => 'InnoDB',
+            'collation' => 'utf8mb4_unicode_ci',
+            'columns' => $columnRows,
+            'indexes' => $indexRows,
+            'foreign_keys' => $foreignKeys,
+        ];
     }
 }

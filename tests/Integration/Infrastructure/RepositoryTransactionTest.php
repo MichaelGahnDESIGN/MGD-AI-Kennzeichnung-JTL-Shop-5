@@ -457,10 +457,30 @@ final class RepositoryTransactionTest extends TestCase
     #[Test]
     public function philosophy_neutralisiert_semikolonlose_numerische_tag_entities(): void
     {
-        foreach (['&#60script&#62alert(1)&#60/script&#62', '&#x3cscript&#x3ealert(1)&#x3c/script&#x3e'] as $angriff) {
+        foreach ([
+            '&#60script&#62alert(1)&#60/script&#62',
+            '&#60;script&#62;alert(1)&#60;/script&#62;',
+            '&#x3cscript&#x3ealert(1)&#x3c/script&#x3e',
+        ] as $angriff) {
             $inhalt = $this->speicherePhilosophie($angriff . ' Sicher');
             self::assertSame('Sicher', $inhalt);
             $this->assertKeinMarkup($inhalt);
+        }
+    }
+
+    #[Test]
+    public function usage_entfernt_dezimale_numerische_script_entities_mit_und_ohne_semikolon(): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->setMarker('xplugin_mgd_ai_usage', self::MARKER);
+        $repository = new UsageRepository($db);
+
+        foreach (['&#60script&#62alert(1)&#60/script&#62', '&#60;script&#62;alert(1)&#60;/script&#62;'] as $index => $angriff) {
+            $repository->upsert(7, 'product', 'entity-' . $index, $angriff . ' Sicher');
+        }
+
+        foreach ($this->schreibAufrufe($db) as $aufruf) {
+            self::assertSame('Sicher', $aufruf['params']['context']);
         }
     }
 

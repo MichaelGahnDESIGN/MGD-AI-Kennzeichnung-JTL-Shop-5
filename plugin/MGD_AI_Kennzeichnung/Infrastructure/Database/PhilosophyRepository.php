@@ -104,7 +104,7 @@ final class PhilosophyRepository
     private function decodeNumericTagEntities(string $text): string
     {
         return preg_replace_callback(
-            '/&#0*60(?![0-9])|&#x0*3c;?|&#0*62(?![0-9])|&#x0*3e;?/iu',
+            '/&#0*60;?(?![0-9])|&#x0*3c;?|&#0*62;?(?![0-9])|&#x0*3e;?/iu',
             static fn(array $match): string => str_contains(strtolower($match[0]), '3c')
                 || preg_match('/60/', $match[0]) === 1 ? '<' : '>',
             $text,
