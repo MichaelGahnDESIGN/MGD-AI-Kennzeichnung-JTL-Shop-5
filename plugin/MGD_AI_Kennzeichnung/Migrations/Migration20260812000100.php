@@ -172,7 +172,24 @@ final class Migration20260812000100 extends Migration implements IMigration
             return 0;
         }
         $value = $metadata->{$field} ?? null;
+        if (is_int($value)) {
+            return $value;
+        }
+        if (!is_string($value) || preg_match('/^(?:0|-?[1-9][0-9]*)$/D', $value) !== 1) {
+            return 0;
+        }
 
-        return is_int($value) ? $value : 0;
+        /*
+         * JTL-Shop 5.7.2 aktiviert PDO::ATTR_STRINGIFY_FETCHES. Deshalb kommen
+         * GET_LOCK/RELEASE_LOCK regulär als "1" zurück. Der Rückvergleich
+         * verhindert zugleich Überlauf, führende Nullen, Dezimalformen,
+         * Leerzeichen oder andere mehrdeutige numerische Darstellungen.
+         */
+        $integer = (int) $value;
+        if ((string) $integer !== $value) {
+            return 0;
+        }
+
+        return $integer;
     }
 }

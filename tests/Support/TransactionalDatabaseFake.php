@@ -50,6 +50,8 @@ final class TransactionalDatabaseFake implements DbInterface
     public bool $returnFalseOnRollback = false;
     public int $forUpdateSelections = 0;
     public bool $lockAvailable = true;
+    public mixed $lockAcquireMetadata = '1';
+    public mixed $lockReleaseMetadata = '1';
     public int $lockRequests = 0;
     public int $lockReleases = 0;
     public ?int $failCreateNumber = null;
@@ -129,12 +131,12 @@ final class TransactionalDatabaseFake implements DbInterface
         if (str_contains($stmt, 'GET_LOCK')) {
             ++$this->lockRequests;
 
-            return (object) ['acquired' => $this->lockAvailable ? 1 : 0];
+            return (object) ['acquired' => $this->lockAvailable ? $this->lockAcquireMetadata : '0'];
         }
         if (str_contains($stmt, 'RELEASE_LOCK')) {
             ++$this->lockReleases;
 
-            return (object) ['released' => 1];
+            return (object) ['released' => $this->lockReleaseMetadata];
         }
         if (str_contains($stmt, 'FOR UPDATE')) {
             ++$this->forUpdateSelections;

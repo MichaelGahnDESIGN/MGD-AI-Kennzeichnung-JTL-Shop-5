@@ -6,6 +6,7 @@ namespace Tests\Unit\Infrastructure;
 
 require_once __DIR__ . '/../../Stubs/JtlDatabaseStubs.php';
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\SchemaOwnershipGuard;
@@ -16,6 +17,24 @@ final class SchemaOwnershipGuardTest extends TestCase
 {
     private const ASSET_TABLE = 'xplugin_mgd_ai_asset';
     private const MARKER = 'mgd-ai-kennzeichnung-jtl-v1';
+
+    /** @return iterable<string, array{mixed}> */
+    public static function ungueltigeLockMetadaten(): iterable
+    {
+        yield 'String nullähnlich' => [''];
+        yield 'numerischer String null' => ['0'];
+        yield 'anderer positiver Integer' => ['2'];
+        yield 'negativer Integer' => ['-1'];
+        yield 'echtes null' => [null];
+        yield 'beliebiger Text' => ['ungueltig'];
+        yield 'Dezimalzahl' => ['1.0'];
+        yield 'Exponentialschreibweise' => ['1e0'];
+        yield 'führende Null' => ['01'];
+        yield 'Pluszeichen' => ['+1'];
+        yield 'Leerzeichen' => [' 1 '];
+        yield 'Float' => [1.0];
+        yield 'Ganzzahlüberlauf' => [str_repeat('9', 80)];
+    }
 
     #[Test]
     public function fremde_vorhandene_tabelle_darf_nicht_mutiert_werden(): void
@@ -46,6 +65,9 @@ final class SchemaOwnershipGuardTest extends TestCase
         self::assertStringContainsString('KEY_COLUMN_USAGE', $db->statements[0]['sql']);
         self::assertStringContainsString('REFERENTIAL_CONSTRAINTS', $db->statements[0]['sql']);
         self::assertStringContainsString('TABLE_COLLATION', $db->statements[0]['sql']);
+        self::assertStringContainsString('ORDINAL_POSITION', $db->statements[0]['sql']);
+        self::assertStringContainsString('SEQ_IN_INDEX', $db->statements[0]['sql']);
+        self::assertStringContainsString('SHA2', $db->statements[0]['sql']);
         self::assertSame(self::ASSET_TABLE, $db->statements[0]['params']['table_name']);
         self::assertSame(['table_name' => self::ASSET_TABLE], $db->statements[0]['params']);
     }
@@ -131,6 +153,58 @@ final class SchemaOwnershipGuardTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Sperre');
+
+        (new \Plugin\MGD_AI_Kennzeichnung\Migrations\Migration20260812000100($db))->up();
+    }
+
+    #[Test]
+    public function migration_akzeptiert_jtl_stringify_get_lock_eins(): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->lockAcquireMetadata = '1';
+        $db->lockReleaseMetadata = '1';
+
+        (new \Plugin\MGD_AI_Kennzeichnung\Migrations\Migration20260812000100($db))->up();
+
+        self::assertSame(1, $db->lockRequests);
+        self::assertSame(1, $db->lockReleases);
+        self::assertSame(3, count($db->existingTables()));
+    }
+
+    #[Test]
+    public function migration_akzeptiert_auch_echten_integer_eins_vom_treiber(): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->lockAcquireMetadata = 1;
+        $db->lockReleaseMetadata = 1;
+
+        (new \Plugin\MGD_AI_Kennzeichnung\Migrations\Migration20260812000100($db))->up();
+
+        self::assertSame(3, count($db->existingTables()));
+    }
+
+    #[Test]
+    #[DataProvider('ungueltigeLockMetadaten')]
+    public function migration_lehnt_ungueltige_get_lock_metadaten_fail_closed_ab(mixed $metadata): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->lockAcquireMetadata = $metadata;
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Sperre konnte nicht erlangt');
+
+        (new \Plugin\MGD_AI_Kennzeichnung\Migrations\Migration20260812000100($db))->up();
+    }
+
+    #[Test]
+    #[DataProvider('ungueltigeLockMetadaten')]
+    public function migration_lehnt_ungueltige_release_lock_metadaten_sichtbar_ab(mixed $metadata): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->lockReleaseMetadata = $metadata;
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Freigeben der Schema-Sperre');
 
         (new \Plugin\MGD_AI_Kennzeichnung\Migrations\Migration20260812000100($db))->up();
     }
