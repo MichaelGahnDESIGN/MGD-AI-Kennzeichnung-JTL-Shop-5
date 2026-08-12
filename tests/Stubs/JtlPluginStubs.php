@@ -18,5 +18,11 @@ use JTL\Events\Dispatcher;
 
 class Bootstrapper
 {
-    public function boot(Dispatcher $dispatcher): void {}
+    /** Zählt im Strukturtest ausschließlich die Weitergabe an den JTL-Elternbootstrap. */
+    public static int $bootAufrufe = 0;
+
+    public function boot(Dispatcher $dispatcher): void
+    {
+        ++self::$bootAufrufe;
+    }
 }

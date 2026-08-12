@@ -19,16 +19,18 @@ jobs:
       - name: Repository auschecken
         # Exakte Revision verhindert unbemerkte Änderungen über ein bewegliches Tag.
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - name: PHP einrichten
         # Auch Drittanbieter-Aktionen werden aus Sicherheitsgründen fest angeheftet.
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
         with:
           php-version: ${{ matrix.php }}
           coverage: none
-      - name: Abhängigkeiten installieren
-        run: composer install --no-interaction --no-progress --prefer-dist
       - name: Composer-Projektdatei streng validieren
         run: composer validate --strict
+      - name: Abhängigkeiten installieren
+        run: composer install --no-interaction --no-progress --prefer-dist
       - name: Pluginmetadaten als XML parsen
         run: xmllint --noout plugin/MGD_AI_Kennzeichnung/info.xml
       - name: Tests ausführen

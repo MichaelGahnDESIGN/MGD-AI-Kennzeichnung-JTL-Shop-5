@@ -6,8 +6,13 @@ namespace Tests\Structure;
 
 use DOMDocument;
 use DOMXPath;
+use JTL\Events\Dispatcher;
+use JTL\Plugin\Bootstrapper as JtlBootstrapper;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
+use ReflectionMethod;
+use ReflectionProperty;
 
 final class PluginContractTest extends TestCase
 {
@@ -41,14 +46,16 @@ final class PluginContractTest extends TestCase
             'Die minimale JTL-Shop-Version muss exakt 5.7.2 sein.',
         );
         self::assertSame(
-            '0.1.0',
+            '1.0.0',
             $this->liesXmlWert($xpath, 'Version'),
-            'Die Pluginversion muss exakt 0.1.0 sein.',
+            'Die Pluginversion muss exakt 1.0.0 sein.',
         );
-        self::assertSame(
-            '8.1',
-            $this->liesXmlWert($xpath, 'PHPVersion'),
-            'Die JTL-Metadaten müssen PHP ab Version 8.1 verlangen.',
+        $phpVersionElemente = $xpath->query('//*[local-name()="PHPVersion"]');
+        self::assertNotFalse($phpVersionElemente, 'Die Prüfung auf unbekannte PHP-Metadaten muss ausführbar sein.');
+        self::assertCount(
+            0,
+            $phpVersionElemente,
+            'Die info.xml darf kein von JTL-Shop 5.7.2 unbekanntes PHPVersion-Element enthalten.',
         );
         self::assertSame(
             'Michael Gahn DESIGN',
@@ -80,21 +87,26 @@ final class PluginContractTest extends TestCase
             'Die Lizenzdatei muss den vereinbarten Copyright-Hinweis enthalten.',
         );
 
-        $bootstrap = $this->liesDatei(
-            'plugin/MGD_AI_Kennzeichnung/Bootstrap.php',
-            'Der JTL-Bootstrap muss vorhanden und lesbar sein.',
-        );
-        self::assertMatchesRegularExpression(
-            '/public\s+function\s+boot\s*\(\s*Dispatcher\s+\$dispatcher\s*\)\s*:\s*void\s*'
-            . '\{\s*parent::boot\(\$dispatcher\);\s*\}/s',
-            $bootstrap,
-            'Die boot()-Methode darf ausschließlich den JTL-Elternbootstrap aufrufen.',
-        );
+        $this->pruefePassivenBootstrap();
 
         $composerJson = $this->liesDatei('composer.json', 'Die composer.json muss vorhanden und lesbar sein.');
         $composer = json_decode($composerJson, true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($composer, 'Die composer.json muss ein JSON-Objekt enthalten.');
         self::assertFileExists(self::ROOT . '/composer.lock', 'Die aufgelösten Composer-Versionen müssen festgehalten sein.');
+
+        $laufzeitPakete = $composer['require'] ?? null;
+        self::assertIsArray($laufzeitPakete, 'Composer muss einen Bereich require enthalten.');
+        self::assertSame('^8.1', $laufzeitPakete['php'] ?? null, 'Composer muss mindestens PHP 8.1 verlangen.');
+
+        $composerKonfiguration = $composer['config'] ?? null;
+        self::assertIsArray($composerKonfiguration, 'Composer muss einen Bereich config enthalten.');
+        $plattform = $composerKonfiguration['platform'] ?? null;
+        self::assertIsArray($plattform, 'Composer muss die Zielplattform festlegen.');
+        self::assertSame(
+            '8.1.0',
+            $plattform['php'] ?? null,
+            'Composer muss Abhängigkeiten verbindlich für PHP 8.1 auflösen.',
+        );
 
         $entwicklungsPakete = $composer['require-dev'] ?? null;
         self::assertIsArray($entwicklungsPakete, 'Composer muss einen Bereich require-dev enthalten.');
@@ -127,6 +139,26 @@ final class PluginContractTest extends TestCase
             $workflow,
             'Der Workflow muss die info.xml mit einem echten XML-Parser prüfen.',
         );
+        self::assertStringContainsString(
+            "php: ['8.1', '8.5']",
+            $workflow,
+            'Die CI-Matrix muss PHP 8.1 ausdrücklich prüfen.',
+        );
+        self::assertStringContainsString(
+            'persist-credentials: false',
+            $workflow,
+            'Der Checkout darf keine GitHub-Zugangsdaten im Arbeitsverzeichnis belassen.',
+        );
+
+        $validatePosition = strpos($workflow, 'composer validate --strict');
+        $installPosition = strpos($workflow, 'composer install --no-interaction');
+        self::assertIsInt($validatePosition, 'Der Composer-Validierungsschritt muss auffindbar sein.');
+        self::assertIsInt($installPosition, 'Der Composer-Installationsschritt muss auffindbar sein.');
+        self::assertLessThan(
+            $installPosition,
+            $validatePosition,
+            'Die strenge Composer-Validierung muss vor der Installation laufen.',
+        );
     }
 
     /**
@@ -155,5 +187,62 @@ final class PluginContractTest extends TestCase
         self::assertIsString($inhalt, $fehlermeldung);
 
         return $inhalt;
+    }
+
+    /**
+     * Führt den echten Plugin-Bootstrap gegen beobachtbare JTL-Teststubs aus.
+     *
+     * Neben der tatsächlichen Weitergabe an den Elternbootstrap wird geprüft,
+     * dass der Plugin-Bootstrap keine zusätzlichen öffentlichen Einstiegspunkte,
+     * eigenen Zustände oder Initialisierungswege mitbringt.
+     */
+    private function pruefePassivenBootstrap(): void
+    {
+        require_once self::ROOT . '/tests/Stubs/JtlPluginStubs.php';
+        require_once self::ROOT . '/plugin/MGD_AI_Kennzeichnung/Bootstrap.php';
+
+        $klasse = new ReflectionClass(\Plugin\MGD_AI_Kennzeichnung\Bootstrap::class);
+        $konstruktor = $klasse->getConstructor();
+        self::assertTrue(
+            $konstruktor === null || $konstruktor->getDeclaringClass()->getName() !== $klasse->getName(),
+            'Der passive Bootstrap darf keinen eigenen Konstruktor besitzen.',
+        );
+
+        $eigeneEigenschaften = array_filter(
+            $klasse->getProperties(),
+            static fn(ReflectionProperty $eigenschaft): bool => $eigenschaft->getDeclaringClass()->getName() === $klasse->getName(),
+        );
+        self::assertSame([], $eigeneEigenschaften, 'Der passive Bootstrap darf keine eigenen Eigenschaften besitzen.');
+
+        $eigeneStatischeMethoden = array_filter(
+            $klasse->getMethods(ReflectionMethod::IS_STATIC),
+            static fn(ReflectionMethod $methode): bool => $methode->getDeclaringClass()->getName() === $klasse->getName(),
+        );
+        self::assertSame(
+            [],
+            $eigeneStatischeMethoden,
+            'Der passive Bootstrap darf keine eigenen statischen Initialisierungswege besitzen.',
+        );
+
+        $eigeneOeffentlicheMethoden = array_values(array_map(
+            static fn(ReflectionMethod $methode): string => $methode->getName(),
+            array_filter(
+                $klasse->getMethods(ReflectionMethod::IS_PUBLIC),
+                static fn(ReflectionMethod $methode): bool => $methode->getDeclaringClass()->getName() === $klasse->getName(),
+            ),
+        ));
+        self::assertSame(
+            ['boot'],
+            $eigeneOeffentlicheMethoden,
+            'Der passive Bootstrap darf nur boot() als eigenen öffentlichen Laufzeiteinstieg bereitstellen.',
+        );
+
+        JtlBootstrapper::$bootAufrufe = 0;
+        $dispatcher = new Dispatcher();
+        $bootstrap = $klasse->newInstance();
+        $bootstrap->boot($dispatcher);
+
+        self::assertSame(1, JtlBootstrapper::$bootAufrufe, 'boot() muss genau einmal an JTL weitergeben.');
+        self::assertSame([], get_object_vars($dispatcher), 'Der Bootstrap darf den Dispatcher nicht verändern.');
     }
 }
