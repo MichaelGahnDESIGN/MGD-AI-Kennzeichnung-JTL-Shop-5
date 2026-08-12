@@ -764,9 +764,39 @@ final class ImageScanServiceTest extends TestCase
     }
 
     #[Test]
-    public function opc_leeres_oder_null_datenbank_json_darf_vertrauenswuerdig_null_referenzen_liefern(): void
+    public function opc_null_leer_oder_blank_datenbank_json_bricht_atomaren_scan_ab(): void
     {
-        foreach ([null, ''] as $json) {
+        foreach ([null, 42, '', " \t\n"] as $json) {
+            $db = $this->scannerDatabase();
+            $db->seedScanUsage(hash('sha256', 'bilder/alt.jpg'), 'bilder/alt.jpg', 'opc:alt', 'opc');
+            $db->scannerRows['topcpage'] = [(object) ['page_id' => 1, 'context' => null, 'areas_json' => $json]];
+            $service = new ImageScanService(
+                [new OpcSourceAdapter($db, new LocalPathNormalizer())],
+                new AssetRepository($db),
+                new UsageRepository($db),
+            );
+
+            try {
+                $service->scan();
+                self::fail('Eine unvollständige cAreasJson-Zeile muss den Scan abbrechen.');
+            } catch (RuntimeException $exception) {
+                self::assertStringContainsString('OPC', $exception->getMessage());
+            }
+            self::assertTrue($db->usageIsPresent('opc:alt'));
+
+            $db->scannerRows['topcpage'] = [(object) [
+                'page_id' => 1,
+                'context' => 'gültig',
+                'areas_json' => '{"properties":{"src":"neu.jpg"}}',
+            ]];
+            self::assertSame(1, $service->scan()->createdAssets);
+        }
+    }
+
+    #[Test]
+    public function opc_gueltige_leere_json_struktur_darf_null_referenzen_liefern(): void
+    {
+        foreach (['{}', '[]'] as $json) {
             $db = $this->scannerDatabase();
             $db->scannerRows['topcpage'] = [(object) ['page_id' => 1, 'context' => null, 'areas_json' => $json]];
 

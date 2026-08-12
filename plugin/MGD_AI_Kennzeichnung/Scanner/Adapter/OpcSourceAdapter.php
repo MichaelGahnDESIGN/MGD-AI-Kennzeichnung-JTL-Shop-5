@@ -57,11 +57,12 @@ final class OpcSourceAdapter implements SourceAdapterInterface, SourceAdapterPag
         $references = [];
         foreach ($rows as $row) {
             $json = $row->areas_json ?? null;
-            if ($json === null || (is_string($json) && trim($json) === '')) {
-                continue;
-            }
             $pageId = filter_var($row->page_id ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-            if ($pageId === false || !is_string($json) || strlen($json) > self::MAXIMUM_JSON_BYTES) {
+            if ($pageId === false
+                || !is_string($json)
+                || trim($json) === ''
+                || strlen($json) > self::MAXIMUM_JSON_BYTES
+            ) {
                 throw self::incompleteRow();
             }
 
