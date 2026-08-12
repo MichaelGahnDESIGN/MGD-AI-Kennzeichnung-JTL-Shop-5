@@ -218,6 +218,88 @@ final class RepositoryTransactionTest extends TestCase
         self::assertStringNotContainsString('Neue Haltung', $aufruf['sql']);
     }
 
+    #[Test]
+    public function philosophy_entfernt_einfach_entity_kodierte_script_tags_vollstaendig(): void
+    {
+        $inhalt = $this->speicherePhilosophie('&lt;script&gt;alert(1)&lt;/script&gt; Sicherer Text');
+
+        self::assertSame('Sicherer Text', $inhalt);
+        $this->assertKeinMarkup($inhalt);
+    }
+
+    #[Test]
+    public function philosophy_entfernt_auch_doppelt_entity_kodierte_script_tags_vollstaendig(): void
+    {
+        $inhalt = $this->speicherePhilosophie(
+            '&amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt; Doppelt sicher',
+        );
+
+        self::assertSame('Doppelt sicher', $inhalt);
+        $this->assertKeinMarkup($inhalt);
+    }
+
+    #[Test]
+    public function philosophy_entfernt_gemischte_script_tags_attribute_und_eventhandler(): void
+    {
+        $inhalt = $this->speicherePhilosophie(
+            '&LT;ScRiPt type=&quot;text/javascript&quot; OnLoAd=&quot;alert(1)&quot;&GT;'
+            . 'alert(1)&LT;/sCrIpT&GT;'
+            . '&lt;p onclick=&quot;alert(2)&quot;&gt;Haltung&lt;/p&gt;',
+        );
+
+        self::assertSame('Haltung', $inhalt);
+        $this->assertKeinMarkup($inhalt);
+        self::assertStringNotContainsStringIgnoringCase('onclick', $inhalt);
+        self::assertStringNotContainsStringIgnoringCase('onload', $inhalt);
+    }
+
+    #[Test]
+    public function philosophy_erhaelt_normale_umlaute_und_text_entities_als_utf8(): void
+    {
+        $inhalt = $this->speicherePhilosophie(
+            'Künstliche Intelligenz fördert Transparenz &amp; Verantwortung: ä ö ü ß &quot;fair&quot;.',
+        );
+
+        self::assertSame(
+            'Künstliche Intelligenz fördert Transparenz & Verantwortung: ä ö ü ß "fair".',
+            $inhalt,
+        );
+        $this->assertKeinMarkup($inhalt);
+    }
+
+    #[Test]
+    public function philosophy_weist_extrem_tief_kodiertes_rest_markup_sicher_ab(): void
+    {
+        $inhalt = '<img src="x" onerror="alert(1)">';
+        for ($durchlauf = 0; $durchlauf < 12; ++$durchlauf) {
+            $inhalt = htmlspecialchars($inhalt, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        }
+
+        $db = new TransactionalDatabaseFake();
+        $db->setMarker('xplugin_mgd_ai_philosophy', self::MARKER);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('darf nicht leer sein');
+
+        (new PhilosophyRepository($db))->upsert('de', $inhalt);
+    }
+
+    private function speicherePhilosophie(string $inhalt): string
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->setMarker('xplugin_mgd_ai_philosophy', self::MARKER);
+
+        (new PhilosophyRepository($db))->upsert('de', $inhalt);
+
+        return $db->philosophies()['de'];
+    }
+
+    private function assertKeinMarkup(string $inhalt): void
+    {
+        self::assertStringNotContainsString('<', $inhalt);
+        self::assertStringNotContainsString('>', $inhalt);
+        self::assertStringNotContainsStringIgnoringCase('script', $inhalt);
+    }
+
     /**
      * @return list<array{sql: string, params: array<string, mixed>}>
      */

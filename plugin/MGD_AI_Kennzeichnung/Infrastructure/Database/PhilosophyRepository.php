@@ -52,15 +52,47 @@ final class PhilosophyRepository
             return '';
         }
 
+        /*
+         * Entities werden zwingend vor der Markup-Entfernung dekodiert. Sonst
+         * könnte etwa „&lt;script&gt;“ strip_tags() passieren und erst danach
+         * wieder zu ausführbarem HTML werden. Mehrfach kodierte Eingaben werden
+         * kontrolliert bis zu einer stabilen Darstellung aufgelöst.
+         */
+        $decoded = mb_substr(str_replace("\0", '', $input), 0, 50000);
+        for ($durchlauf = 0; $durchlauf < 10; ++$durchlauf) {
+            $next = html_entity_decode($decoded, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            if ($next === $decoded) {
+                break;
+            }
+            $decoded = $next;
+        }
+
+        /*
+         * Extrem tief verschachtelte Kodierungen werden nach dem begrenzten
+         * Dekodieren neutralisiert. Dadurch kann auch eine spätere Anzeige,
+         * die irrtümlich nochmals Entities dekodiert, kein Tag rekonstruieren.
+         */
+        $markupEntity = '/&(?:(?:amp|#0*38|#x0*26);)*(?:lt|gt|#0*(?:60|62)|#x0*(?:3c|3e));/iu';
+        if (preg_match($markupEntity, $decoded) === 1) {
+            /*
+             * Nach zehn Durchläufen verbliebenes potenzielles Markup ist eine
+             * ungewöhnlich tiefe Kodierung. Der gesamte Inhalt wird sicher
+             * abgewiesen, statt Teile eines Angriffs als scheinbaren Text zu
+             * übernehmen oder eine spätere Rekonstruktion zu riskieren.
+             */
+            $decoded = '';
+        }
+
         $ohneAktiveBloecke = preg_replace(
             '#<(script|style)\b[^>]*>.*?</\1>#isu',
             '',
-            $input,
+            $decoded,
         ) ?? '';
-        $text = html_entity_decode(strip_tags($ohneAktiveBloecke), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $text = preg_replace('/[\t ]+/u', ' ', str_replace("\0", '', $text)) ?? '';
+        $text = strip_tags($ohneAktiveBloecke);
+        $text = preg_replace('/[\t ]+/u', ' ', $text) ?? '';
         $text = preg_replace('/\R{3,}/u', "\n\n", $text) ?? '';
 
+        /* Nach strip_tags() darf bewusst keine Entity-Dekodierung mehr folgen. */
         return mb_substr(trim($text), 0, 10000);
     }
 }
