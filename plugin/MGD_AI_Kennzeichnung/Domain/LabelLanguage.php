@@ -32,8 +32,9 @@ enum LabelLanguage: string
     /**
      * Löst die automatische Sprache anhand des Shop- oder Seitenkontexts auf.
      *
-     * Deutsche Varianten wie de, de-DE und de_CH werden erkannt. Jeder andere
-     * oder technisch ungültige Kontext verwendet als stabilen Fallback Englisch.
+     * Ausschließlich die normalisierten Werte „de“ und „de-DE“ werden als
+     * deutscher Kontext anerkannt. Andere regionale Varianten verwenden den
+     * bewusst engen und stabilen englischen Fallback.
      */
     public function resolve(mixed $localeContext): self
     {
@@ -45,9 +46,9 @@ enum LabelLanguage: string
             return self::En;
         }
 
-        $normalisiert = str_replace('_', '-', strtolower(trim($localeContext)));
+        $normalisiert = strtolower(trim($localeContext));
 
-        return $normalisiert === 'de' || str_starts_with($normalisiert, 'de-')
+        return $normalisiert === 'de' || $normalisiert === 'de-de'
             ? self::De
             : self::En;
     }

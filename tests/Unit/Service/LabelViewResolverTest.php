@@ -146,6 +146,18 @@ final class LabelViewResolverTest extends TestCase
     }
 
     #[Test]
+    public function automatische_sprache_verwendet_für_andere_deutsche_regionen_englisch(): void
+    {
+        $resolver = $this->erstelleResolver();
+
+        foreach (['de-AT', 'de-CH', 'de_CH', 'de_DE'] as $locale) {
+            $view = $resolver->resolve(status: 'deepfake', language: 'auto', locale: $locale);
+
+            self::assertSame('AI DEEPFAKE', $view->visibleText, sprintf('Locale %s muss Englisch nutzen.', $locale));
+        }
+    }
+
+    #[Test]
     public function resolver_leitet_ausschließlich_feste_klassen_aus_geschlossenen_werten_ab(): void
     {
         $resolver = $this->erstelleResolver();

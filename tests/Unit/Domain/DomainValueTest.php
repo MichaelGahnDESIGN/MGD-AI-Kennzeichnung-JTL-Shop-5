@@ -14,6 +14,8 @@ use Plugin\MGD_AI_Kennzeichnung\Domain\LabelStatus;
 use Plugin\MGD_AI_Kennzeichnung\Domain\LabelTheme;
 use Plugin\MGD_AI_Kennzeichnung\Domain\LabelView;
 use ReflectionClass;
+use ReflectionException;
+use TypeError;
 
 final class DomainValueTest extends TestCase
 {
@@ -143,7 +145,11 @@ final class DomainValueTest extends TestCase
 
         self::assertSame(LabelLanguage::De, LabelLanguage::Auto->resolve('de'));
         self::assertSame(LabelLanguage::De, LabelLanguage::Auto->resolve('de-DE'));
-        self::assertSame(LabelLanguage::De, LabelLanguage::Auto->resolve('de_CH'));
+        self::assertSame(LabelLanguage::De, LabelLanguage::Auto->resolve(' DE-DE '));
+        self::assertSame(LabelLanguage::En, LabelLanguage::Auto->resolve('de-AT'));
+        self::assertSame(LabelLanguage::En, LabelLanguage::Auto->resolve('de-CH'));
+        self::assertSame(LabelLanguage::En, LabelLanguage::Auto->resolve('de_CH'));
+        self::assertSame(LabelLanguage::En, LabelLanguage::Auto->resolve('de_DE'));
         self::assertSame(LabelLanguage::En, LabelLanguage::Auto->resolve('en-US'));
         self::assertSame(LabelLanguage::En, LabelLanguage::Auto->resolve('fr-FR'));
         self::assertSame(LabelLanguage::En, LabelLanguage::Auto->resolve(['de-DE']));
@@ -161,7 +167,12 @@ final class DomainValueTest extends TestCase
         yield 'Hersteller' => ['manufacturer', 'manufacturer', 'mgd-ai-label--source-manufacturer'];
         yield 'Banner' => ['banner', 'banner', 'mgd-ai-label--source-banner'];
         yield 'OnPage Composer' => ['opc', 'opc', 'mgd-ai-label--source-opc'];
-        yield 'lokal manuell' => ['custom-local', 'custom-local', 'mgd-ai-label--source-custom-local'];
+        yield 'lokal manuell' => [
+            'custom-local-manual',
+            'custom-local-manual',
+            'mgd-ai-label--source-custom-local-manual',
+        ];
+        yield 'alte unvereinbarte Variante' => ['custom-local', 'unknown', 'mgd-ai-label--source-unknown'];
         yield 'normalisierte Großschreibung' => [' PRODUCT ', 'product', 'mgd-ai-label--source-product'];
         yield 'eingeschleuste Quelle' => ['remote<script>', 'unknown', 'mgd-ai-label--source-unknown'];
         yield 'nicht-string Eingabe' => [['product'], 'unknown', 'mgd-ai-label--source-unknown'];
@@ -196,6 +207,127 @@ final class DomainValueTest extends TestCase
                 sprintf('Die Eigenschaft %s muss unter PHP 8.1 readonly sein.', $eigenschaft->getName()),
             );
         }
+    }
+
+    #[Test]
+    public function label_view_konstruktor_ist_für_aufrufer_nicht_zugänglich(): void
+    {
+        $reflexion = new ReflectionClass(LabelView::class);
+        $konstruktor = $reflexion->getConstructor();
+
+        self::assertNotNull($konstruktor);
+        self::assertTrue($konstruktor->isPrivate());
+
+        $this->expectException(ReflectionException::class);
+        $reflexion->newInstance(
+            true,
+            '<script>frei</script>',
+            '<b>frei</b>',
+            'fremde-position',
+            'fremdes-theme',
+            'fremde-quelle',
+            999,
+            999,
+            999,
+            999,
+            999,
+        );
+    }
+
+    #[Test]
+    public function sichere_factory_erzeugt_nur_kontrollierte_inhalte_klassen_und_begrenzte_zahlen(): void
+    {
+        $reflexion = new ReflectionClass(LabelView::class);
+        self::assertTrue($reflexion->hasMethod('forVisibleLabel'));
+
+        $view = LabelView::forVisibleLabel(
+            LabelStatus::Deepfake,
+            LabelLanguage::De,
+            LabelPosition::TopLeft,
+            LabelTheme::Dark,
+            AssetSource::CustomLocalManual,
+            999,
+            -10,
+            999,
+            -10,
+            999,
+        );
+
+        self::assertTrue($view->visible);
+        self::assertSame('KI-DEEPFAKE', $view->visibleText);
+        self::assertSame(
+            'Dieser Inhalt ist ein mit künstlicher Intelligenz erzeugter oder manipulierter Deepfake.',
+            $view->assistiveText,
+        );
+        self::assertSame('mgd-ai-label--position-top-left', $view->positionClass);
+        self::assertSame('mgd-ai-label--theme-dark', $view->themeClass);
+        self::assertSame('mgd-ai-label--source-custom-local-manual', $view->sourceClass);
+        self::assertSame([48, 0, 32, 0, 24], [
+            $view->fontSize,
+            $view->outerMargin,
+            $view->innerPadding,
+            $view->borderRadius,
+            $view->blur,
+        ]);
+        self::assertStringNotContainsString('<', $view->visibleText . $view->assistiveText);
+        self::assertStringNotContainsString('>', $view->visibleText . $view->assistiveText);
+    }
+
+    #[Test]
+    public function sichere_factory_weist_freie_statuswerte_durch_typisierung_zurück(): void
+    {
+        $reflexion = new ReflectionClass(LabelView::class);
+        self::assertTrue($reflexion->hasMethod('forVisibleLabel'));
+        $factory = $reflexion->getMethod('forVisibleLabel');
+
+        $this->expectException(TypeError::class);
+        $factory->invoke(
+            null,
+            'generated',
+            LabelLanguage::De,
+            LabelPosition::TopLeft,
+            LabelTheme::Dark,
+            AssetSource::Product,
+            12,
+            8,
+            6,
+            4,
+            0,
+        );
+    }
+
+    #[Test]
+    public function sichere_factory_macht_unsichtbare_status_vollständig_leer(): void
+    {
+        $reflexion = new ReflectionClass(LabelView::class);
+        self::assertTrue($reflexion->hasMethod('forVisibleLabel'));
+
+        $view = LabelView::forVisibleLabel(
+            LabelStatus::Unreviewed,
+            LabelLanguage::De,
+            LabelPosition::TopLeft,
+            LabelTheme::Dark,
+            AssetSource::Product,
+            48,
+            64,
+            32,
+            32,
+            24,
+        );
+
+        self::assertFalse($view->visible);
+        self::assertSame('', $view->visibleText);
+        self::assertSame('', $view->assistiveText);
+        self::assertSame('', $view->positionClass);
+        self::assertSame('', $view->themeClass);
+        self::assertSame('', $view->sourceClass);
+        self::assertSame([0, 0, 0, 0, 0], [
+            $view->fontSize,
+            $view->outerMargin,
+            $view->innerPadding,
+            $view->borderRadius,
+            $view->blur,
+        ]);
     }
 
     #[Test]

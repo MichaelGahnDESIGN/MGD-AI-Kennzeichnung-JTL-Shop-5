@@ -7,7 +7,8 @@ namespace Plugin\MGD_AI_Kennzeichnung\Domain;
 /**
  * Positivliste der unterstützten Herkunftsbereiche eines gekennzeichneten Assets.
  *
- * „custom-local“ steht eindeutig für manuell im eigenen Shop verwaltete Inhalte.
+ * „custom-local-manual“ steht eindeutig für manuell im eigenen Shop verwaltete
+ * Inhalte.
  * „unknown“ ist ein neutraler technischer Fallback und erzeugt niemals eine aus
  * einer freien Eingabe abgeleitete Klasse oder externe Quelle.
  */
@@ -18,7 +19,7 @@ enum AssetSource: string
     case Manufacturer = 'manufacturer';
     case Banner = 'banner';
     case Opc = 'opc';
-    case CustomLocal = 'custom-local';
+    case CustomLocalManual = 'custom-local-manual';
     case Unknown = 'unknown';
 
     /**
@@ -48,7 +49,7 @@ enum AssetSource: string
             self::Manufacturer => 'mgd-ai-label--source-manufacturer',
             self::Banner => 'mgd-ai-label--source-banner',
             self::Opc => 'mgd-ai-label--source-opc',
-            self::CustomLocal => 'mgd-ai-label--source-custom-local',
+            self::CustomLocalManual => 'mgd-ai-label--source-custom-local-manual',
             self::Unknown => 'mgd-ai-label--source-unknown',
         };
     }
