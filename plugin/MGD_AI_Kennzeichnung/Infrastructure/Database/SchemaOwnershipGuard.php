@@ -74,7 +74,8 @@ final class SchemaOwnershipGuard
     {
         return $this->db->getSingleObject(
             <<<'SQL'
-                SELECT `t`.`TABLE_COMMENT` AS `ownership_marker`,
+                SELECT DATABASE() AS `current_schema`,
+                       `t`.`TABLE_COMMENT` AS `ownership_marker`,
                        `t`.`ENGINE` AS `table_engine`,
                        `t`.`TABLE_COLLATION` AS `table_collation`,
                        COALESCE((
@@ -102,6 +103,7 @@ final class SchemaOwnershipGuard
                        COALESCE((
                            SELECT JSON_ARRAYAGG(JSON_OBJECT(
                                'name', `k`.`CONSTRAINT_NAME`, 'column', `k`.`COLUMN_NAME`,
+                               'referenced_schema', `k`.`REFERENCED_TABLE_SCHEMA`,
                                'referenced_table', `k`.`REFERENCED_TABLE_NAME`,
                                'referenced_column', `k`.`REFERENCED_COLUMN_NAME`,
                                'sequence', `k`.`ORDINAL_POSITION`,
@@ -129,7 +131,9 @@ final class SchemaOwnershipGuard
     {
         $engine = $metadata->table_engine ?? null;
         $collation = $metadata->table_collation ?? null;
+        $currentSchema = $metadata->current_schema ?? null;
         if (($metadata->ownership_marker ?? null) !== self::OWNERSHIP_MARKER
+            || !is_string($currentSchema) || $currentSchema === ''
             || !is_string($engine) || strtolower($engine) !== 'innodb'
             || !is_string($collation) || strtolower($collation) !== 'utf8mb4_unicode_ci') {
             return false;
@@ -137,7 +141,10 @@ final class SchemaOwnershipGuard
 
         return $this->normalizedColumns($metadata->columns_json ?? null) === $this->expectedColumns($table)
             && $this->normalizedIndexes($metadata->indexes_json ?? null) === $this->expectedIndexes($table)
-            && $this->normalizedForeignKeys($metadata->foreign_keys_json ?? null) === $this->expectedForeignKeys($table);
+            && $this->normalizedForeignKeys($metadata->foreign_keys_json ?? null) === $this->expectedForeignKeys(
+                $table,
+                $currentSchema,
+            );
     }
 
     /** @return list<string> */
@@ -205,6 +212,13 @@ final class SchemaOwnershipGuard
             $normalized[] = implode('|', [
                 strtolower($this->stringValue($row, 'name')),
                 strtolower($this->stringValue($row, 'column')),
+                /*
+                 * Schemanamen werden absichtlich nicht gemäß einer
+                 * Datenbank-Collation gefaltet. Die Hexdarstellung bewahrt
+                 * jedes Byte und kann selbst das interne Trennzeichen nicht
+                 * mit einem anderen Schemanamen verschmelzen lassen.
+                 */
+                bin2hex($this->stringValue($row, 'referenced_schema')),
                 strtolower($this->stringValue($row, 'referenced_table')),
                 strtolower($this->stringValue($row, 'referenced_column')),
                 $sequence,
@@ -376,10 +390,13 @@ final class SchemaOwnershipGuard
     }
 
     /** @return list<string> */
-    private function expectedForeignKeys(string $table): array
+    private function expectedForeignKeys(string $table, string $currentSchema): array
     {
         return $table === 'xplugin_mgd_ai_usage'
-            ? ['fk_mgd_ai_usage_asset|asset_id|xplugin_mgd_ai_asset|id|1|RESTRICT|CASCADE']
+            ? [sprintf(
+                'fk_mgd_ai_usage_asset|asset_id|%s|xplugin_mgd_ai_asset|id|1|RESTRICT|CASCADE',
+                bin2hex($currentSchema),
+            )]
             : [];
     }
 }

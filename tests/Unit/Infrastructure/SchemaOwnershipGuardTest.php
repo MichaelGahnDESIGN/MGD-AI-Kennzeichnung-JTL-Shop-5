@@ -72,6 +72,8 @@ final class SchemaOwnershipGuardTest extends TestCase
         self::assertStringContainsString('INDEX_TYPE', $db->statements[0]['sql']);
         self::assertStringContainsString('UPDATE_RULE', $db->statements[0]['sql']);
         self::assertStringContainsString('DELETE_RULE', $db->statements[0]['sql']);
+        self::assertStringContainsString('REFERENCED_TABLE_SCHEMA', $db->statements[0]['sql']);
+        self::assertStringContainsString('DATABASE() AS `current_schema`', $db->statements[0]['sql']);
         self::assertStringContainsString('JSON_ARRAYAGG', $db->statements[0]['sql']);
         self::assertSame(self::ASSET_TABLE, $db->statements[0]['params']['table_name']);
         self::assertSame(['table_name' => self::ASSET_TABLE], $db->statements[0]['params']);
@@ -154,6 +156,41 @@ final class SchemaOwnershipGuardTest extends TestCase
 
         self::assertSame([], $db->droppedTables);
         self::assertSame([self::ASSET_TABLE], $db->existingTables());
+    }
+
+    #[Test]
+    public function usage_fremdschluessel_auf_fremdes_schema_gilt_nicht_als_eigentum(): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->setMarker('xplugin_mgd_ai_usage', self::MARKER);
+        $db->setReferencedSchema('xplugin_mgd_ai_usage', 'fremde_datenbank');
+        $guard = new SchemaOwnershipGuard($db);
+
+        self::assertFalse($guard->mayMutate('xplugin_mgd_ai_usage'));
+
+        $this->expectException(RuntimeException::class);
+        $guard->assertOwned('xplugin_mgd_ai_usage');
+    }
+
+    #[Test]
+    public function nachtraeglich_schemafremder_fk_verhindert_jedes_cleanup_drop(): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->failCreateNumber = 3;
+        $db->alterForeignKeySchemaBeforeCleanup = ['xplugin_mgd_ai_usage', 'fremde_datenbank'];
+
+        try {
+            (new \Plugin\MGD_AI_Kennzeichnung\Migrations\Migration20260812000100($db))->up();
+            self::fail('Migration und unsicheres Cleanup müssen eskalieren.');
+        } catch (RuntimeException $fehler) {
+            self::assertStringContainsString('Bereinigung', $fehler->getMessage());
+        }
+
+        self::assertSame([], $db->droppedTables);
+        self::assertSame(
+            [self::ASSET_TABLE, 'xplugin_mgd_ai_usage'],
+            $db->existingTables(),
+        );
     }
 
     #[Test]

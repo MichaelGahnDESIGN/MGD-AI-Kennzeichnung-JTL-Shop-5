@@ -20,6 +20,8 @@ use stdClass;
  */
 final class TransactionalDatabaseFake implements DbInterface
 {
+    public string $currentSchema = 'task3';
+
     /** @var array<string, string> */
     private array $markers = [];
 
@@ -59,6 +61,8 @@ final class TransactionalDatabaseFake implements DbInterface
     public ?string $alterEngineBeforeCleanup = null;
     /** @var null|array{string, string, int} */
     public ?array $alterIndexBeforeCleanup = null;
+    /** @var null|array{string, string} */
+    public ?array $alterForeignKeySchemaBeforeCleanup = null;
     public ?string $foreignTableBeforeCreate = null;
     /** @var list<string> */
     public array $droppedTables = [];
@@ -88,6 +92,14 @@ final class TransactionalDatabaseFake implements DbInterface
     public function setEngine(string $table, string $engine): void
     {
         $this->schemas[$table]['engine'] = $engine;
+    }
+
+    public function setReferencedSchema(string $table, string $schema): void
+    {
+        foreach ($this->schemas[$table]['foreign_keys'] as &$foreignKey) {
+            $foreignKey['referenced_schema'] = $schema;
+        }
+        unset($foreignKey);
     }
 
     /** @param array<string, string> $statuses */
@@ -168,6 +180,7 @@ final class TransactionalDatabaseFake implements DbInterface
         }
 
         return (object) [
+            'current_schema' => $this->currentSchema,
             'ownership_marker' => $this->markers[$table],
             'table_engine' => $this->schemas[$table]['engine'],
             'table_collation' => $this->schemas[$table]['collation'],
@@ -203,6 +216,10 @@ final class TransactionalDatabaseFake implements DbInterface
                         }
                     }
                     unset($row);
+                }
+                if ($this->alterForeignKeySchemaBeforeCleanup !== null) {
+                    [$table, $schema] = $this->alterForeignKeySchemaBeforeCleanup;
+                    $this->setReferencedSchema($table, $schema);
                 }
                 throw new RuntimeException(sprintf('Erzwungener CREATE-Fehler #%d.', $this->createCount));
             }
@@ -425,6 +442,7 @@ final class TransactionalDatabaseFake implements DbInterface
         }
         $foreignKeys = $table === 'xplugin_mgd_ai_usage' ? [[
             'name' => 'fk_mgd_ai_usage_asset', 'column' => 'asset_id',
+            'referenced_schema' => $this->currentSchema,
             'referenced_table' => 'xplugin_mgd_ai_asset', 'referenced_column' => 'id',
             'sequence' => '1', 'update_rule' => 'RESTRICT', 'delete_rule' => 'CASCADE',
         ]] : [];
