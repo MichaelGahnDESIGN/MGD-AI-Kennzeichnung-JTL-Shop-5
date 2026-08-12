@@ -66,6 +66,54 @@ final class AssetRepository
     }
 
     /**
+     * Legt ein beim Scan neu gefundenes Asset ausschließlich mit dem sicheren
+     * Startstatus „unreviewed“ an. Bei einem vorhandenen Schlüssel werden nur
+     * technische Pfaddaten aktualisiert; die menschliche Kennzeichnung bleibt
+     * unter allen Umständen unverändert.
+     *
+     * @return array{id: int, created: bool}
+     */
+    public function ensureUnreviewed(string $assetKey, string $localPath): array
+    {
+        $this->ownership->assertOwned(self::TABLE);
+        $normalKey = $this->canonicalAssetKey($assetKey);
+        $normalPath = ltrim($this->normalPath($localPath), '/');
+        if ($normalKey === '' || $normalPath === '') {
+            throw new RuntimeException('Asset-Schlüssel und lokaler Pfad dürfen nicht leer sein.');
+        }
+
+        $affected = $this->db->getAffectedRows(
+            <<<'SQL'
+                INSERT INTO `xplugin_mgd_ai_asset`
+                    (`asset_key`, `local_path`, `status`, `position`, `theme`, `created_at`, `updated_at`)
+                VALUES
+                    (:asset_key, :local_path, 'unreviewed', 'bottom-right', 'auto', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ON DUPLICATE KEY UPDATE
+                    `local_path` = VALUES(`local_path`),
+                    `updated_at` = CURRENT_TIMESTAMP
+                SQL,
+            ['asset_key' => $normalKey, 'local_path' => $normalPath],
+        );
+        $row = $this->db->getSingleObject(
+            <<<'SQL'
+                SELECT `id`
+                  FROM `xplugin_mgd_ai_asset`
+                 WHERE `asset_key` = :asset_key
+                SQL,
+            ['asset_key' => $normalKey],
+        );
+        $id = $row->id ?? null;
+        if (is_string($id) && preg_match('/^[1-9][0-9]*$/D', $id) === 1) {
+            $id = (int) $id;
+        }
+        if (!is_int($id) || $id < 1) {
+            throw new RuntimeException('Das gespeicherte Scan-Asset besitzt keine gültige technische ID.');
+        }
+
+        return ['id' => $id, 'created' => $affected === 1];
+    }
+
+    /**
      * Ändert die vollständige Benutzerauswahl atomar. Schlägt nur ein Element
      * fehl, stellt Rollback sämtliche davor geschriebenen Zustände wieder her.
      *

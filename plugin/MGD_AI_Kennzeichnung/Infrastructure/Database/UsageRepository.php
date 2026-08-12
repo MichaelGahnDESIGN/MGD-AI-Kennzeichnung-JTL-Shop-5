@@ -7,13 +7,14 @@ namespace Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database;
 use JTL\DB\DbInterface;
 use Plugin\MGD_AI_Kennzeichnung\Domain\AssetSource;
 use RuntimeException;
+use Throwable;
 
 /** Speichert minimierte technische Fundstellen eines Assets idempotent. */
 final class UsageRepository
 {
     private const TABLE = 'xplugin_mgd_ai_usage';
-
     private readonly SchemaOwnershipGuard $ownership;
+    private bool $reconciling = false;
 
     public function __construct(private readonly DbInterface $db)
     {
@@ -26,7 +27,7 @@ final class UsageRepository
         mixed $sourceReference,
         mixed $context = null,
         bool $present = true,
-    ): void {
+    ): bool {
         $this->ownership->assertOwned(self::TABLE);
         if ($assetId < 1) {
             throw new RuntimeException('Die technische Asset-ID muss positiv sein.');
@@ -65,6 +66,99 @@ final class UsageRepository
                 'is_present' => $present ? 1 : 0,
             ],
         );
+
+        if (!$this->reconciling) {
+            return true;
+        }
+
+        $inserted = $this->db->getAffectedRows(
+            <<<'SQL'
+                INSERT IGNORE INTO `tmp_mgd_ai_scan_usage`
+                    (`asset_id`, `source_type`, `source_reference_hash`)
+                VALUES
+                    (:asset_id, :source_type, :source_reference_hash)
+                SQL,
+            [
+                'asset_id' => $assetId,
+                'source_type' => $normalSource,
+                'source_reference_hash' => hash('sha256', $reference),
+            ],
+        );
+
+        return $inserted === 1;
+    }
+
+    /**
+     * Führt einen vollständigen Scan atomar aus. Eine temporäre, indizierte
+     * Datenbanktabelle hält nur technische Schlüssel und ersetzt eine potenziell
+     * unbegrenzte PHP-Deduplizierung. Erst nachdem der Callback erfolgreich
+     * beendet ist, werden nicht mehr gesehene Nutzungen als fehlend markiert.
+     *
+     * @template T
+     * @param callable(): T $scan
+     * @return T
+     */
+    public function reconcile(callable $scan): mixed
+    {
+        $this->ownership->assertOwned(self::TABLE);
+        if ($this->reconciling) {
+            throw new RuntimeException('Ein Bildabgleich darf nicht verschachtelt gestartet werden.');
+        }
+        if (!$this->db->beginTransaction()) {
+            throw new RuntimeException('Datenbanktransaktion für den Bildabgleich konnte nicht gestartet werden.');
+        }
+
+        try {
+            $this->db->getAffectedRows(
+                <<<'SQL'
+                    CREATE TEMPORARY TABLE `tmp_mgd_ai_scan_usage` (
+                        `asset_id` BIGINT UNSIGNED NOT NULL,
+                        `source_type` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+                        `source_reference_hash` CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+                        PRIMARY KEY (`asset_id`, `source_type`, `source_reference_hash`)
+                    ) ENGINE=InnoDB
+                    SQL,
+            );
+            $this->reconciling = true;
+            $result = $scan();
+            $this->reconciling = false;
+
+            $this->db->getAffectedRows(
+                <<<'SQL'
+                    UPDATE `xplugin_mgd_ai_usage` AS `usage`
+                    LEFT JOIN `tmp_mgd_ai_scan_usage` AS `seen`
+                      ON `seen`.`asset_id` = `usage`.`asset_id`
+                     AND `seen`.`source_type` = `usage`.`source_type`
+                     AND `seen`.`source_reference_hash` = `usage`.`source_reference_hash`
+                       SET `usage`.`is_present` = 0
+                     WHERE `seen`.`asset_id` IS NULL
+                       AND `usage`.`is_present` = 1
+                       AND `usage`.`source_type` IN ('product', 'category', 'manufacturer', 'banner', 'opc')
+                    SQL,
+            );
+            $this->db->getAffectedRows('DROP TEMPORARY TABLE `tmp_mgd_ai_scan_usage`');
+            if (!$this->db->commit()) {
+                throw new RuntimeException('Bildabgleich konnte nicht bestätigt werden.');
+            }
+
+            return $result;
+        } catch (Throwable $error) {
+            $this->reconciling = false;
+            try {
+                if (!$this->db->rollback()) {
+                    throw new RuntimeException('Datenbank-Rollback meldete false.');
+                }
+                $this->db->getAffectedRows('DROP TEMPORARY TABLE IF EXISTS `tmp_mgd_ai_scan_usage`');
+            } catch (Throwable $rollbackError) {
+                throw new RuntimeException(
+                    'Rollback nach fehlgeschlagenem Bildabgleich ist ebenfalls fehlgeschlagen: '
+                    . $rollbackError->getMessage(),
+                    0,
+                    $error,
+                );
+            }
+            throw $error;
+        }
     }
 
     /**

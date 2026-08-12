@@ -24,22 +24,30 @@ final class TransactionalDatabaseFake implements DbInterface
     public bool $reverseMetadataRows = false;
     public ?string $duplicateMetadataRows = null;
 
+    /** @var array<string, list<stdClass>> Seitenweise Rückgaben der fünf JTL-Scannerquellen. */
+    public array $scannerRows = [];
+
     /** @var array<string, string> */
     private array $markers = [];
 
     /** @var array<string, array{engine: string, collation: string, columns: list<array<string, mixed>>, indexes: list<array<string, mixed>>, foreign_keys: list<array<string, mixed>>}> */
     private array $schemas = [];
 
-    /** @var array<string, array{label: string, status: string, position: string, theme: string, local_path: string}> */
+    /** @var array<string, array{id: int, label: string, status: string, position: string, theme: string, local_path: string}> */
     private array $assets = [];
 
     /** @var array<string, array<string, mixed>> */
     private array $usages = [];
 
+    /** @var array<string, true> Technische Deduplizierung des laufenden Scans. */
+    private array $scanUsages = [];
+
+    private int $nextAssetId = 1;
+
     /** @var array<string, string> */
     private array $philosophies = [];
 
-    /** @var null|array{assets: array<string, array{label: string, status: string, position: string, theme: string, local_path: string}>, usages: array<string, array<string, mixed>>, philosophies: array<string, string>} */
+    /** @var null|array{assets: array<string, array{id: int, label: string, status: string, position: string, theme: string, local_path: string}>, usages: array<string, array<string, mixed>>, philosophies: array<string, string>} */
     private ?array $snapshot = null;
 
     /** @var list<array{sql: string, params: array<string, mixed>}> */
@@ -110,6 +118,7 @@ final class TransactionalDatabaseFake implements DbInterface
         foreach ($statuses as $assetKey => $status) {
             $canonicalKey = $this->canonicalAssetKey($assetKey);
             $this->assets[$canonicalKey] = [
+                'id' => $this->nextAssetId++,
                 'label' => $assetKey,
                 'status' => $status,
                 'position' => 'bottom-right',
@@ -117,6 +126,71 @@ final class TransactionalDatabaseFake implements DbInterface
                 'local_path' => '/media/' . $assetKey . '.jpg',
             ];
         }
+    }
+
+    public function seedScanAsset(string $assetKey, string $localPath, string $status): void
+    {
+        $this->assets[$assetKey] = [
+            'id' => $this->nextAssetId++,
+            'label' => $assetKey,
+            'status' => $status,
+            'position' => 'bottom-right',
+            'theme' => 'auto',
+            'local_path' => $localPath,
+        ];
+    }
+
+    public function seedScanUsage(
+        string $assetKey,
+        string $localPath,
+        string $sourceReference,
+        string $sourceType = 'product',
+    ): void {
+        if (!isset($this->assets[$assetKey])) {
+            $this->seedScanAsset($assetKey, $localPath, 'unreviewed');
+        }
+        $assetId = $this->assets[$assetKey]['id'];
+        $key = implode('|', [(string) $assetId, $sourceType, hash('sha256', $sourceReference)]);
+        $this->usages[$key] = [
+            'asset_id' => $assetId,
+            'source_type' => $sourceType,
+            'source_reference' => $sourceReference,
+            'source_reference_hash' => hash('sha256', $sourceReference),
+            'context' => null,
+            'is_present' => 1,
+        ];
+    }
+
+    public function statusForAsset(string $assetKey): ?string
+    {
+        return $this->assets[$assetKey]['status'] ?? null;
+    }
+
+    public function localPathForAsset(string $assetKey): ?string
+    {
+        return $this->assets[$assetKey]['local_path'] ?? null;
+    }
+
+    public function usageIsPresent(string $sourceReference): bool
+    {
+        foreach ($this->usages as $usage) {
+            if (($usage['source_reference'] ?? null) === $sourceReference) {
+                return ($usage['is_present'] ?? null) === 1;
+            }
+        }
+
+        return false;
+    }
+
+    public function hasUsage(string $sourceReference): bool
+    {
+        foreach ($this->usages as $usage) {
+            if (($usage['source_reference'] ?? null) === $sourceReference) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** @return array<string, string> */
@@ -176,6 +250,14 @@ final class TransactionalDatabaseFake implements DbInterface
 
             return is_string($assetKey) && isset($this->assets[$assetKey]) ? (object) ['id' => 1] : null;
         }
+        if (str_contains($stmt, 'FROM `xplugin_mgd_ai_asset`') && isset($params['asset_key'])) {
+            $assetKey = $params['asset_key'];
+            if (is_string($assetKey) && isset($this->assets[$assetKey])) {
+                return (object) ['id' => $this->assets[$assetKey]['id']];
+            }
+
+            return null;
+        }
         $table = $params['table_name'] ?? null;
         if (!is_string($table) || !array_key_exists($table, $this->markers)) {
             return null;
@@ -193,6 +275,14 @@ final class TransactionalDatabaseFake implements DbInterface
     public function getObjects(string $stmt, array $params = []): array
     {
         $this->statements[] = ['sql' => $stmt, 'params' => $params];
+        foreach ($this->scannerRows as $table => $rows) {
+            if (str_contains($stmt, 'FROM `' . $table . '`')) {
+                $offset = $params['offset'] ?? 0;
+                $limit = $params['limit'] ?? 100;
+
+                return is_int($offset) && is_int($limit) ? array_slice($rows, $offset, $limit) : [];
+            }
+        }
         $table = $params['table_name'] ?? null;
         if (!is_string($table) || !isset($this->schemas[$table])) {
             return [];
@@ -213,6 +303,17 @@ final class TransactionalDatabaseFake implements DbInterface
     public function getAffectedRows(string $stmt, array $params = []): int
     {
         $this->statements[] = ['sql' => $stmt, 'params' => $params];
+
+        if (str_starts_with(ltrim($stmt), 'CREATE TEMPORARY TABLE')) {
+            $this->scanUsages = [];
+
+            return 0;
+        }
+        if (str_starts_with(ltrim($stmt), 'DROP TEMPORARY TABLE')) {
+            $this->scanUsages = [];
+
+            return 0;
+        }
 
         if (str_starts_with(ltrim($stmt), 'CREATE TABLE')) {
             ++$this->createCount;
@@ -291,13 +392,37 @@ final class TransactionalDatabaseFake implements DbInterface
 
         if (str_contains($stmt, 'INSERT INTO `xplugin_mgd_ai_asset`')) {
             $assetKey = $this->stringParameter($params, 'asset_key');
+            if (isset($this->assets[$assetKey]) && !array_key_exists('status', $params)) {
+                $this->assets[$assetKey]['local_path'] = $this->stringParameter($params, 'local_path');
+
+                return 0;
+            }
             $this->assets[$assetKey] = [
+                'id' => $this->assets[$assetKey]['id'] ?? $this->nextAssetId++,
                 'label' => $assetKey,
                 'status' => $this->stringParameter($params, 'status', 'unreviewed'),
                 'position' => $this->stringParameter($params, 'position', 'bottom-right'),
                 'theme' => $this->stringParameter($params, 'theme', 'auto'),
                 'local_path' => $this->stringParameter($params, 'local_path'),
             ];
+
+            return 1;
+        }
+
+        if (str_contains($stmt, 'INSERT IGNORE INTO `tmp_mgd_ai_scan_usage`')) {
+            $assetId = $params['asset_id'] ?? null;
+            if (!is_int($assetId)) {
+                throw new RuntimeException('Technische Asset-ID fehlt im Scan-Binding.');
+            }
+            $key = implode('|', [
+                (string) $assetId,
+                $this->stringParameter($params, 'source_type'),
+                $this->stringParameter($params, 'source_reference_hash'),
+            ]);
+            if (isset($this->scanUsages[$key])) {
+                return 0;
+            }
+            $this->scanUsages[$key] = true;
 
             return 1;
         }
@@ -315,6 +440,26 @@ final class TransactionalDatabaseFake implements DbInterface
             $this->usages[$key] = $params;
 
             return 1;
+        }
+
+        if (str_contains($stmt, 'UPDATE `xplugin_mgd_ai_usage` AS `usage`')) {
+            $affected = 0;
+            foreach ($this->usages as $key => &$usage) {
+                if (!isset($this->scanUsages[$key])
+                    && ($usage['is_present'] ?? null) === 1
+                    && in_array(
+                        $usage['source_type'] ?? null,
+                        ['product', 'category', 'manufacturer', 'banner', 'opc'],
+                        true,
+                    )
+                ) {
+                    $usage['is_present'] = 0;
+                    ++$affected;
+                }
+            }
+            unset($usage);
+
+            return $affected;
         }
 
         if (str_contains($stmt, 'INSERT INTO `xplugin_mgd_ai_philosophy`')) {
