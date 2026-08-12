@@ -26,7 +26,14 @@ final class SessionConfirmationStore implements ConfirmationStoreInterface
 
     public function put(string $key, StoredOperation $operation, int $expiresAt): void
     {
-        $entries = $this->entries();
+        $now = time();
+        $entries = $this->entries($now);
+        if ($expiresAt <= $now) {
+            /* Auch beim abgewiesenen Schreiben werden zuvor gelesene Altlasten sofort entfernt. */
+            $this->session[self::SESSION_KEY] = $entries;
+
+            return;
+        }
         if (count($entries) >= 20) {
             uasort($entries, static fn(array $left, array $right): int => $left['expires_at'] <=> $right['expires_at']);
             array_shift($entries);
@@ -45,16 +52,26 @@ final class SessionConfirmationStore implements ConfirmationStoreInterface
 
     public function take(string $key): ?array
     {
-        $entries = $this->entries();
+        $entries = $this->entries(time());
         $entry = $entries[$key] ?? null;
         unset($entries[$key]);
         $this->session[self::SESSION_KEY] = $entries;
 
-        return $entry;
+        if ($entry === null) {
+            return null;
+        }
+        $operation = $this->hydrateOperation($entry['operation']);
+
+        return $operation === null ? null : ['operation' => $operation, 'expires_at' => $entry['expires_at']];
     }
 
-    /** @return array<string, array{operation: StoredOperation, expires_at: int}> */
-    private function entries(): array
+    /**
+     * @return array<string, array{
+     *   operation: array{name: string, ids: list<int>, changes: array<string, string>},
+     *   expires_at: int
+     * }>
+     */
+    private function entries(int $now): array
     {
         $entries = $this->session[self::SESSION_KEY] ?? [];
         if (!is_array($entries)) {
@@ -68,10 +85,18 @@ final class SessionConfirmationStore implements ConfirmationStoreInterface
             }
             $operation = $this->hydrateOperation($entry['operation'] ?? null);
             $expiresAt = $entry['expires_at'] ?? null;
-            if ($operation === null || !is_int($expiresAt)) {
+            if ($operation === null || !is_int($expiresAt) || $expiresAt <= $now) {
                 continue;
             }
-            $valid[$key] = ['operation' => $operation, 'expires_at' => $expiresAt];
+            /* In der Session verbleiben ausschließlich skalare, validierte Arrays; niemals PHP-Objekte. */
+            $valid[$key] = [
+                'operation' => [
+                    'name' => $operation->name,
+                    'ids' => $operation->ids,
+                    'changes' => $operation->changes,
+                ],
+                'expires_at' => $expiresAt,
+            ];
         }
 
         return $valid;

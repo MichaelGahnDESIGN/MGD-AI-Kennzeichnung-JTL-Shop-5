@@ -2,7 +2,9 @@
 
 ## Zweck und Datenminimierung
 
-Änderungen an mehreren Bildern und die Bereinigung veralteter Fundstellen müssen zuerst in einer Vorschau bestätigt werden. Der Browser erhält dafür ein zufälliges Einmaltoken. Die vollständige geplante Änderung bleibt höchstens **10 Minuten** im serverseitigen JTL-Sitzungsspeicher und wird nicht als verstecktes Formularfeld an den Browser ausgelagert.
+Änderungen an mehreren Bildern und die Bereinigung veralteter Fundstellen müssen zuerst in einer Vorschau bestätigt werden. Der Browser erhält dafür ein zufälliges Einmaltoken. Die vollständige geplante Änderung bleibt **höchstens 10 Minuten ausführbar** und wird nicht als verstecktes Formularfeld an den Browser ausgelagert. Nach Ablauf kann sie unabhängig von der physischen Session-Aufbewahrung nicht mehr ausgeführt werden.
+
+Bei jedem Lesen oder Schreiben dieses Plugin-Sitzungsspeichers werden abgelaufene sowie beschädigte Einträge entfernt; ein genau jetzt ablaufender Eintrag gilt bereits als abgelaufen. Erfolgt nach dem Ablauf kein weiterer Zugriff durch das Plugin, kann die skalare Vorgangsdarstellung physisch länger im JTL-Sitzungsspeicher verbleiben, bis JTL die Sitzung selbst bereinigt; beim nächsten Zugriff entfernt das Plugin sie. Eine garantierte physische Speicherhöchstdauer wäre ohne einen unabhängigen Wartungslauf daher nicht wahrheitsgemäß.
 
 Die Tabelle `xplugin_mgd_ai_confirmation_claim` verhindert eine doppelte Ausführung bei parallelen Anfragen oder veralteten Sitzungskopien. Sie speichert ausschließlich:
 

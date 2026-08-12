@@ -112,6 +112,10 @@ final class ConfirmationClaimMigrationTest extends TestCase
         $documentation = file_get_contents($path);
         self::assertIsString($documentation);
         self::assertStringContainsString('10 Minuten', $documentation);
+        self::assertStringContainsString('höchstens 10 Minuten ausführbar', $documentation);
+        self::assertStringContainsString('beim nächsten Zugriff', $documentation);
+        self::assertStringContainsString('physisch länger', $documentation);
+        self::assertStringNotContainsString('bleibt höchstens', $documentation);
         self::assertStringContainsString('1.000', $documentation);
         self::assertStringContainsString('mindestens einen vollständigen Tag', $documentation);
         self::assertStringContainsString('opportunistisch', $documentation);
