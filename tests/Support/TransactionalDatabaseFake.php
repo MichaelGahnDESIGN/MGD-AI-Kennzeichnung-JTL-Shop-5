@@ -6,6 +6,7 @@ namespace Tests\Support;
 
 use Error;
 use JTL\DB\DbInterface;
+use PDO;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\SchemaOwnershipGuard;
 use RuntimeException;
 use stdClass;
@@ -20,6 +21,7 @@ use stdClass;
  */
 final class TransactionalDatabaseFake implements DbInterface
 {
+    private readonly TransactionStatePdo $pdo;
     public string $currentSchema = 'task3';
     public bool $reverseMetadataRows = false;
     public ?string $duplicateMetadataRows = null;
@@ -60,6 +62,11 @@ final class TransactionalDatabaseFake implements DbInterface
     public bool $failWithError = false;
     public bool $failRollback = false;
     public bool $returnFalseOnRollback = false;
+    public bool $failCommit = false;
+    public bool $returnFalseOnCommit = false;
+    public bool $failTemporaryDropOnce = false;
+    public int $temporaryTableDrops = 0;
+    private bool $temporaryScanTableExists = false;
     public int $forUpdateSelections = 0;
     public bool $lockAvailable = true;
     public mixed $lockAcquireMetadata = '1';
@@ -77,6 +84,22 @@ final class TransactionalDatabaseFake implements DbInterface
     /** @var list<string> */
     public array $droppedTables = [];
     private int $createCount = 0;
+
+    public function __construct()
+    {
+        $this->pdo = new TransactionStatePdo();
+    }
+
+    public function getPDO(): PDO
+    {
+        return $this->pdo;
+    }
+
+    /** Modelliert eine vom aufrufenden JTL-Code bereits geöffnete Transaktion. */
+    public function beginOuterTransactionForTest(): void
+    {
+        $this->pdo->transactionActive = true;
+    }
 
     public function setMarker(string $table, string $marker): void
     {
@@ -305,11 +328,21 @@ final class TransactionalDatabaseFake implements DbInterface
         $this->statements[] = ['sql' => $stmt, 'params' => $params];
 
         if (str_starts_with(ltrim($stmt), 'CREATE TEMPORARY TABLE')) {
+            if ($this->temporaryScanTableExists) {
+                throw new RuntimeException('Temporäre Scantabelle existiert bereits.');
+            }
+            $this->temporaryScanTableExists = true;
             $this->scanUsages = [];
 
             return 0;
         }
         if (str_starts_with(ltrim($stmt), 'DROP TEMPORARY TABLE')) {
+            ++$this->temporaryTableDrops;
+            if ($this->failTemporaryDropOnce) {
+                $this->failTemporaryDropOnce = false;
+                throw new RuntimeException('Erzwungener Fehler beim Löschen der temporären Scantabelle.');
+            }
+            $this->temporaryScanTableExists = false;
             $this->scanUsages = [];
 
             return 0;
@@ -444,14 +477,11 @@ final class TransactionalDatabaseFake implements DbInterface
 
         if (str_contains($stmt, 'UPDATE `xplugin_mgd_ai_usage` AS `usage`')) {
             $affected = 0;
+            $sourceType = $this->stringParameter($params, 'source_type');
             foreach ($this->usages as $key => &$usage) {
                 if (!isset($this->scanUsages[$key])
                     && ($usage['is_present'] ?? null) === 1
-                    && in_array(
-                        $usage['source_type'] ?? null,
-                        ['product', 'category', 'manufacturer', 'banner', 'opc'],
-                        true,
-                    )
+                    && ($usage['source_type'] ?? null) === $sourceType
                 ) {
                     $usage['is_present'] = 0;
                     ++$affected;
@@ -500,6 +530,12 @@ final class TransactionalDatabaseFake implements DbInterface
     public function commit(): bool
     {
         ++$this->commits;
+        if ($this->failCommit) {
+            throw new RuntimeException('Erzwungener Commit-Fehler.');
+        }
+        if ($this->returnFalseOnCommit) {
+            return false;
+        }
         $this->snapshot = null;
 
         return true;
@@ -640,5 +676,18 @@ final class TransactionalDatabaseFake implements DbInterface
             'indexes' => $indexRows,
             'foreign_keys' => $foreignKeys,
         ];
+    }
+}
+
+/** Minimales PDO-Doppel ausschließlich für den offiziellen inTransaction-Vertrag. */
+final class TransactionStatePdo extends PDO
+{
+    public bool $transactionActive = false;
+
+    public function __construct() {}
+
+    public function inTransaction(): bool
+    {
+        return $this->transactionActive;
     }
 }

@@ -14,6 +14,8 @@ use InvalidArgumentException;
  */
 final class SourceScanPage
 {
+    public const MAXIMUM_REFERENCES = 500;
+
     /** @var list<LocalImageReference> */
     public readonly array $references;
 
@@ -27,6 +29,9 @@ final class SourceScanPage
     {
         if ($rowsRead < 0 || $rowsRead > 100) {
             throw new InvalidArgumentException('Eine Scannerseite darf nur 0 bis 100 gelesene Zeilen enthalten.');
+        }
+        if (count($references) > self::MAXIMUM_REFERENCES) {
+            throw new InvalidArgumentException('Eine Scannerseite darf höchstens 500 Bildreferenzen enthalten.');
         }
         $validated = [];
         foreach ($references as $reference) {

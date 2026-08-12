@@ -15,6 +15,7 @@ final class UsageRepository
     private const TABLE = 'xplugin_mgd_ai_usage';
     private readonly SchemaOwnershipGuard $ownership;
     private bool $reconciling = false;
+    private bool $scanOwnershipConfirmed = false;
 
     public function __construct(private readonly DbInterface $db)
     {
@@ -28,7 +29,9 @@ final class UsageRepository
         mixed $context = null,
         bool $present = true,
     ): bool {
-        $this->ownership->assertOwned(self::TABLE);
+        if (!$this->reconciling) {
+            $this->ownership->assertOwned(self::TABLE);
+        }
         if ($assetId < 1) {
             throw new RuntimeException('Die technische Asset-ID muss positiv sein.');
         }
@@ -95,20 +98,37 @@ final class UsageRepository
      * beendet ist, werden nicht mehr gesehene Nutzungen als fehlend markiert.
      *
      * @template T
+     * @param list<AssetSource> $scannedSources
      * @param callable(): T $scan
      * @return T
      */
-    public function reconcile(callable $scan): mixed
+    public function reconcile(array $scannedSources, callable $scan): mixed
     {
-        $this->ownership->assertOwned(self::TABLE);
+        $this->assertAutomaticSourceScope($scannedSources);
+        $this->assertReadyForScan();
         if ($this->reconciling) {
             throw new RuntimeException('Ein Bildabgleich darf nicht verschachtelt gestartet werden.');
+        }
+        /*
+         * NiceDB 5.7.2 zählt verschachtelte beginTransaction()-Aufrufe intern,
+         * rollback() setzt jedoch den Zähler auf null und rollt die physische
+         * PDO-Transaktion vollständig zurück. Deshalb darf der Scanner niemals
+         * innerhalb einer fremden äußeren Transaktion beginnen.
+         */
+        if ($this->db->getPDO()->inTransaction()) {
+            throw new RuntimeException('Der Bildabgleich darf nicht innerhalb einer bereits aktiven Transaktion starten.');
         }
         if (!$this->db->beginTransaction()) {
             throw new RuntimeException('Datenbanktransaktion für den Bildabgleich konnte nicht gestartet werden.');
         }
 
+        $cleanupRequired = false;
+        $error = null;
+        /** @var array{value: T}|null $outcome */
+        $outcome = null;
         try {
+            /* Auch ein während CREATE geworfener Treiberfehler kann die Tabelle bereits angelegt haben. */
+            $cleanupRequired = true;
             $this->db->getAffectedRows(
                 <<<'SQL'
                     CREATE TEMPORARY TABLE `tmp_mgd_ai_scan_usage` (
@@ -120,11 +140,12 @@ final class UsageRepository
                     SQL,
             );
             $this->reconciling = true;
-            $result = $scan();
+            $outcome = ['value' => $scan()];
             $this->reconciling = false;
 
-            $this->db->getAffectedRows(
-                <<<'SQL'
+            foreach ($scannedSources as $source) {
+                $this->db->getAffectedRows(
+                    <<<'SQL'
                     UPDATE `xplugin_mgd_ai_usage` AS `usage`
                     LEFT JOIN `tmp_mgd_ai_scan_usage` AS `seen`
                       ON `seen`.`asset_id` = `usage`.`asset_id`
@@ -133,31 +154,84 @@ final class UsageRepository
                        SET `usage`.`is_present` = 0
                      WHERE `seen`.`asset_id` IS NULL
                        AND `usage`.`is_present` = 1
-                       AND `usage`.`source_type` IN ('product', 'category', 'manufacturer', 'banner', 'opc')
+                       AND `usage`.`source_type` = :source_type
                     SQL,
-            );
+                    ['source_type' => $source->value],
+                );
+            }
             $this->db->getAffectedRows('DROP TEMPORARY TABLE `tmp_mgd_ai_scan_usage`');
+            $cleanupRequired = false;
             if (!$this->db->commit()) {
                 throw new RuntimeException('Bildabgleich konnte nicht bestätigt werden.');
             }
-
-            return $result;
-        } catch (Throwable $error) {
+        } catch (Throwable $caught) {
             $this->reconciling = false;
+            $error = $caught;
             try {
                 if (!$this->db->rollback()) {
                     throw new RuntimeException('Datenbank-Rollback meldete false.');
                 }
-                $this->db->getAffectedRows('DROP TEMPORARY TABLE IF EXISTS `tmp_mgd_ai_scan_usage`');
             } catch (Throwable $rollbackError) {
-                throw new RuntimeException(
+                $error = new RuntimeException(
                     'Rollback nach fehlgeschlagenem Bildabgleich ist ebenfalls fehlgeschlagen: '
                     . $rollbackError->getMessage(),
                     0,
-                    $error,
+                    $caught,
                 );
             }
+        } finally {
+            $this->reconciling = false;
+            if ($cleanupRequired) {
+                try {
+                    $this->db->getAffectedRows('DROP TEMPORARY TABLE IF EXISTS `tmp_mgd_ai_scan_usage`');
+                } catch (Throwable $cleanupError) {
+                    $error = new RuntimeException(
+                        'Bereinigung der temporären Scantabelle ist fehlgeschlagen: ' . $cleanupError->getMessage(),
+                        0,
+                        $error,
+                    );
+                }
+            }
+        }
+
+        if ($error !== null) {
             throw $error;
+        }
+        if ($outcome === null) {
+            throw new RuntimeException('Bildabgleich endete ohne Ergebnis.');
+        }
+
+        return $outcome['value'];
+    }
+
+    /** @param list<AssetSource> $sources */
+    private function assertAutomaticSourceScope(array $sources): void
+    {
+        $allowed = [
+            AssetSource::Product,
+            AssetSource::Category,
+            AssetSource::Manufacturer,
+            AssetSource::Banner,
+            AssetSource::Opc,
+        ];
+        $seen = [];
+        foreach ($sources as $source) {
+            if (!in_array($source, $allowed, true) || isset($seen[$source->value])) {
+                throw new RuntimeException('Die Liste vollständig gescannter Quellen ist ungültig oder doppelt.');
+            }
+            $seen[$source->value] = true;
+        }
+        if ($seen === []) {
+            throw new RuntimeException('Die Liste vollständig gescannter Quellen darf nicht leer sein.');
+        }
+    }
+
+    /** Prüft den Usage-Tabellenvertrag einmal vor dem atomaren Scanlauf. */
+    public function assertReadyForScan(): void
+    {
+        if (!$this->scanOwnershipConfirmed) {
+            $this->ownership->assertOwned(self::TABLE);
+            $this->scanOwnershipConfirmed = true;
         }
     }
 

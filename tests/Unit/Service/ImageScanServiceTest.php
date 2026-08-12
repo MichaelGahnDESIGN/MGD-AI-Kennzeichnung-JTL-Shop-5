@@ -182,6 +182,12 @@ final class ImageScanServiceTest extends TestCase
         $db->seedScanAsset($existing->assetKey, $existing->localPath, 'generated');
         $db->seedScanUsage($missing->assetKey, $missing->localPath, 'artikel:alt');
         $db->seedScanUsage(
+            hash('sha256', 'bilder/kategorie-alt.jpg'),
+            'bilder/kategorie-alt.jpg',
+            'kategorie:alt',
+            'category',
+        );
+        $db->seedScanUsage(
             hash('sha256', 'bilder/manuell.jpg'),
             'bilder/manuell.jpg',
             'manuell:1',
@@ -197,8 +203,88 @@ final class ImageScanServiceTest extends TestCase
 
         self::assertSame('generated', $db->statusForAsset($existing->assetKey));
         self::assertFalse($db->usageIsPresent('artikel:alt'));
+        self::assertTrue($db->usageIsPresent('kategorie:alt'));
         self::assertTrue($db->usageIsPresent('artikel:1'));
         self::assertTrue($db->usageIsPresent('manuell:1'));
+    }
+
+    #[Test]
+    public function erfolgreicher_scan_markiert_nur_die_explizit_vollstaendig_gelesenen_quellen_fehlend(): void
+    {
+        $db = $this->scannerDatabase();
+        $automaticSources = [
+            AssetSource::Product,
+            AssetSource::Category,
+            AssetSource::Manufacturer,
+            AssetSource::Banner,
+            AssetSource::Opc,
+        ];
+        foreach ($automaticSources as $source) {
+            $db->seedScanUsage(
+                hash('sha256', 'bilder/' . $source->value . '.jpg'),
+                'bilder/' . $source->value . '.jpg',
+                $source->value . ':alt',
+                $source->value,
+            );
+        }
+        $adapters = array_map(
+            static fn(AssetSource $source): SourceAdapterInterface => new RecordingAdapter($source, []),
+            $automaticSources,
+        );
+
+        (new ImageScanService($adapters, new AssetRepository($db), new UsageRepository($db)))->scan();
+
+        foreach ($automaticSources as $source) {
+            self::assertFalse($db->usageIsPresent($source->value . ':alt'));
+        }
+        $missingUpdates = array_filter(
+            $db->statements,
+            static fn(array $statement): bool => str_contains($statement['sql'], 'SET `usage`.`is_present` = 0'),
+        );
+        self::assertCount(5, $missingUpdates);
+        self::assertSame(
+            array_map(static fn(AssetSource $source): string => $source->value, $automaticSources),
+            array_column(array_column($missingUpdates, 'params'), 'source_type'),
+        );
+    }
+
+    #[Test]
+    public function leerer_scan_markiert_keine_bestehende_nutzung_fehlend(): void
+    {
+        $db = $this->scannerDatabase();
+        $db->seedScanUsage(hash('sha256', 'bilder/a.jpg'), 'bilder/a.jpg', 'artikel:alt');
+
+        $result = (new ImageScanService([], new AssetRepository($db), new UsageRepository($db)))->scan();
+
+        self::assertSame(0, $result->createdAssets);
+        self::assertSame(0, $result->recordedUsages);
+        self::assertTrue($db->usageIsPresent('artikel:alt'));
+    }
+
+    #[Test]
+    public function doppelte_quellenadapter_werden_vor_transaktion_und_schreibzugriff_abgewiesen(): void
+    {
+        $db = $this->scannerDatabase();
+        $service = new ImageScanService(
+            [
+                new RecordingAdapter(AssetSource::Product, []),
+                new RecordingAdapter(AssetSource::Product, []),
+            ],
+            new AssetRepository($db),
+            new UsageRepository($db),
+        );
+
+        $error = null;
+        try {
+            $service->scan();
+        } catch (RuntimeException $exception) {
+            $error = $exception;
+        }
+
+        self::assertNotNull($error, 'Doppelte Quellentypen müssen vor dem Scan abgewiesen werden.');
+        self::assertStringContainsString('doppelt', $error->getMessage());
+        self::assertSame(0, $db->begins);
+        self::assertSame([], $db->statements);
     }
 
     #[Test]
@@ -228,6 +314,122 @@ final class ImageScanServiceTest extends TestCase
         self::assertTrue($db->usageIsPresent('artikel:alt'));
         self::assertFalse($db->hasUsage('artikel:neu'));
         self::assertSame(1, $db->rollbacks);
+    }
+
+    #[Test]
+    public function aktive_aeussere_nicedb_transaktion_wird_vor_scanwrites_fail_fast_abgewiesen(): void
+    {
+        $db = $this->scannerDatabase();
+        $db->beginOuterTransactionForTest();
+        $db->seedScanUsage(hash('sha256', 'bilder/alt.jpg'), 'bilder/alt.jpg', 'artikel:alt');
+        $service = new ImageScanService(
+            [new RecordingAdapter(AssetSource::Product, [])],
+            new AssetRepository($db),
+            new UsageRepository($db),
+        );
+
+        try {
+            $service->scan();
+            self::fail('Eine äußere Transaktion darf nicht durch NiceDBs inneren Rollback gefährdet werden.');
+        } catch (RuntimeException $exception) {
+            self::assertStringContainsString('Transaktion', $exception->getMessage());
+        }
+
+        self::assertSame(0, $db->begins);
+        self::assertSame(0, $db->commits);
+        self::assertSame(0, $db->rollbacks);
+        self::assertTrue($db->usageIsPresent('artikel:alt'));
+    }
+
+    #[Test]
+    public function temporaere_scantabelle_wird_trotz_werfendem_rollback_entfernt_und_naechster_lauf_funktioniert(): void
+    {
+        $db = $this->scannerDatabase();
+        $db->failRollback = true;
+        $service = new ImageScanService(
+            [new ThrowingAdapter()],
+            new AssetRepository($db),
+            new UsageRepository($db),
+        );
+
+        try {
+            $service->scan();
+            self::fail('Scanner- und Rollbackfehler müssen sichtbar bleiben.');
+        } catch (RuntimeException $exception) {
+            self::assertSame('Erzwungener Scannerfehler.', $exception->getPrevious()?->getMessage());
+        }
+        self::assertSame(1, $db->temporaryTableDrops);
+
+        $db->failRollback = false;
+        (new ImageScanService(
+            [new RecordingAdapter(AssetSource::Product, [])],
+            new AssetRepository($db),
+            new UsageRepository($db),
+        ))->scan();
+        self::assertSame(2, $db->temporaryTableDrops);
+    }
+
+    #[Test]
+    public function temporaere_scantabelle_wird_auch_bei_rollback_false_entfernt(): void
+    {
+        $db = $this->scannerDatabase();
+        $db->returnFalseOnRollback = true;
+
+        try {
+            (new ImageScanService(
+                [new ThrowingAdapter()],
+                new AssetRepository($db),
+                new UsageRepository($db),
+            ))->scan();
+            self::fail('Rollback false muss sichtbar bleiben.');
+        } catch (RuntimeException $exception) {
+            self::assertSame('Erzwungener Scannerfehler.', $exception->getPrevious()?->getMessage());
+        }
+
+        self::assertSame(1, $db->temporaryTableDrops);
+    }
+
+    #[Test]
+    public function temporaere_scantabelle_wird_bei_commit_false_oder_exception_entfernt(): void
+    {
+        foreach (['false', 'exception'] as $modus) {
+            $db = $this->scannerDatabase();
+            $db->returnFalseOnCommit = $modus === 'false';
+            $db->failCommit = $modus === 'exception';
+
+            try {
+                (new ImageScanService(
+                    [new RecordingAdapter(AssetSource::Product, [])],
+                    new AssetRepository($db),
+                    new UsageRepository($db),
+                ))->scan();
+                self::fail('Ein fehlgeschlagener Commit muss eskalieren.');
+            } catch (RuntimeException $exception) {
+                self::assertStringContainsString($modus === 'false' ? 'bestätigt' : 'Commit', $exception->getMessage());
+            }
+
+            self::assertGreaterThanOrEqual(1, $db->temporaryTableDrops);
+            self::assertSame(1, $db->rollbacks);
+        }
+    }
+
+    #[Test]
+    public function cleanupfehler_bleibt_sichtbar_und_bewahrt_den_scannerfehler_als_previous(): void
+    {
+        $db = $this->scannerDatabase();
+        $db->failTemporaryDropOnce = true;
+
+        try {
+            (new ImageScanService(
+                [new ThrowingAdapter()],
+                new AssetRepository($db),
+                new UsageRepository($db),
+            ))->scan();
+            self::fail('Der Cleanupfehler muss sichtbar eskalieren.');
+        } catch (RuntimeException $exception) {
+            self::assertStringContainsString('temporären Scantabelle', $exception->getMessage());
+            self::assertSame('Erzwungener Scannerfehler.', $exception->getPrevious()?->getMessage());
+        }
     }
 
     #[Test]
@@ -290,6 +492,71 @@ final class ImageScanServiceTest extends TestCase
     }
 
     #[Test]
+    public function scannerseite_verwirft_mehr_als_fuenfhundert_referenzen_hart(): void
+    {
+        $normalizer = new LocalPathNormalizer();
+        $reference = self::reference($normalizer, '/bilder/a.jpg', 'artikel:1');
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('500');
+        new SourceScanPage(array_fill(0, 501, $reference), 100);
+    }
+
+    #[Test]
+    public function opc_ueberschreitung_des_zeilenlimits_bricht_atomar_ohne_missing_ab(): void
+    {
+        $db = $this->scannerDatabase();
+        $db->seedScanUsage(hash('sha256', 'bilder/alt.jpg'), 'bilder/alt.jpg', 'opc:alt', 'opc');
+        $images = [];
+        for ($index = 0; $index < 101; ++$index) {
+            $images[] = ['url' => 'bild-' . $index . '.jpg'];
+        }
+        $db->scannerRows['topcpage'] = [(object) [
+            'page_id' => 1,
+            'context' => 'Zu viele Bilder',
+            'areas_json' => json_encode(['properties' => ['images' => $images]], JSON_THROW_ON_ERROR),
+        ]];
+        $service = new ImageScanService(
+            [new OpcSourceAdapter($db, new LocalPathNormalizer())],
+            new AssetRepository($db),
+            new UsageRepository($db),
+        );
+
+        try {
+            $service->scan();
+            self::fail('Mehr als 100 OPC-Referenzen pro DB-Zeile müssen den Lauf abbrechen.');
+        } catch (RuntimeException $exception) {
+            self::assertStringContainsString('100', $exception->getMessage());
+        }
+
+        self::assertTrue($db->usageIsPresent('opc:alt'));
+        self::assertSame(1, $db->rollbacks);
+    }
+
+    #[Test]
+    public function ownership_wird_pro_repository_und_scan_nur_einmal_geprueft(): void
+    {
+        $db = $this->scannerDatabase();
+        $normalizer = new LocalPathNormalizer();
+        $references = [];
+        for ($index = 0; $index < 100; ++$index) {
+            $references[] = self::reference($normalizer, '/bilder/' . $index . '.jpg', 'artikel:' . $index);
+        }
+
+        (new ImageScanService(
+            [new RecordingAdapter(AssetSource::Product, $references)],
+            new AssetRepository($db),
+            new UsageRepository($db),
+        ))->scan();
+
+        $metadataStatements = array_filter(
+            $db->statements,
+            static fn(array $statement): bool => str_contains($statement['sql'], 'INFORMATION_SCHEMA'),
+        );
+        self::assertCount(8, $metadataStatements, 'Asset- und Usage-Eigentum benötigen je genau vier Metadatenabfragen.');
+    }
+
+    #[Test]
     public function opc_json_extrahiert_nur_offizielle_bildfelder_bounded_und_eindeutig(): void
     {
         $db = $this->scannerDatabase();
@@ -341,6 +608,22 @@ final class ImageScanServiceTest extends TestCase
             (object) ['page_id' => 2, 'context' => 'tief', 'areas_json' => str_repeat('[', 70) . '"bilder/a.jpg"' . str_repeat(']', 70)],
             (object) ['page_id' => 3, 'context' => 'groß', 'areas_json' => str_repeat(' ', 1048577)],
         ];
+
+        self::assertSame([], self::collect((new OpcSourceAdapter($db, new LocalPathNormalizer()))->scan(0, 100)));
+    }
+
+    #[Test]
+    public function opc_json_verwirft_bereits_eine_gueltige_zeile_ueber_hundert_kibibyte(): void
+    {
+        $db = $this->scannerDatabase();
+        $db->scannerRows['topcpage'] = [(object) [
+            'page_id' => 9,
+            'context' => 'Groß',
+            'areas_json' => json_encode([
+                'padding' => str_repeat('x', 102400),
+                'properties' => ['src' => 'muss-verworfen-werden.jpg'],
+            ], JSON_THROW_ON_ERROR),
+        ]];
 
         self::assertSame([], self::collect((new OpcSourceAdapter($db, new LocalPathNormalizer()))->scan(0, 100)));
     }

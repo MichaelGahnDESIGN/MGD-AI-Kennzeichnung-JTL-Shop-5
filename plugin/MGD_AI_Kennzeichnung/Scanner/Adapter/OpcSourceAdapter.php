@@ -13,6 +13,7 @@ use Plugin\MGD_AI_Kennzeichnung\Scanner\LocalPathNormalizer;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\SourceAdapterInterface;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\SourceAdapterPageInterface;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\SourceScanPage;
+use RuntimeException;
 
 /**
  * Liest die in OPC-Seiten eingebetteten Bildreferenzen aus JTL-Shop 5.7.2.
@@ -25,10 +26,10 @@ use Plugin\MGD_AI_Kennzeichnung\Scanner\SourceScanPage;
  */
 final class OpcSourceAdapter implements SourceAdapterInterface, SourceAdapterPageInterface
 {
-    private const MAXIMUM_JSON_BYTES = 1048576;
+    private const MAXIMUM_JSON_BYTES = 102400;
     private const MAXIMUM_JSON_DEPTH = 64;
     private const MAXIMUM_VISITED_NODES = 10000;
-    private const MAXIMUM_REFERENCES_PER_ROW = 1000;
+    private const MAXIMUM_REFERENCES_PER_ROW = 100;
     private const STORAGE_PREFIX = 'media/image/storage/opc/';
 
     public function __construct(private readonly DbInterface $db, private readonly LocalPathNormalizer $normalizer) {}
@@ -95,6 +96,9 @@ final class OpcSourceAdapter implements SourceAdapterInterface, SourceAdapterPag
                 );
                 if ($reference !== null) {
                     $references[] = $reference;
+                    if (count($references) > SourceScanPage::MAXIMUM_REFERENCES) {
+                        throw new RuntimeException('Eine OPC-Datenbankseite enthält mehr als 500 Bildreferenzen.');
+                    }
                 }
             }
         }
@@ -145,7 +149,7 @@ final class OpcSourceAdapter implements SourceAdapterInterface, SourceAdapterPag
                         ];
                     }
                     if (count($candidates) > self::MAXIMUM_REFERENCES_PER_ROW) {
-                        return false;
+                        throw new RuntimeException('Eine OPC-Datenbankzeile enthält mehr als 100 Bildreferenzen.');
                     }
                 }
             }
@@ -159,7 +163,7 @@ final class OpcSourceAdapter implements SourceAdapterInterface, SourceAdapterPag
             }
         }
 
-        return count($candidates) <= self::MAXIMUM_REFERENCES_PER_ROW;
+        return true;
     }
 
     private static function assertPage(int $offset, int $limit): void

@@ -17,6 +17,7 @@ final class AssetRepository
     private const TABLE = 'xplugin_mgd_ai_asset';
 
     private readonly SchemaOwnershipGuard $ownership;
+    private bool $scanOwnershipConfirmed = false;
 
     public function __construct(private readonly DbInterface $db)
     {
@@ -75,7 +76,9 @@ final class AssetRepository
      */
     public function ensureUnreviewed(string $assetKey, string $localPath): array
     {
-        $this->ownership->assertOwned(self::TABLE);
+        if (!$this->scanOwnershipConfirmed) {
+            $this->assertReadyForScan();
+        }
         $normalKey = $this->canonicalAssetKey($assetKey);
         $normalPath = ltrim($this->normalPath($localPath), '/');
         if ($normalKey === '' || $normalPath === '') {
@@ -111,6 +114,15 @@ final class AssetRepository
         }
 
         return ['id' => $id, 'created' => $affected === 1];
+    }
+
+    /** Prüft den unveränderlichen Tabellenvertrag einmal vor einem Scanlauf. */
+    public function assertReadyForScan(): void
+    {
+        if (!$this->scanOwnershipConfirmed) {
+            $this->ownership->assertOwned(self::TABLE);
+            $this->scanOwnershipConfirmed = true;
+        }
     }
 
     /**

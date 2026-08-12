@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugin\MGD_AI_Kennzeichnung\Service;
 
+use Plugin\MGD_AI_Kennzeichnung\Domain\AssetSource;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\AssetRepository;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\UsageRepository;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\LocalImageReference;
@@ -27,7 +28,13 @@ final class ImageScanService
 
     public function scan(): ImageScanResult
     {
-        return $this->usages->reconcile(function (): ImageScanResult {
+        $scannedSources = $this->validateAdapters();
+        if ($scannedSources === []) {
+            return new ImageScanResult(0, 0);
+        }
+
+        $this->assets->assertReadyForScan();
+        return $this->usages->reconcile($scannedSources, function (): ImageScanResult {
             $createdAssets = 0;
             $recordedUsages = 0;
 
@@ -91,6 +98,36 @@ final class ImageScanService
 
             return new ImageScanResult($createdAssets, $recordedUsages);
         });
+    }
+
+    /**
+     * @return list<AssetSource>
+     */
+    private function validateAdapters(): array
+    {
+        $automaticSources = [
+            AssetSource::Product,
+            AssetSource::Category,
+            AssetSource::Manufacturer,
+            AssetSource::Banner,
+            AssetSource::Opc,
+        ];
+        $sources = [];
+        foreach ($this->adapters as $adapter) {
+            if (!$adapter instanceof SourceAdapterPageInterface) {
+                throw new RuntimeException('Der Quellenadapter erfüllt den sicheren Seitenvertrag nicht.');
+            }
+            $source = $adapter->source();
+            if (!in_array($source, $automaticSources, true)) {
+                throw new RuntimeException('Der Quellenadapter verwendet keinen automatisch scanbaren Quellentyp.');
+            }
+            if (isset($sources[$source->value])) {
+                throw new RuntimeException('Ein Quellentyp wurde doppelt als Scanneradapter registriert.');
+            }
+            $sources[$source->value] = $source;
+        }
+
+        return array_values($sources);
     }
 
     private function assertPage(SourceScanPage $page, SourceAdapterInterface $adapter): void

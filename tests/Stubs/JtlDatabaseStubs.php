@@ -15,6 +15,8 @@ use stdClass;
 
 interface DbInterface
 {
+    public function getPDO(): \PDO;
+
     /** @param array<string, mixed> $params
      *  @return stdClass[]
      */

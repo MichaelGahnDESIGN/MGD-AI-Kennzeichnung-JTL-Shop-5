@@ -8,6 +8,7 @@ require_once __DIR__ . '/../../Stubs/JtlDatabaseStubs.php';
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Plugin\MGD_AI_Kennzeichnung\Domain\AssetSource;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\AssetRepository;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\PhilosophyRepository;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\UsageRepository;
@@ -17,6 +18,28 @@ use Tests\Support\TransactionalDatabaseFake;
 final class RepositoryTransactionTest extends TestCase
 {
     private const MARKER = 'mgd-ai-kennzeichnung-jtl-v1';
+
+    #[Test]
+    public function reconcile_weist_manuelle_unbekannte_oder_doppelte_quellenscopes_vor_transaktion_ab(): void
+    {
+        foreach ([
+            [AssetSource::CustomLocalManual],
+            [AssetSource::Unknown],
+            [AssetSource::Product, AssetSource::Product],
+            [],
+        ] as $sources) {
+            $db = new TransactionalDatabaseFake();
+            $db->setMarker('xplugin_mgd_ai_usage', self::MARKER);
+
+            try {
+                (new UsageRepository($db))->reconcile($sources, static fn() => null);
+                self::fail('Nur eine eindeutige, nichtleere Positivliste automatischer Quellen ist erlaubt.');
+            } catch (RuntimeException $exception) {
+                self::assertStringContainsString('Quellen', $exception->getMessage());
+            }
+            self::assertSame(0, $db->begins);
+        }
+    }
 
     #[Test]
     public function bulk_update_rollt_bei_jeder_throwable_alle_vorherigen_aenderungen_zurueck(): void
