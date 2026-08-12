@@ -27,7 +27,10 @@ final class ConfirmationClaimRepositoryTest extends TestCase
             $db->statements,
             static fn(array $entry): bool => str_contains($entry['sql'], 'INSERT IGNORE'),
         ))[0];
-        self::assertSame(['token_hash', 'expires_at'], array_keys($statement['params']));
+        self::assertSame(
+            ['token_hash', 'expires_at_value', 'expires_at_guard'],
+            array_keys($statement['params']),
+        );
         $tokenHash = $statement['params']['token_hash'];
         self::assertIsString($tokenHash);
         self::assertMatchesRegularExpression('/^[a-f0-9]{64}$/D', $tokenHash);
@@ -98,6 +101,7 @@ final class ConfirmationClaimRepositoryTest extends TestCase
         self::assertCount(1, $purges);
         self::assertSame([], $purges[0]['params']);
         self::assertStringContainsString('`expires_at` <= UTC_TIMESTAMP(6)', $purges[0]['sql']);
+        self::assertStringContainsString('- INTERVAL 1 DAY', $purges[0]['sql']);
         self::assertStringContainsString('ORDER BY `expires_at`', $purges[0]['sql']);
         self::assertStringContainsString('LIMIT 1000', $purges[0]['sql']);
         self::assertFalse($db->hasConfirmationClaimForTest(str_repeat('1', 64)));
@@ -133,6 +137,70 @@ final class ConfirmationClaimRepositoryTest extends TestCase
 
         /* Eine alte Zeile plus der soeben geschriebene neue Claim bleiben übrig. */
         self::assertSame(2, $db->confirmationClaimCountForTest());
+    }
+
+    #[Test]
+    public function kurz_abgelaufener_claim_bleibt_als_replaysperre_erhalten(): void
+    {
+        $db = $this->ownedDatabase();
+        $token = str_repeat('8', 64);
+        $db->seedConfirmationClaimForTest(hash('sha256', $token), gmdate('Y-m-d H:i:s'));
+
+        $this->expectException(ConfirmationException::class);
+        (new ConfirmationClaimRepository($db))->claim($token, time() + 10);
+    }
+
+    #[Test]
+    public function datenbankzeit_lehnt_bei_vorauslaufender_db_uhr_abgelaufenen_neuen_claim_ab(): void
+    {
+        $db = $this->ownedDatabase();
+        $db->setConfirmationDatabaseNowForTest(gmdate('Y-m-d H:i:s', time() + 600));
+        $token = str_repeat('7', 64);
+
+        try {
+            (new ConfirmationClaimRepository($db))->claim($token, time() + 300);
+            self::fail('Die autoritative Datenbankzeit muss den abgelaufenen Claim abweisen.');
+        } catch (ConfirmationException) {
+            self::assertFalse($db->hasConfirmationClaimForTest(hash('sha256', $token)));
+        }
+    }
+
+    #[Test]
+    public function insert_prueft_ablauf_atomar_mit_zwei_eindeutigen_bindings(): void
+    {
+        $db = $this->ownedDatabase();
+        (new ConfirmationClaimRepository($db))->claim(str_repeat('6', 64), time() + 300);
+
+        $insert = array_values(array_filter(
+            $db->statements,
+            static fn(array $entry): bool => str_contains($entry['sql'], 'INSERT IGNORE'),
+        ))[0];
+        self::assertStringContainsString('SELECT :token_hash, :expires_at_value, UTC_TIMESTAMP(6)', $insert['sql']);
+        self::assertStringContainsString('WHERE :expires_at_guard > UTC_TIMESTAMP(6)', $insert['sql']);
+        self::assertSame(
+            $insert['params']['expires_at_value'],
+            $insert['params']['expires_at_guard'],
+        );
+    }
+
+    #[Test]
+    public function purge_loescht_nur_mehr_als_einen_tag_abgelaufene_claims(): void
+    {
+        $db = $this->ownedDatabase();
+        $now = time();
+        $db->setConfirmationDatabaseNowForTest(gmdate('Y-m-d H:i:s', $now));
+        $old = str_repeat('3', 64);
+        $recent = str_repeat('4', 64);
+        $live = str_repeat('5', 64);
+        $db->seedConfirmationClaimForTest($old, gmdate('Y-m-d H:i:s', $now - 90000));
+        $db->seedConfirmationClaimForTest($recent, gmdate('Y-m-d H:i:s', $now - 3600));
+        $db->seedConfirmationClaimForTest($live, gmdate('Y-m-d H:i:s', $now + 3600));
+
+        (new ConfirmationClaimRepository($db))->claim(str_repeat('a', 64), $now + 300);
+
+        self::assertFalse($db->hasConfirmationClaimForTest($old));
+        self::assertTrue($db->hasConfirmationClaimForTest($recent));
+        self::assertTrue($db->hasConfirmationClaimForTest($live));
     }
 
     private function ownedDatabase(): TransactionalDatabaseFake

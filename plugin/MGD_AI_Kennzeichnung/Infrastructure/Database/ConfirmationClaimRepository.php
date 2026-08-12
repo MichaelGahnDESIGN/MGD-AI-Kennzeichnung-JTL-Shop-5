@@ -38,7 +38,7 @@ final class ConfirmationClaimRepository implements ConfirmationClaimRepositoryIn
             $this->db->getAffectedRows(
                 <<<'SQL'
                     DELETE FROM `xplugin_mgd_ai_confirmation_claim`
-                     WHERE `expires_at` <= UTC_TIMESTAMP(6)
+                     WHERE `expires_at` <= UTC_TIMESTAMP(6) - INTERVAL 1 DAY
                      ORDER BY `expires_at`
                      LIMIT 1000
                     SQL,
@@ -47,11 +47,14 @@ final class ConfirmationClaimRepository implements ConfirmationClaimRepositoryIn
                 <<<'SQL'
                     INSERT IGNORE INTO `xplugin_mgd_ai_confirmation_claim`
                         (`token_hash`, `expires_at`, `claimed_at`)
-                    VALUES (:token_hash, :expires_at, CURRENT_TIMESTAMP(6))
+                    SELECT :token_hash, :expires_at_value, UTC_TIMESTAMP(6)
+                     WHERE :expires_at_guard > UTC_TIMESTAMP(6)
                     SQL,
                 [
                     'token_hash' => hash('sha256', $token),
-                    'expires_at' => gmdate('Y-m-d H:i:s', $expiresAt),
+                    /* Zwei Namen vermeiden Mehrfachbindung bei emulierten PDO-Prepares in JTL-Shop. */
+                    'expires_at_value' => gmdate('Y-m-d H:i:s', $expiresAt),
+                    'expires_at_guard' => gmdate('Y-m-d H:i:s', $expiresAt),
                 ],
             );
         } catch (Throwable $fehler) {

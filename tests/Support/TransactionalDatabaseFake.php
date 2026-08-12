@@ -57,6 +57,7 @@ final class TransactionalDatabaseFake implements DbInterface
     private array $confirmationClaims = [];
     private bool $confirmationClaimsFail = false;
     private bool $confirmationClaimPurgeFails = false;
+    private ?string $confirmationDatabaseNow = null;
 
     /** @var null|array{assets: array<string, array{id: int, label: string, status: string, position: string, theme: string, local_path: string}>, usages: array<string, array<string, mixed>>, philosophies: array<string, string>} */
     private ?array $snapshot = null;
@@ -317,6 +318,12 @@ final class TransactionalDatabaseFake implements DbInterface
         return count($this->confirmationClaims);
     }
 
+    /** Setzt ausschließlich im Test die autoritative UTC-Uhr der Datenbank. */
+    public function setConfirmationDatabaseNowForTest(string $databaseNow): void
+    {
+        $this->confirmationDatabaseNow = $databaseNow;
+    }
+
     /** @return list<string> */
     public function existingTables(): array
     {
@@ -551,11 +558,12 @@ final class TransactionalDatabaseFake implements DbInterface
             if ($this->confirmationClaimPurgeFails) {
                 throw new RuntimeException('Erzwungener interner Claim-Purge-Fehler.');
             }
-            $now = gmdate('Y-m-d H:i:s');
+            $databaseNow = $this->confirmationDatabaseNow ?? gmdate('Y-m-d H:i:s');
+            $retentionBoundary = gmdate('Y-m-d H:i:s', strtotime($databaseNow . ' UTC') - 86400);
             asort($this->confirmationClaims, SORT_STRING);
             $removed = 0;
             foreach ($this->confirmationClaims as $tokenHash => $expiresAt) {
-                if ($expiresAt > $now || $removed >= 1000) {
+                if ($expiresAt > $retentionBoundary || $removed >= 1000) {
                     continue;
                 }
                 unset($this->confirmationClaims[$tokenHash]);
@@ -576,11 +584,16 @@ final class TransactionalDatabaseFake implements DbInterface
             if (isset($this->confirmationClaims[$tokenHash])) {
                 return 0;
             }
-            $expiresAt = $params['expires_at'] ?? null;
-            if (!is_string($expiresAt)) {
+            $expiresAtValue = $params['expires_at_value'] ?? null;
+            $expiresAtGuard = $params['expires_at_guard'] ?? null;
+            if (!is_string($expiresAtValue) || !is_string($expiresAtGuard) || $expiresAtValue !== $expiresAtGuard) {
                 throw new RuntimeException('Claim ohne gebundene Ablaufzeit.');
             }
-            $this->confirmationClaims[$tokenHash] = $expiresAt;
+            $databaseNow = $this->confirmationDatabaseNow ?? gmdate('Y-m-d H:i:s');
+            if ($expiresAtGuard <= $databaseNow) {
+                return 0;
+            }
+            $this->confirmationClaims[$tokenHash] = $expiresAtValue;
 
             return 1;
         }

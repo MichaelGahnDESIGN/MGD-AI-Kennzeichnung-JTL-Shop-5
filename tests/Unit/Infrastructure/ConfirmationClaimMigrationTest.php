@@ -113,6 +113,7 @@ final class ConfirmationClaimMigrationTest extends TestCase
         self::assertIsString($documentation);
         self::assertStringContainsString('10 Minuten', $documentation);
         self::assertStringContainsString('1.000', $documentation);
+        self::assertStringContainsString('24 Stunden und 10 Minuten', $documentation);
         self::assertStringContainsString('Deinstallation', $documentation);
         $index = file_get_contents(dirname($path) . '/README.md');
         self::assertIsString($index);
