@@ -21,6 +21,8 @@ use stdClass;
 final class TransactionalDatabaseFake implements DbInterface
 {
     public string $currentSchema = 'task3';
+    public bool $reverseMetadataRows = false;
+    public ?string $duplicateMetadataRows = null;
 
     /** @var array<string, string> */
     private array $markers = [];
@@ -184,10 +186,28 @@ final class TransactionalDatabaseFake implements DbInterface
             'ownership_marker' => $this->markers[$table],
             'table_engine' => $this->schemas[$table]['engine'],
             'table_collation' => $this->schemas[$table]['collation'],
-            'columns_json' => json_encode($this->schemas[$table]['columns'], JSON_THROW_ON_ERROR),
-            'indexes_json' => json_encode($this->schemas[$table]['indexes'], JSON_THROW_ON_ERROR),
-            'foreign_keys_json' => json_encode($this->schemas[$table]['foreign_keys'], JSON_THROW_ON_ERROR),
         ];
+    }
+
+    /** @return stdClass[] */
+    public function getObjects(string $stmt, array $params = []): array
+    {
+        $this->statements[] = ['sql' => $stmt, 'params' => $params];
+        $table = $params['table_name'] ?? null;
+        if (!is_string($table) || !isset($this->schemas[$table])) {
+            return [];
+        }
+        $kind = match (true) {
+            str_contains($stmt, 'INFORMATION_SCHEMA`.`COLUMNS') => 'columns',
+            str_contains($stmt, 'INFORMATION_SCHEMA`.`STATISTICS') => 'indexes',
+            str_contains($stmt, 'INFORMATION_SCHEMA`.`KEY_COLUMN_USAGE') => 'foreign_keys',
+            default => null,
+        };
+        if ($kind === null) {
+            return [];
+        }
+
+        return array_map(static fn(array $row): stdClass => (object) $row, $this->metadataRows($table, $kind));
     }
 
     public function getAffectedRows(string $stmt, array $params = []): int
@@ -371,6 +391,27 @@ final class TransactionalDatabaseFake implements DbInterface
                 $this->schemas[$table]['columns'][$index][$field] = $value;
             }
         }
+    }
+
+    /**
+     * @param 'columns'|'indexes'|'foreign_keys' $kind
+     * @return list<array<string, mixed>>
+     */
+    private function metadataRows(string $table, string $kind): array
+    {
+        $rows = match ($kind) {
+            'columns' => $this->schemas[$table]['columns'],
+            'indexes' => $this->schemas[$table]['indexes'],
+            'foreign_keys' => $this->schemas[$table]['foreign_keys'],
+        };
+        if ($this->duplicateMetadataRows === $kind && $rows !== []) {
+            $rows[] = $rows[0];
+        }
+        if ($this->reverseMetadataRows) {
+            $rows = array_reverse($rows);
+        }
+
+        return $rows;
     }
 
     /** @return array{engine: string, collation: string, columns: list<array<string, mixed>>, indexes: list<array<string, mixed>>, foreign_keys: list<array<string, mixed>>} */

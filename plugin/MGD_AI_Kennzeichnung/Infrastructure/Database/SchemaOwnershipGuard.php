@@ -72,59 +72,76 @@ final class SchemaOwnershipGuard
 
     private function metadata(string $table): ?object
     {
-        return $this->db->getSingleObject(
+        $metadata = $this->db->getSingleObject(
             <<<'SQL'
                 SELECT DATABASE() AS `current_schema`,
                        `t`.`TABLE_COMMENT` AS `ownership_marker`,
                        `t`.`ENGINE` AS `table_engine`,
-                       `t`.`TABLE_COLLATION` AS `table_collation`,
-                       COALESCE((
-                           SELECT JSON_ARRAYAGG(JSON_OBJECT(
-                               'name', `c`.`COLUMN_NAME`, 'type', `c`.`COLUMN_TYPE`,
-                               'nullable', `c`.`IS_NULLABLE`, 'default', `c`.`COLUMN_DEFAULT`,
-                               'collation', `c`.`COLLATION_NAME`, 'extra', `c`.`EXTRA`,
-                               'ordinal', `c`.`ORDINAL_POSITION`
-                           ))
-                             FROM `INFORMATION_SCHEMA`.`COLUMNS` AS `c`
-                            WHERE `c`.`TABLE_SCHEMA` = DATABASE()
-                              AND `c`.`TABLE_NAME` = `input`.`target_table`
-                       ), JSON_ARRAY()) AS `columns_json`,
-                       COALESCE((
-                           SELECT JSON_ARRAYAGG(JSON_OBJECT(
-                               'name', `s`.`INDEX_NAME`, 'non_unique', `s`.`NON_UNIQUE`,
-                               'sequence', `s`.`SEQ_IN_INDEX`, 'column', `s`.`COLUMN_NAME`,
-                               'sub_part', `s`.`SUB_PART`, 'collation', `s`.`COLLATION`,
-                               'type', `s`.`INDEX_TYPE`
-                           ))
-                             FROM `INFORMATION_SCHEMA`.`STATISTICS` AS `s`
-                            WHERE `s`.`TABLE_SCHEMA` = DATABASE()
-                              AND `s`.`TABLE_NAME` = `input`.`target_table`
-                       ), JSON_ARRAY()) AS `indexes_json`,
-                       COALESCE((
-                           SELECT JSON_ARRAYAGG(JSON_OBJECT(
-                               'name', `k`.`CONSTRAINT_NAME`, 'column', `k`.`COLUMN_NAME`,
-                               'referenced_schema', `k`.`REFERENCED_TABLE_SCHEMA`,
-                               'referenced_table', `k`.`REFERENCED_TABLE_NAME`,
-                               'referenced_column', `k`.`REFERENCED_COLUMN_NAME`,
-                               'sequence', `k`.`ORDINAL_POSITION`,
-                               'update_rule', `r`.`UPDATE_RULE`, 'delete_rule', `r`.`DELETE_RULE`
-                           ))
-                             FROM `INFORMATION_SCHEMA`.`KEY_COLUMN_USAGE` AS `k`
-                             JOIN `INFORMATION_SCHEMA`.`REFERENTIAL_CONSTRAINTS` AS `r`
-                               ON `r`.`CONSTRAINT_SCHEMA` = `k`.`CONSTRAINT_SCHEMA`
-                              AND `r`.`CONSTRAINT_NAME` = `k`.`CONSTRAINT_NAME`
-                            WHERE `k`.`TABLE_SCHEMA` = DATABASE()
-                              AND `k`.`TABLE_NAME` = `input`.`target_table`
-                              AND `k`.`REFERENCED_TABLE_NAME` IS NOT NULL
-                       ), JSON_ARRAY()) AS `foreign_keys_json`
+                       `t`.`TABLE_COLLATION` AS `table_collation`
                   FROM `INFORMATION_SCHEMA`.`TABLES`
                     AS `t`
-                 CROSS JOIN (SELECT :table_name AS `target_table`) AS `input`
-                 WHERE `TABLE_SCHEMA` = DATABASE()
-                   AND `TABLE_NAME` = `input`.`target_table`
+                 WHERE `t`.`TABLE_SCHEMA` = DATABASE()
+                   AND `t`.`TABLE_NAME` = :table_name
                 SQL,
             ['table_name' => $table],
         );
+        if ($metadata === null) {
+            return null;
+        }
+
+        /*
+         * JTL-Shop unterstützt Datenbanken, die noch keine JSON-Aggregate
+         * besitzen. Darum lesen wir jede Metadatenart als einfache Zeilen und
+         * vergleichen die vollständige Semantik anschließend in PHP.
+         */
+        $metadata->columns = $this->db->getObjects(
+            <<<'SQL'
+                SELECT `c`.`COLUMN_NAME` AS `name`, `c`.`COLUMN_TYPE` AS `type`,
+                       `c`.`IS_NULLABLE` AS `nullable`, `c`.`COLUMN_DEFAULT` AS `default`,
+                       `c`.`COLLATION_NAME` AS `collation`, `c`.`EXTRA` AS `extra`,
+                       `c`.`ORDINAL_POSITION` AS `ordinal`
+                  FROM `INFORMATION_SCHEMA`.`COLUMNS` AS `c`
+                 WHERE `c`.`TABLE_SCHEMA` = DATABASE()
+                   AND `c`.`TABLE_NAME` = :table_name
+                 ORDER BY `c`.`ORDINAL_POSITION`
+                SQL,
+            ['table_name' => $table],
+        );
+        $metadata->indexes = $this->db->getObjects(
+            <<<'SQL'
+                SELECT `s`.`INDEX_NAME` AS `name`, `s`.`NON_UNIQUE` AS `non_unique`,
+                       `s`.`SEQ_IN_INDEX` AS `sequence`, `s`.`COLUMN_NAME` AS `column`,
+                       `s`.`SUB_PART` AS `sub_part`, `s`.`COLLATION` AS `collation`,
+                       `s`.`INDEX_TYPE` AS `type`
+                  FROM `INFORMATION_SCHEMA`.`STATISTICS` AS `s`
+                 WHERE `s`.`TABLE_SCHEMA` = DATABASE()
+                   AND `s`.`TABLE_NAME` = :table_name
+                 ORDER BY `s`.`INDEX_NAME`, `s`.`SEQ_IN_INDEX`
+                SQL,
+            ['table_name' => $table],
+        );
+        $metadata->foreign_keys = $this->db->getObjects(
+            <<<'SQL'
+                SELECT `k`.`CONSTRAINT_NAME` AS `name`, `k`.`COLUMN_NAME` AS `column`,
+                       `k`.`REFERENCED_TABLE_SCHEMA` AS `referenced_schema`,
+                       `k`.`REFERENCED_TABLE_NAME` AS `referenced_table`,
+                       `k`.`REFERENCED_COLUMN_NAME` AS `referenced_column`,
+                       `k`.`ORDINAL_POSITION` AS `sequence`,
+                       `r`.`UPDATE_RULE` AS `update_rule`, `r`.`DELETE_RULE` AS `delete_rule`
+                  FROM `INFORMATION_SCHEMA`.`KEY_COLUMN_USAGE` AS `k`
+                  JOIN `INFORMATION_SCHEMA`.`REFERENTIAL_CONSTRAINTS` AS `r`
+                    ON `r`.`CONSTRAINT_SCHEMA` = `k`.`CONSTRAINT_SCHEMA`
+                   AND `r`.`CONSTRAINT_NAME` = `k`.`CONSTRAINT_NAME`
+                   AND `r`.`TABLE_NAME` = `k`.`TABLE_NAME`
+                 WHERE `k`.`TABLE_SCHEMA` = DATABASE()
+                   AND `k`.`TABLE_NAME` = :table_name
+                   AND `k`.`REFERENCED_TABLE_NAME` IS NOT NULL
+                 ORDER BY `k`.`CONSTRAINT_NAME`, `k`.`ORDINAL_POSITION`
+                SQL,
+            ['table_name' => $table],
+        );
+
+        return $metadata;
     }
 
     private function isExpectedSchema(string $table, object $metadata): bool
@@ -139,18 +156,18 @@ final class SchemaOwnershipGuard
             return false;
         }
 
-        return $this->normalizedColumns($metadata->columns_json ?? null) === $this->expectedColumns($table)
-            && $this->normalizedIndexes($metadata->indexes_json ?? null) === $this->expectedIndexes($table)
-            && $this->normalizedForeignKeys($metadata->foreign_keys_json ?? null) === $this->expectedForeignKeys(
+        return $this->normalizedColumns($metadata->columns ?? null) === $this->expectedColumns($table)
+            && $this->normalizedIndexes($metadata->indexes ?? null) === $this->expectedIndexes($table)
+            && $this->normalizedForeignKeys($metadata->foreign_keys ?? null) === $this->expectedForeignKeys(
                 $table,
                 $currentSchema,
             );
     }
 
     /** @return list<string> */
-    private function normalizedColumns(mixed $json): array
+    private function normalizedColumns(mixed $rows): array
     {
-        $rows = $this->jsonRows($json);
+        $rows = $this->objectRows($rows);
         $normalized = [];
         foreach ($rows as $row) {
             $ordinal = $this->canonicalInteger($row['ordinal'] ?? null);
@@ -173,9 +190,9 @@ final class SchemaOwnershipGuard
     }
 
     /** @return list<string> */
-    private function normalizedIndexes(mixed $json): array
+    private function normalizedIndexes(mixed $rows): array
     {
-        $rows = $this->jsonRows($json);
+        $rows = $this->objectRows($rows);
         $normalized = [];
         foreach ($rows as $row) {
             $nonUnique = $this->canonicalInteger($row['non_unique'] ?? null);
@@ -200,9 +217,9 @@ final class SchemaOwnershipGuard
     }
 
     /** @return list<string> */
-    private function normalizedForeignKeys(mixed $json): array
+    private function normalizedForeignKeys(mixed $rows): array
     {
-        $rows = $this->jsonRows($json);
+        $rows = $this->objectRows($rows);
         $normalized = [];
         foreach ($rows as $row) {
             $sequence = $this->canonicalInteger($row['sequence'] ?? null);
@@ -232,35 +249,27 @@ final class SchemaOwnershipGuard
     }
 
     /** @return list<array<string, mixed>> */
-    private function jsonRows(mixed $json): array
+    private function objectRows(mixed $rows): array
     {
-        if (!is_string($json)) {
+        if (!is_array($rows) || !array_is_list($rows)) {
             return [];
         }
-        try {
-            $decoded = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
-        } catch (\JsonException) {
-            return [];
-        }
-        if (!is_array($decoded) || !array_is_list($decoded)) {
-            return [];
-        }
-        $rows = [];
-        foreach ($decoded as $row) {
-            if (!is_array($row)) {
+        $normalizedRows = [];
+        foreach ($rows as $row) {
+            if (!is_object($row)) {
                 return [];
             }
             $normalizedRow = [];
-            foreach ($row as $key => $value) {
+            foreach (get_object_vars($row) as $key => $value) {
                 if (!is_string($key)) {
                     return [];
                 }
                 $normalizedRow[$key] = $value;
             }
-            $rows[] = $normalizedRow;
+            $normalizedRows[] = $normalizedRow;
         }
 
-        return $rows;
+        return $normalizedRows;
     }
 
     /** @param array<string, mixed> $row */

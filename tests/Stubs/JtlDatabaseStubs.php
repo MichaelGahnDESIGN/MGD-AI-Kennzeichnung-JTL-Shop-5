@@ -15,6 +15,11 @@ use stdClass;
 
 interface DbInterface
 {
+    /** @param array<string, mixed> $params
+     *  @return stdClass[]
+     */
+    public function getObjects(string $stmt, array $params = []): array;
+
     /** @param array<string, mixed> $params */
     public function getSingleObject(string $stmt, array $params = []): ?stdClass;
 

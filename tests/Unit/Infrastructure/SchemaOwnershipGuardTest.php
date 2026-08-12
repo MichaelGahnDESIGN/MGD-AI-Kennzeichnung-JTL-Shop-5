@@ -58,25 +58,50 @@ final class SchemaOwnershipGuardTest extends TestCase
 
         self::assertTrue($guard->mayMutate(self::ASSET_TABLE));
         $guard->assertOwned(self::ASSET_TABLE);
-        self::assertStringContainsString('INFORMATION_SCHEMA', $db->statements[0]['sql']);
-        self::assertStringContainsString('TABLES', $db->statements[0]['sql']);
-        self::assertStringContainsString('COLUMNS', $db->statements[0]['sql']);
-        self::assertStringContainsString('STATISTICS', $db->statements[0]['sql']);
-        self::assertStringContainsString('KEY_COLUMN_USAGE', $db->statements[0]['sql']);
-        self::assertStringContainsString('REFERENTIAL_CONSTRAINTS', $db->statements[0]['sql']);
-        self::assertStringContainsString('TABLE_COLLATION', $db->statements[0]['sql']);
-        self::assertStringContainsString('ORDINAL_POSITION', $db->statements[0]['sql']);
-        self::assertStringContainsString('SEQ_IN_INDEX', $db->statements[0]['sql']);
-        self::assertStringContainsString('NON_UNIQUE', $db->statements[0]['sql']);
-        self::assertStringContainsString('SUB_PART', $db->statements[0]['sql']);
-        self::assertStringContainsString('INDEX_TYPE', $db->statements[0]['sql']);
-        self::assertStringContainsString('UPDATE_RULE', $db->statements[0]['sql']);
-        self::assertStringContainsString('DELETE_RULE', $db->statements[0]['sql']);
-        self::assertStringContainsString('REFERENCED_TABLE_SCHEMA', $db->statements[0]['sql']);
-        self::assertStringContainsString('DATABASE() AS `current_schema`', $db->statements[0]['sql']);
-        self::assertStringContainsString('JSON_ARRAYAGG', $db->statements[0]['sql']);
-        self::assertSame(self::ASSET_TABLE, $db->statements[0]['params']['table_name']);
-        self::assertSame(['table_name' => self::ASSET_TABLE], $db->statements[0]['params']);
+        $sql = implode("\n", array_column($db->statements, 'sql'));
+        foreach (['TABLES', 'COLUMNS', 'STATISTICS', 'KEY_COLUMN_USAGE', 'REFERENTIAL_CONSTRAINTS'] as $quelle) {
+            self::assertStringContainsString($quelle, $sql);
+        }
+        foreach (['TABLE_COLLATION', 'ORDINAL_POSITION', 'SEQ_IN_INDEX', 'NON_UNIQUE', 'SUB_PART',
+            'INDEX_TYPE', 'UPDATE_RULE', 'DELETE_RULE', 'REFERENCED_TABLE_SCHEMA'] as $feld) {
+            self::assertStringContainsString($feld, $sql);
+        }
+        self::assertStringContainsString('DATABASE() AS `current_schema`', $sql);
+        self::assertStringNotContainsString('JSON_ARRAYAGG', $sql);
+        self::assertStringNotContainsString('JSON_OBJECTAGG', $sql);
+        self::assertCount(8, $db->statements, 'Jede Ownership-Prüfung benötigt vier einfache Metadatenabfragen.');
+        foreach ($db->statements as $statement) {
+            self::assertSame(['table_name' => self::ASSET_TABLE], $statement['params']);
+        }
+    }
+
+    #[Test]
+    public function metadaten_reihenfolge_beeinflusst_den_semantischen_vertrag_nicht(): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->setMarker('xplugin_mgd_ai_usage', self::MARKER);
+        $db->reverseMetadataRows = true;
+
+        self::assertTrue((new SchemaOwnershipGuard($db))->mayMutate('xplugin_mgd_ai_usage'));
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function doppelteMetadaten(): iterable
+    {
+        yield 'Spalte' => [self::ASSET_TABLE, 'columns'];
+        yield 'Index' => [self::ASSET_TABLE, 'indexes'];
+        yield 'Fremdschlüssel' => ['xplugin_mgd_ai_usage', 'foreign_keys'];
+    }
+
+    #[DataProvider('doppelteMetadaten')]
+    #[Test]
+    public function doppelte_metadaten_werden_fail_closed_abgewiesen(string $table, string $kind): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->setMarker($table, self::MARKER);
+        $db->duplicateMetadataRows = $kind;
+
+        self::assertFalse((new SchemaOwnershipGuard($db))->mayMutate($table));
     }
 
     #[Test]
