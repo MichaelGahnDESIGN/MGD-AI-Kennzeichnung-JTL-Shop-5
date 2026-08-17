@@ -32,7 +32,10 @@ jobs:
       - name: Abhängigkeiten installieren
         run: composer install --no-interaction --no-progress --prefer-dist
       - name: Pluginmetadaten als XML parsen
-        run: xmllint --noout plugin/MGD_AI_Kennzeichnung/info.xml
+        # DOMDocument gehört bereits zur eingerichteten PHP-Laufzeit. Dadurch
+        # hängt die Prüfung nicht von einem zufällig vorinstallierten OS-Paket ab.
+        run: >-
+          php -r '$d = new DOMDocument(); exit($d->load("plugin/MGD_AI_Kennzeichnung/info.xml") ? 0 : 1);'
       - name: Tests ausführen
         run: composer test
       - name: Statische Analyse ausführen

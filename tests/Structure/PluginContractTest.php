@@ -135,9 +135,9 @@ final class PluginContractTest extends TestCase
             'Der Workflow muss Composer ausdrücklich streng validieren.',
         );
         self::assertStringContainsString(
-            'xmllint --noout plugin/MGD_AI_Kennzeichnung/info.xml',
+            'DOMDocument',
             $workflow,
-            'Der Workflow muss die info.xml mit einem echten XML-Parser prüfen.',
+            'Der Workflow muss die info.xml mit dem plattformunabhängigen DOM-Parser prüfen.',
         );
         self::assertStringContainsString(
             "php: ['8.1', '8.5']",
