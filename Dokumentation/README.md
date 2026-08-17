@@ -7,3 +7,7 @@ Die JTL-Mindestversion 5.7.2 steht im Element `MinShopVersion` der `info.xml`. J
 ## Sicherheit und Datenschutz
 
 - [Admin-Sicherheitsbestätigungen](Admin-Sicherheitsbestaetigungen.md): Datenminimierung, automatische Löschung und sicherer Rückbau der Einmalbestätigungen.
+- [Installation und Livetest](Installation-und-Livetest.md): Pflichtbackup, Plugin-Manager, Onvis-Prüfliste und Rollback.
+- [Datenschutz und Sicherheit](Datenschutz-und-Sicherheit.md): gespeicherte Daten, optionale Netzwerkzugriffe und Schutzgrenzen.
+- [OPC-CSS-Klassen](OPC-CSS-Klassen.md): dokumentierte Kombinationen für bewusst markierte Elemente.
+- [Release 1.0.0](Release-1.0.0.md): freizugebender Funktionsstand und Betriebsbedingungen.

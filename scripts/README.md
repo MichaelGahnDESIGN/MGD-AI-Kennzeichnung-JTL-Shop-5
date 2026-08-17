@@ -1,3 +1,3 @@
 # Hilfsskripte
 
-Dieser Ordner ist für klar abgegrenzte Entwicklungs- und Veröffentlichungshelfer vorgesehen. Im initialen Grundgerüst werden noch keine eigenen Skripte benötigt.
+`build-release.sh` erstellt ausschließlich aus `plugin/MGD_AI_Kennzeichnung/` das reproduzierbare Installationspaket. Das Skript verweigert Symlinks und typische Entwicklungs- oder Geheimnisdateien, vereinheitlicht Rechte und Zeitstempel und schreibt nach `dist/`.
