@@ -376,6 +376,14 @@ final class TransactionalDatabaseFake implements DbInterface
 
             return null;
         }
+        if (str_contains($stmt, 'FROM `xplugin_mgd_ai_philosophy`') && isset($params['language'])) {
+            $language = $params['language'];
+            if (is_string($language) && isset($this->philosophies[$language])) {
+                return (object) ['content' => $this->philosophies[$language]];
+            }
+
+            return null;
+        }
         $table = $params['table_name'] ?? null;
         if (!is_string($table) || !array_key_exists($table, $this->markers)) {
             return null;

@@ -1,0 +1,8 @@
+/* Lokale, zurückhaltende Grunddarstellung; das Shop-Theme bleibt führend. */
+.mgd-ai-philosophy {
+    max-width: 72ch;
+    margin-inline: auto;
+}
+
+.mgd-ai-philosophy > :first-child { margin-top: 0; }
+.mgd-ai-philosophy > :last-child { margin-bottom: 0; }

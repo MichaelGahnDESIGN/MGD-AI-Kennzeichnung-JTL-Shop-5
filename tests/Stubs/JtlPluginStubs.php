@@ -139,4 +139,24 @@ class Shop
 
         return self::$container;
     }
+
+    public static function getLanguageCode(): string
+    {
+        return 'ger';
+    }
 }
+
+namespace JTL\OPC;
+
+use JTL\DB\DbInterface;
+
+class Portlet
+{
+    protected string $title = '';
+    protected string $group = '';
+    protected bool $active = false;
+
+    public function __construct(protected DbInterface $db) {}
+}
+
+class PortletInstance {}

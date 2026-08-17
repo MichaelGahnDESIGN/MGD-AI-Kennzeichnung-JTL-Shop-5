@@ -393,7 +393,7 @@ final class RepositoryTransactionTest extends TestCase
     }
 
     #[Test]
-    public function philosophy_upsert_ist_je_sprache_idempotent_und_speichert_keinen_html_oder_script_code(): void
+    public function philosophy_upsert_ist_je_sprache_idempotent_und_speichert_nur_erlaubtes_html(): void
     {
         $db = new TransactionalDatabaseFake();
         $db->setMarker('xplugin_mgd_ai_philosophy', self::MARKER);
@@ -403,9 +403,9 @@ final class RepositoryTransactionTest extends TestCase
         $repository->upsert('de-de', '<b>Neue Haltung</b>');
 
         self::assertSame(1, $db->philosophyCount());
-        self::assertSame(['de-de' => 'Neue Haltung'], $db->philosophies());
+        self::assertSame(['de' => 'Neue Haltung'], $db->philosophies());
         $aufruf = $this->schreibAufrufe($db)[1];
-        self::assertSame('de-de', $aufruf['params']['language']);
+        self::assertSame('de', $aufruf['params']['language']);
         $inhalt = $aufruf['params']['content'];
         self::assertIsString($inhalt);
         self::assertStringNotContainsString('<', $inhalt);
@@ -441,8 +441,8 @@ final class RepositoryTransactionTest extends TestCase
             . '&lt;p onclick=&quot;alert(2)&quot;&gt;Haltung&lt;/p&gt;',
         );
 
-        self::assertSame('Haltung', $inhalt);
-        $this->assertKeinMarkup($inhalt);
+        self::assertSame('<p>Haltung</p>', $inhalt);
+        self::assertStringNotContainsStringIgnoringCase('script', $inhalt);
         self::assertStringNotContainsStringIgnoringCase('onclick', $inhalt);
         self::assertStringNotContainsStringIgnoringCase('onload', $inhalt);
     }
@@ -455,10 +455,23 @@ final class RepositoryTransactionTest extends TestCase
         );
 
         self::assertSame(
-            'Künstliche Intelligenz fördert Transparenz & Verantwortung: ä ö ü ß "fair".',
+            'Künstliche Intelligenz fördert Transparenz &amp; Verantwortung: ä ö ü ß "fair".',
             $inhalt,
         );
-        $this->assertKeinMarkup($inhalt);
+        self::assertStringNotContainsString('<script', $inhalt);
+    }
+
+    #[Test]
+    public function philosophy_liefert_nur_die_zur_shopsprache_passende_bereinigte_fassung(): void
+    {
+        $db = new TransactionalDatabaseFake();
+        $db->setMarker('xplugin_mgd_ai_philosophy', self::MARKER);
+        $repository = new PhilosophyRepository($db);
+        $repository->upsert('de', '<p>Deutsche Haltung</p>');
+        $repository->upsert('eng', '<p>English policy</p>');
+
+        self::assertSame('<p>Deutsche Haltung</p>', $repository->findForLocale('ger'));
+        self::assertSame('<p>English policy</p>', $repository->findForLocale('en-US'));
     }
 
     #[Test]
