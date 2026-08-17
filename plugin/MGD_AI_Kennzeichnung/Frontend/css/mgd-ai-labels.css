@@ -1,0 +1,118 @@
+/*
+ * Barrierearme Kennzeichnungen für native Ausgaben und bewusst markierte
+ * OPC-Elemente. Alle Varianten sind lokal; es werden keine Webfonts, Bilder
+ * oder externen Ressourcen geladen.
+ */
+.mgd-ai-label {
+    --mgd-ai-font-size: 12px;
+    --mgd-ai-outer-margin: 8px;
+    --mgd-ai-inner-padding: 6px;
+    --mgd-ai-border-radius: 4px;
+    --mgd-ai-blur: 0px;
+}
+
+.mgd-ai-label--native,
+.mgd-ai-label:not([role="note"])::after,
+.mgd-ai-label__badge {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    z-index: 5;
+    max-width: calc(100% - (2 * var(--mgd-ai-outer-margin)));
+    padding: var(--mgd-ai-inner-padding);
+    border: 1px solid currentColor;
+    border-radius: var(--mgd-ai-border-radius);
+    font: 700 var(--mgd-ai-font-size)/1.25 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    letter-spacing: 0.035em;
+    text-align: left;
+    text-transform: uppercase;
+    pointer-events: none;
+    backdrop-filter: blur(var(--mgd-ai-blur));
+    -webkit-backdrop-filter: blur(var(--mgd-ai-blur));
+}
+
+/* Ein manuell markiertes OPC-Element bildet den sicheren Positionierungsrahmen. */
+.mgd-ai-label:not([role="note"]) {
+    position: relative;
+}
+
+.mgd-ai-label:not([role="note"])::after,
+.mgd-ai-label__badge,
+.mgd-ai-label--native {
+    position: absolute;
+}
+
+.mgd-ai-label--position-top-left::after,
+.mgd-ai-label--position-top-left.mgd-ai-label--native,
+.mgd-ai-label--position-top-left > .mgd-ai-label__badge {
+    top: var(--mgd-ai-outer-margin);
+    left: var(--mgd-ai-outer-margin);
+}
+
+.mgd-ai-label--position-top-right::after,
+.mgd-ai-label--position-top-right.mgd-ai-label--native,
+.mgd-ai-label--position-top-right > .mgd-ai-label__badge {
+    top: var(--mgd-ai-outer-margin);
+    right: var(--mgd-ai-outer-margin);
+}
+
+.mgd-ai-label--position-bottom-left::after,
+.mgd-ai-label--position-bottom-left.mgd-ai-label--native,
+.mgd-ai-label--position-bottom-left > .mgd-ai-label__badge {
+    bottom: var(--mgd-ai-outer-margin);
+    left: var(--mgd-ai-outer-margin);
+}
+
+.mgd-ai-label--position-bottom-right::after,
+.mgd-ai-label--position-bottom-right.mgd-ai-label--native,
+.mgd-ai-label--position-bottom-right > .mgd-ai-label__badge {
+    right: var(--mgd-ai-outer-margin);
+    bottom: var(--mgd-ai-outer-margin);
+}
+
+.mgd-ai-label--theme-auto,
+.mgd-ai-label--theme-dark {
+    color: #fff;
+    background: rgba(17, 24, 39, 0.92);
+}
+
+.mgd-ai-label--theme-light {
+    color: #111827;
+    background: rgba(255, 255, 255, 0.94);
+}
+
+@media (prefers-color-scheme: light) {
+    .mgd-ai-label--theme-auto {
+        color: #111827;
+        background: rgba(255, 255, 255, 0.94);
+    }
+}
+
+/* Der Pseudoinhalt bleibt sichtbar, wenn JavaScript nicht verfügbar ist. */
+.mgd-ai-status-generated:not([role="note"])::after { content: "AI-GENERATED"; }
+.mgd-ai-status-partially-generated:not([role="note"])::after { content: "PARTIALLY AI-GENERATED"; }
+.mgd-ai-status-modified:not([role="note"])::after { content: "AI-MODIFIED"; }
+.mgd-ai-status-deepfake:not([role="note"])::after { content: "AI DEEPFAKE"; }
+
+html[lang="de"] .mgd-ai-status-generated:not([role="note"])::after { content: "KI-GENERIERT"; }
+html[lang="de"] .mgd-ai-status-partially-generated:not([role="note"])::after { content: "TEILWEISE KI-GENERIERT"; }
+html[lang="de"] .mgd-ai-status-modified:not([role="note"])::after { content: "MIT KI BEARBEITET"; }
+html[lang="de"] .mgd-ai-status-deepfake:not([role="note"])::after { content: "KI-DEEPFAKE"; }
+
+.mgd-ai-label--enhanced::after {
+    content: none !important;
+}
+
+.mgd-ai-footer-credit {
+    margin: 0.75rem 0;
+    font-size: 0.875rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mgd-ai-label,
+    .mgd-ai-label::after,
+    .mgd-ai-label__badge {
+        animation: none !important;
+        transition: none !important;
+    }
+}

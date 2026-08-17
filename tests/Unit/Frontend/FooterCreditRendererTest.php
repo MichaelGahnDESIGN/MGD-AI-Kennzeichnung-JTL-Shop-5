@@ -6,7 +6,7 @@ namespace Tests\Unit\Frontend;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Plugin\MGD_AI_Kennzeichnung\Frontend\FooterCreditRenderer;
+use Plugin\MGD_AI_Kennzeichnung\Presentation\FooterCreditRenderer;
 
 final class FooterCreditRendererTest extends TestCase
 {

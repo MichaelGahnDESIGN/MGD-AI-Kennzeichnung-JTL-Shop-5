@@ -47,4 +47,20 @@ enum LabelStatus: string
             self::Unreviewed, self::None => false,
         };
     }
+
+    /**
+     * Liefert ausschließlich eine fest definierte Statusklasse für die Ausgabe.
+     * Unsichtbare Zustände besitzen keine Klasse und können dadurch auch nicht
+     * versehentlich über CSS sichtbar gemacht werden.
+     */
+    public function cssClass(): string
+    {
+        return match ($this) {
+            self::Generated => 'mgd-ai-status-generated',
+            self::PartiallyGenerated => 'mgd-ai-status-partially-generated',
+            self::Modified => 'mgd-ai-status-modified',
+            self::Deepfake => 'mgd-ai-status-deepfake',
+            self::Unreviewed, self::None => '',
+        };
+    }
 }
