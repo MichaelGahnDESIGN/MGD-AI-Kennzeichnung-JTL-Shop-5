@@ -6,8 +6,13 @@ namespace Plugin\MGD_AI_Kennzeichnung;
 
 use JTL\Events\Dispatcher;
 use JTL\Plugin\Bootstrapper;
+use JTL\Shop;
+use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\FrontendLabelRepository;
+use Plugin\MGD_AI_Kennzeichnung\Presentation\FrontendDocumentIntegrator;
+use Plugin\MGD_AI_Kennzeichnung\Service\DisplaySettings;
 use Plugin\MGD_AI_Kennzeichnung\Service\SystemCompatibilityCheck;
 use Plugin\MGD_AI_Kennzeichnung\Setup\PluginDataLifecycle;
+use Throwable;
 
 /**
  * Einstiegspunkt des Plugins für den Startvorgang von JTL-Shop.
@@ -26,6 +31,40 @@ class Bootstrap extends Bootstrapper
     public function boot(Dispatcher $dispatcher): void
     {
         parent::boot($dispatcher);
+        $dispatcher->listen('shop.hook.140', function (array $argumente): void {
+            $plugin = $this->getPlugin();
+            $konfiguration = $plugin->getConfig();
+            $einstellungen = DisplaySettings::fromJtlConfig([
+                'show_credit' => $konfiguration->getValue('show_credit'),
+                'update_notices' => $konfiguration->getValue('update_notices'),
+                'language' => $konfiguration->getValue('language'),
+                'position' => $konfiguration->getValue('position'),
+                'theme' => $konfiguration->getValue('theme'),
+                'font_size' => $konfiguration->getValue('font_size'),
+                'outer_margin' => $konfiguration->getValue('outer_margin'),
+                'inner_padding' => $konfiguration->getValue('inner_padding'),
+                'border_radius' => $konfiguration->getValue('border_radius'),
+                'blur' => $konfiguration->getValue('blur'),
+            ]);
+            $integrator = new FrontendDocumentIntegrator();
+            $integrator->integrate(
+                $argumente,
+                $plugin->getPaths()->getFrontendURL(),
+                $einstellungen->showCredit,
+            );
+
+            /* Ein Datenbankfehler darf die Auslieferung des Shops niemals unterbrechen. */
+            try {
+                $integrator->integrateLabels(
+                    $argumente,
+                    (new FrontendLabelRepository($this->getDB()))->visibleLabels(),
+                    $einstellungen,
+                    Shop::getLanguageCode(),
+                );
+            } catch (Throwable) {
+                return;
+            }
+        });
     }
 
     /** Bricht die Installation auf nicht unterstützten Laufzeiten früh ab. */

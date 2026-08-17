@@ -159,7 +159,7 @@ final class DisplaySettingsTest extends TestCase
         self::assertTrue($dokument->load(self::INFO_XML));
         $xpath = new DOMXPath($dokument);
 
-        $settingslinks = $xpath->query('/jtlshopplugin/Adminmenu/Settingslink');
+        $settingslinks = $xpath->query('/jtlshopplugin/Install/Adminmenu/Settingslink');
         self::assertNotFalse($settingslinks);
         self::assertCount(1, $settingslinks);
 
@@ -178,7 +178,7 @@ final class DisplaySettingsTest extends TestCase
 
         foreach ($erwarteteDefaults as $name => $standard) {
             $abfrage = sprintf(
-                '/jtlshopplugin/Adminmenu/Settingslink/Setting[ValueName="%s"]',
+                '/jtlshopplugin/Install/Adminmenu/Settingslink/Setting[ValueName="%s"]',
                 $name,
             );
             $knoten = $xpath->query($abfrage);
@@ -191,7 +191,7 @@ final class DisplaySettingsTest extends TestCase
         }
 
         $version = $xpath->evaluate('string(/jtlshopplugin/Version)');
-        $dateiname = $xpath->evaluate('string(/jtlshopplugin/Adminmenu/Customlink/Filename)');
+        $dateiname = $xpath->evaluate('string(/jtlshopplugin/Install/Adminmenu/Customlink/Filename)');
         self::assertIsString($version);
         self::assertIsString($dateiname);
         self::assertSame('1.0.0', trim($version));

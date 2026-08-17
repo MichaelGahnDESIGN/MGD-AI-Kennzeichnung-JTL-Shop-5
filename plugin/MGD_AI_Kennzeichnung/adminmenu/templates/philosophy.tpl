@@ -2,7 +2,10 @@
 <section aria-labelledby="mgd-ai-philosophy-heading">
     <h1 id="mgd-ai-philosophy-heading">AI-Philosophie pflegen</h1>
     <p>Erlaubt sind Absätze, Überschriften, Listen, Hervorhebungen und sichere HTTPS-Links.</p>
+    {if $message !== ''}<p role="status">{$message|escape:'html':'UTF-8'}</p>{/if}
     <form method="post">
+        <input type="hidden" name="kPlugin" value="{$pluginId|escape:'html':'UTF-8'}">
+        <input type="hidden" name="kPluginAdminMenu" value="{$adminMenuId|escape:'html':'UTF-8'}">
         <input type="hidden" name="csrf_token" value="{$csrfToken|escape:'html':'UTF-8'}">
         <label for="mgd-ai-philosophy-de">Deutscher Inhalt</label>
         <textarea id="mgd-ai-philosophy-de" name="content_de" rows="14">{$contentDe|escape:'html':'UTF-8'}</textarea>

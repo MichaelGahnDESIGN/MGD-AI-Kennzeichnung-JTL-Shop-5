@@ -87,6 +87,11 @@ final class AdminEntryPointTest extends TestCase
             {
                 return new AdminMenu([9]);
             }
+
+            public function getConfig(): \JTL\Plugin\Data\Config
+            {
+                return new \JTL\Plugin\Data\Config();
+            }
         };
         $menu = (object) ['kPluginAdminMenu' => 9];
 

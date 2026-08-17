@@ -48,7 +48,7 @@ enum LabelLanguage: string
 
         $normalisiert = strtolower(trim($localeContext));
 
-        return $normalisiert === 'de' || $normalisiert === 'de-de'
+        return in_array($normalisiert, ['de', 'de-de', 'ger'], true)
             ? self::De
             : self::En;
     }

@@ -243,6 +243,10 @@ final class PluginContractTest extends TestCase
         $bootstrap->boot($dispatcher);
 
         self::assertSame(1, JtlBootstrapper::$bootAufrufe, 'boot() muss genau einmal an JTL weitergeben.');
-        self::assertSame([], get_object_vars($dispatcher), 'Der Bootstrap darf den Dispatcher nicht verändern.');
+        self::assertSame(
+            ['shop.hook.140'],
+            $dispatcher->events(),
+            'Der Bootstrap muss genau den offiziellen JTL-Outputfilter für lokale Frontendassets registrieren.',
+        );
     }
 }

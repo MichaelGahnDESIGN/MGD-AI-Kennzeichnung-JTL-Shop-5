@@ -401,6 +401,33 @@ final class TransactionalDatabaseFake implements DbInterface
     public function getObjects(string $stmt, array $params = []): array
     {
         $this->statements[] = ['sql' => $stmt, 'params' => $params];
+        if (str_contains($stmt, 'INNER JOIN `xplugin_mgd_ai_usage`')) {
+            $sichtbar = ['generated' => true, 'partially-generated' => true, 'modified' => true, 'deepfake' => true];
+            $ergebnis = [];
+            foreach ($this->assets as $asset) {
+                if (!isset($sichtbar[$asset['status']])) {
+                    continue;
+                }
+                $quelle = null;
+                foreach ($this->usages as $usage) {
+                    if ($usage['asset_id'] === $asset['id'] && $usage['is_present'] === 1) {
+                        $kandidat = $usage['source_type'];
+                        $quelle = is_string($kandidat) && ($quelle === null || $kandidat < $quelle) ? $kandidat : $quelle;
+                    }
+                }
+                if ($quelle !== null) {
+                    $ergebnis[] = (object) [
+                        'local_path' => $asset['local_path'],
+                        'status' => $asset['status'],
+                        'position' => $asset['position'],
+                        'theme' => $asset['theme'],
+                        'source_type' => $quelle,
+                    ];
+                }
+            }
+
+            return array_slice($ergebnis, 0, 500);
+        }
         if (str_contains($stmt, 'FROM `xplugin_mgd_ai_asset`') && str_contains($stmt, ' IN (')) {
             $requested = $this->integerParameterSet($params);
 

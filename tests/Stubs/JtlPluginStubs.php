@@ -10,7 +10,28 @@ declare(strict_types=1);
 
 namespace JTL\Events;
 
-class Dispatcher {}
+class Dispatcher
+{
+    /** @var array<string, callable> */
+    private array $listeners = [];
+
+    public function listen(string $event, callable $listener): void
+    {
+        $this->listeners[$event] = $listener;
+    }
+
+    /** @return list<string> */
+    public function events(): array
+    {
+        return array_keys($this->listeners);
+    }
+
+    /** @param array<mixed> $arguments */
+    public function dispatch(string $event, array $arguments): void
+    {
+        ($this->listeners[$event])($arguments);
+    }
+}
 
 namespace JTL\Plugin;
 
@@ -37,6 +58,11 @@ class Bootstrapper
     {
         throw new \RuntimeException('Im reinen Bootstrap-Strukturtest ist keine Datenbank gesetzt.');
     }
+
+    public function getPlugin(): PluginInterface
+    {
+        throw new \RuntimeException('Im reinen Bootstrap-Strukturtest ist kein Pluginobjekt gesetzt.');
+    }
 }
 
 interface PluginInterface
@@ -46,6 +72,8 @@ interface PluginInterface
     public function getPaths(): \JTL\Plugin\Data\Paths;
 
     public function getAdminMenu(): \JTL\Plugin\Data\AdminMenu;
+
+    public function getConfig(): \JTL\Plugin\Data\Config;
 }
 
 namespace JTL\Plugin\Data;
@@ -63,11 +91,30 @@ class AdminMenu
 
 class Paths
 {
-    public function __construct(private readonly string $adminURL = '/plugin/adminmenu/') {}
+    public function __construct(
+        private readonly string $adminURL = '/plugin/adminmenu/',
+        private readonly string $frontendURL = 'https://example.test/plugin/frontend/',
+    ) {}
 
     public function getAdminURL(): string
     {
         return $this->adminURL;
+    }
+
+    public function getFrontendURL(): string
+    {
+        return $this->frontendURL;
+    }
+}
+
+class Config
+{
+    /** @param array<string, mixed> $values */
+    public function __construct(private readonly array $values = []) {}
+
+    public function getValue(string $name): mixed
+    {
+        return $this->values[$name] ?? null;
     }
 }
 
@@ -155,6 +202,26 @@ class Shop
     public static function getLanguageCode(): string
     {
         return 'ger';
+    }
+
+    public static function Smarty(): \JTL\Smarty\JTLSmarty
+    {
+        return new \JTL\Smarty\JTLSmarty();
+    }
+}
+
+namespace JTL\Smarty;
+
+class JTLSmarty
+{
+    public function assign(string $name, mixed $value): self
+    {
+        return $this;
+    }
+
+    public function fetch(string $path): string
+    {
+        return '';
     }
 }
 

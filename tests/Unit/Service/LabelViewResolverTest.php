@@ -14,6 +14,14 @@ use ReflectionProperty;
 
 final class LabelViewResolverTest extends TestCase
 {
+    #[Test]
+    public function jtl_sprachcode_ger_wird_als_deutsch_aufgeloest(): void
+    {
+        $view = (new LabelViewResolver())->resolve('generated', language: 'auto', locale: 'ger');
+
+        self::assertSame('KI-GENERIERT', $view->visibleText);
+    }
+
     /**
      * @return iterable<string, array{mixed}>
      */

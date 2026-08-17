@@ -56,6 +56,11 @@ final class PhilosophyPortletContractTest extends TestCase
         $info = file_get_contents(self::ROOT . '/info.xml');
         self::assertIsString($info);
 
+        self::assertStringContainsString('<Class>AIPhilosophie</Class>', $info);
+        self::assertStringContainsString('<Group>content</Group>', $info);
+        self::assertStringContainsString('<Active>1</Active>', $info);
+        self::assertStringContainsString('<Filename>philosophy.php</Filename>', $info);
+        self::assertFileExists(self::ROOT . '/adminmenu/philosophy.php');
         self::assertStringNotContainsString('<LinkGroup', $info);
         self::assertStringNotContainsString('<SpecialPage', $info);
         self::assertStringNotContainsString('<Blueprint', $info);

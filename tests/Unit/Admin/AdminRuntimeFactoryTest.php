@@ -11,6 +11,7 @@ use JTL\Backend\AdminAccount;
 use JTL\Plugin\PluginInterface;
 use JTL\Plugin\Data\Paths;
 use JTL\Plugin\Data\AdminMenu;
+use JTL\Plugin\Data\Config;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Controller\AdminAssetController;
@@ -38,6 +39,11 @@ final class AdminRuntimeFactoryTest extends TestCase
             public function getAdminMenu(): AdminMenu
             {
                 return new AdminMenu([9]);
+            }
+
+            public function getConfig(): Config
+            {
+                return new Config();
             }
         };
 

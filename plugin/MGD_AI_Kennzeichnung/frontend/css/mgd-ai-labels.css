@@ -31,7 +31,8 @@
     -webkit-backdrop-filter: blur(var(--mgd-ai-blur));
 }
 
-/* Ein manuell markiertes OPC-Element bildet den sicheren Positionierungsrahmen. */
+/* Native Bilder und manuell markierte OPC-Elemente erhalten einen lokalen Positionierungsrahmen. */
+.mgd-ai-label-host,
 .mgd-ai-label:not([role="note"]) {
     position: relative;
 }

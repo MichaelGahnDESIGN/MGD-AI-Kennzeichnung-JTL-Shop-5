@@ -9,12 +9,25 @@
     <PluginID>MGD_AI_Kennzeichnung</PluginID>
     <CreateDate>2026-08-12</CreateDate>
     <Version>1.0.0</Version>
-    <Adminmenu>
+    <Install>
+        <Portlets>
+            <Portlet>
+                <Title>AI-Philosophie</Title>
+                <Class>AIPhilosophie</Class>
+                <Group>content</Group>
+                <Active>1</Active>
+            </Portlet>
+        </Portlets>
+        <Adminmenu>
         <Customlink sort="1">
             <Name>Bildverwaltung</Name>
             <Filename>assets.php</Filename>
         </Customlink>
-        <Settingslink sort="2">
+        <Customlink sort="2">
+            <Name>AI-Philosophie</Name>
+            <Filename>philosophy.php</Filename>
+        </Customlink>
+        <Settingslink sort="3">
             <Name>Einstellungen</Name>
             <Setting type="selectbox" initialValue="N" sort="1" conf="Y">
                 <Name>Herstellernennung im Footer anzeigen</Name>
@@ -91,5 +104,6 @@
                 <ValueName>blur</ValueName>
             </Setting>
         </Settingslink>
-    </Adminmenu>
+        </Adminmenu>
+    </Install>
 </jtlshopplugin>
