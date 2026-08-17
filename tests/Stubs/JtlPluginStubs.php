@@ -25,6 +25,18 @@ class Bootstrapper
     {
         ++self::$bootAufrufe;
     }
+
+    public function preInstallCheck(): bool
+    {
+        return true;
+    }
+
+    public function uninstalled(bool $deleteData = true): void {}
+
+    public function getDB(): \JTL\DB\DbInterface
+    {
+        throw new \RuntimeException('Im reinen Bootstrap-Strukturtest ist keine Datenbank gesetzt.');
+    }
 }
 
 interface PluginInterface

@@ -87,7 +87,7 @@ final class PluginContractTest extends TestCase
             'Die Lizenzdatei muss den vereinbarten Copyright-Hinweis enthalten.',
         );
 
-        $this->pruefePassivenBootstrap();
+        $this->pruefeSchlankenLifecycleBootstrap();
 
         $composerJson = $this->liesDatei('composer.json', 'Die composer.json muss vorhanden und lesbar sein.');
         $composer = json_decode($composerJson, true, flags: JSON_THROW_ON_ERROR);
@@ -196,7 +196,7 @@ final class PluginContractTest extends TestCase
      * dass der Plugin-Bootstrap keine zusätzlichen öffentlichen Einstiegspunkte,
      * eigenen Zustände oder Initialisierungswege mitbringt.
      */
-    private function pruefePassivenBootstrap(): void
+    private function pruefeSchlankenLifecycleBootstrap(): void
     {
         require_once self::ROOT . '/tests/Stubs/JtlPluginStubs.php';
         require_once self::ROOT . '/plugin/MGD_AI_Kennzeichnung/Bootstrap.php';
@@ -205,14 +205,14 @@ final class PluginContractTest extends TestCase
         $konstruktor = $klasse->getConstructor();
         self::assertTrue(
             $konstruktor === null || $konstruktor->getDeclaringClass()->getName() !== $klasse->getName(),
-            'Der passive Bootstrap darf keinen eigenen Konstruktor besitzen.',
+            'Der Lifecycle-Bootstrap darf keinen eigenen Konstruktor besitzen.',
         );
 
         $eigeneEigenschaften = array_filter(
             $klasse->getProperties(),
             static fn(ReflectionProperty $eigenschaft): bool => $eigenschaft->getDeclaringClass()->getName() === $klasse->getName(),
         );
-        self::assertSame([], $eigeneEigenschaften, 'Der passive Bootstrap darf keine eigenen Eigenschaften besitzen.');
+        self::assertSame([], $eigeneEigenschaften, 'Der Lifecycle-Bootstrap darf keine eigenen Eigenschaften besitzen.');
 
         $eigeneStatischeMethoden = array_filter(
             $klasse->getMethods(ReflectionMethod::IS_STATIC),
@@ -221,7 +221,7 @@ final class PluginContractTest extends TestCase
         self::assertSame(
             [],
             $eigeneStatischeMethoden,
-            'Der passive Bootstrap darf keine eigenen statischen Initialisierungswege besitzen.',
+            'Der Lifecycle-Bootstrap darf keine eigenen statischen Initialisierungswege besitzen.',
         );
 
         $eigeneOeffentlicheMethoden = array_values(array_map(
@@ -232,9 +232,9 @@ final class PluginContractTest extends TestCase
             ),
         ));
         self::assertSame(
-            ['boot'],
+            ['boot', 'preInstallCheck', 'uninstalled'],
             $eigeneOeffentlicheMethoden,
-            'Der passive Bootstrap darf nur boot() als eigenen öffentlichen Laufzeiteinstieg bereitstellen.',
+            'Der Bootstrap darf nur die drei vorgesehenen JTL-Lifecycle-Einstiege bereitstellen.',
         );
 
         JtlBootstrapper::$bootAufrufe = 0;
