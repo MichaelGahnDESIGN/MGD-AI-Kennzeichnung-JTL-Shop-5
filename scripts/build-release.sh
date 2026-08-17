@@ -40,7 +40,12 @@ TZ=UTC find "${arbeitsordner}/MGD_AI_Kennzeichnung" -exec touch -t 202608120000.
 rm -f "${ausgabedatei}"
 (
     cd "${arbeitsordner}"
-    find MGD_AI_Kennzeichnung -type f -print | LC_ALL=C sort | zip -X -q "${ausgabedatei}" -@
+    # JTL-Shop 5.7.2 bestimmt den Plugin-Stamm aus dem ersten ZIP-Eintrag.
+    # Deshalb muss der Stammordner zwingend vor der sortierten Dateiliste stehen.
+    {
+        printf '%s\n' 'MGD_AI_Kennzeichnung/'
+        find MGD_AI_Kennzeichnung -type f -print | LC_ALL=C sort
+    } | zip -X -q "${ausgabedatei}" -@
 )
 
 echo "Release erstellt: ${ausgabedatei}"

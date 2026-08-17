@@ -25,6 +25,11 @@ final class DocumentationAndReleaseTest extends TestCase
         self::assertSame($ersterHash, hash_file('sha256', self::ZIP));
 
         $eintraege = $this->entries();
+        self::assertSame(
+            'MGD_AI_Kennzeichnung/',
+            $eintraege[0] ?? null,
+            'JTL-Shop 5.7.2 leitet den Plugin-Stamm aus dem ersten ZIP-Eintrag ab.',
+        );
         self::assertContains('MGD_AI_Kennzeichnung/Bootstrap.php', $eintraege);
         self::assertContains('MGD_AI_Kennzeichnung/info.xml', $eintraege);
         self::assertContains('MGD_AI_Kennzeichnung/Portlets/AIPhilosophie/AIPhilosophie.php', $eintraege);
