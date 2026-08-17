@@ -1,0 +1,220 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Service;
+
+use DOMDocument;
+use DOMElement;
+use DOMXPath;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use Plugin\MGD_AI_Kennzeichnung\Domain\LabelLanguage;
+use Plugin\MGD_AI_Kennzeichnung\Domain\LabelPosition;
+use Plugin\MGD_AI_Kennzeichnung\Domain\LabelTheme;
+use Plugin\MGD_AI_Kennzeichnung\Service\DisplaySettings;
+use ReflectionClass;
+
+final class DisplaySettingsTest extends TestCase
+{
+    private const INFO_XML = __DIR__ . '/../../../plugin/MGD_AI_Kennzeichnung/info.xml';
+
+    #[Test]
+    public function sichere_standardwerte_sind_unveraenderlich_und_datenschutzfreundlich(): void
+    {
+        $this->erwarteEinstellungenKlasse();
+
+        $einstellungen = DisplaySettings::fromInput([]);
+        $reflexion = new ReflectionClass($einstellungen);
+
+        self::assertTrue($reflexion->isFinal());
+        foreach ($reflexion->getProperties() as $eigenschaft) {
+            self::assertTrue($eigenschaft->isReadOnly());
+        }
+
+        self::assertFalse($einstellungen->showCredit);
+        self::assertFalse($einstellungen->updateNoticesEnabled);
+        self::assertSame(LabelLanguage::Auto, $einstellungen->language);
+        self::assertSame(LabelPosition::BottomRight, $einstellungen->position);
+        self::assertSame(LabelTheme::Auto, $einstellungen->theme);
+        self::assertSame([12, 8, 6, 4, 0], $this->zahlen($einstellungen));
+    }
+
+    #[Test]
+    public function direkte_eingaben_akzeptieren_nur_strikte_typen_und_geschlossene_werte(): void
+    {
+        $this->erwarteEinstellungenKlasse();
+
+        $gueltig = DisplaySettings::fromInput([
+            'showCredit' => true,
+            'updateNoticesEnabled' => true,
+            'language' => 'de',
+            'position' => 'top-left',
+            'theme' => 'dark',
+            'fontSize' => 48,
+            'outerMargin' => 64,
+            'innerPadding' => 32,
+            'borderRadius' => 32,
+            'blur' => 24,
+            'cssClass' => 'eingeschleust',
+        ]);
+
+        self::assertTrue($gueltig->showCredit);
+        self::assertTrue($gueltig->updateNoticesEnabled);
+        self::assertSame(LabelLanguage::De, $gueltig->language);
+        self::assertSame(LabelPosition::TopLeft, $gueltig->position);
+        self::assertSame(LabelTheme::Dark, $gueltig->theme);
+        self::assertSame([48, 64, 32, 32, 24], $this->zahlen($gueltig));
+        self::assertFalse(property_exists($gueltig, 'cssClass'));
+
+        $manipuliert = DisplaySettings::fromInput([
+            'showCredit' => 'Y',
+            'updateNoticesEnabled' => 1,
+            'language' => ' DE ',
+            'position' => 'top-left eigene-klasse',
+            'theme' => ['dark'],
+            'fontSize' => '48',
+            'outerMargin' => 1.5,
+            'innerPadding' => 'NaN',
+            'borderRadius' => INF,
+            'blur' => '<24>',
+        ]);
+
+        self::assertFalse($manipuliert->showCredit);
+        self::assertFalse($manipuliert->updateNoticesEnabled);
+        self::assertSame(LabelLanguage::Auto, $manipuliert->language);
+        self::assertSame(LabelPosition::BottomRight, $manipuliert->position);
+        self::assertSame(LabelTheme::Auto, $manipuliert->theme);
+        self::assertSame([12, 8, 6, 4, 0], $this->zahlen($manipuliert));
+    }
+
+    #[Test]
+    public function direkte_ganzzahlen_werden_auf_die_label_view_grenzen_begrenzt(): void
+    {
+        $this->erwarteEinstellungenKlasse();
+
+        $unten = DisplaySettings::fromInput([
+            'fontSize' => PHP_INT_MIN,
+            'outerMargin' => -1,
+            'innerPadding' => -1,
+            'borderRadius' => -1,
+            'blur' => -1,
+        ]);
+        $oben = DisplaySettings::fromInput([
+            'fontSize' => PHP_INT_MAX,
+            'outerMargin' => PHP_INT_MAX,
+            'innerPadding' => PHP_INT_MAX,
+            'borderRadius' => PHP_INT_MAX,
+            'blur' => PHP_INT_MAX,
+        ]);
+
+        self::assertSame([8, 0, 0, 0, 0], $this->zahlen($unten));
+        self::assertSame([48, 64, 32, 32, 24], $this->zahlen($oben));
+    }
+
+    #[Test]
+    public function jtl_adapter_akzeptiert_nur_kanonische_konfigurationsstrings(): void
+    {
+        $this->erwarteEinstellungenKlasse();
+
+        $gueltig = DisplaySettings::fromJtlConfig([
+            'show_credit' => 'Y',
+            'update_notices' => 'Y',
+            'language' => 'en',
+            'position' => 'bottom-left',
+            'theme' => 'light',
+            'font_size' => '18',
+            'outer_margin' => '14',
+            'inner_padding' => '10',
+            'border_radius' => '7',
+            'blur' => '5',
+        ]);
+
+        self::assertTrue($gueltig->showCredit);
+        self::assertTrue($gueltig->updateNoticesEnabled);
+        self::assertSame(LabelLanguage::En, $gueltig->language);
+        self::assertSame(LabelPosition::BottomLeft, $gueltig->position);
+        self::assertSame(LabelTheme::Light, $gueltig->theme);
+        self::assertSame([18, 14, 10, 7, 5], $this->zahlen($gueltig));
+
+        $manipuliert = DisplaySettings::fromJtlConfig([
+            'show_credit' => 'yes',
+            'update_notices' => '1',
+            'font_size' => '12px',
+            'outer_margin' => '1.5',
+            'inner_padding' => 'NaN',
+            'border_radius' => [],
+            'blur' => ' 5 ',
+        ]);
+
+        self::assertFalse($manipuliert->showCredit);
+        self::assertFalse($manipuliert->updateNoticesEnabled);
+        self::assertSame([12, 8, 6, 4, 0], $this->zahlen($manipuliert));
+    }
+
+    #[Test]
+    public function info_xml_verwendet_offizielle_jtl_settinglinks_mit_sicheren_defaults(): void
+    {
+        $dokument = new DOMDocument();
+        self::assertTrue($dokument->load(self::INFO_XML));
+        $xpath = new DOMXPath($dokument);
+
+        $settingslinks = $xpath->query('/jtlshopplugin/Adminmenu/Settingslink');
+        self::assertNotFalse($settingslinks);
+        self::assertCount(1, $settingslinks);
+
+        $erwarteteDefaults = [
+            'show_credit' => 'N',
+            'update_notices' => 'N',
+            'language' => 'auto',
+            'position' => 'bottom-right',
+            'theme' => 'auto',
+            'font_size' => '12',
+            'outer_margin' => '8',
+            'inner_padding' => '6',
+            'border_radius' => '4',
+            'blur' => '0',
+        ];
+
+        foreach ($erwarteteDefaults as $name => $standard) {
+            $abfrage = sprintf(
+                '/jtlshopplugin/Adminmenu/Settingslink/Setting[ValueName="%s"]',
+                $name,
+            );
+            $knoten = $xpath->query($abfrage);
+            self::assertNotFalse($knoten);
+            self::assertCount(1, $knoten, sprintf('Die Einstellung %s muss genau einmal existieren.', $name));
+            $element = $knoten->item(0);
+            self::assertInstanceOf(DOMElement::class, $element);
+            self::assertSame('Y', $element->attributes->getNamedItem('conf')?->nodeValue);
+            self::assertSame($standard, $element->attributes->getNamedItem('initialValue')?->nodeValue);
+        }
+
+        $version = $xpath->evaluate('string(/jtlshopplugin/Version)');
+        $dateiname = $xpath->evaluate('string(/jtlshopplugin/Adminmenu/Customlink/Filename)');
+        self::assertIsString($version);
+        self::assertIsString($dateiname);
+        self::assertSame('1.0.0', trim($version));
+        self::assertSame('assets.php', trim($dateiname));
+    }
+
+    /** @return array{int, int, int, int, int} */
+    private function zahlen(DisplaySettings $einstellungen): array
+    {
+        return [
+            $einstellungen->fontSize,
+            $einstellungen->outerMargin,
+            $einstellungen->innerPadding,
+            $einstellungen->borderRadius,
+            $einstellungen->blur,
+        ];
+    }
+
+    private function erwarteEinstellungenKlasse(): void
+    {
+        self::assertTrue(
+            class_exists(DisplaySettings::class),
+            sprintf('Die Klasse %s muss implementiert werden.', DisplaySettings::class),
+        );
+    }
+}

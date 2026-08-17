@@ -14,5 +14,82 @@
             <Name>Bildverwaltung</Name>
             <Filename>assets.php</Filename>
         </Customlink>
+        <Settingslink sort="2">
+            <Name>Einstellungen</Name>
+            <Setting type="selectbox" initialValue="N" sort="1" conf="Y">
+                <Name>Herstellernennung im Footer anzeigen</Name>
+                <Description>Zeigt optional den festen Hinweis „Plugin von Michael Gahn DESIGN“ an.</Description>
+                <ValueName>show_credit</ValueName>
+                <SelectboxOptions>
+                    <Option value="N" sort="1">Nein</Option>
+                    <Option value="Y" sort="2">Ja</Option>
+                </SelectboxOptions>
+            </Setting>
+            <Setting type="selectbox" initialValue="N" sort="2" conf="Y">
+                <Name>Updatehinweise über GitHub abrufen</Name>
+                <Description>Datenschutzfreundlich deaktiviert. Bei Aktivierung wird höchstens alle zwölf Stunden die neueste Release-Information bei api.github.com abgefragt.</Description>
+                <ValueName>update_notices</ValueName>
+                <SelectboxOptions>
+                    <Option value="N" sort="1">Nein</Option>
+                    <Option value="Y" sort="2">Ja</Option>
+                </SelectboxOptions>
+            </Setting>
+            <Setting type="selectbox" initialValue="auto" sort="3" conf="Y">
+                <Name>Sprache der Kennzeichnung</Name>
+                <Description>Verwendet automatisch die Shopsprache oder eine fest gewählte Sprache.</Description>
+                <ValueName>language</ValueName>
+                <SelectboxOptions>
+                    <Option value="auto" sort="1">Automatisch</Option>
+                    <Option value="de" sort="2">Deutsch</Option>
+                    <Option value="en" sort="3">Englisch</Option>
+                </SelectboxOptions>
+            </Setting>
+            <Setting type="selectbox" initialValue="bottom-right" sort="4" conf="Y">
+                <Name>Position der Kennzeichnung</Name>
+                <Description>Legt die Position anhand einer festen, sicheren Auswahl fest.</Description>
+                <ValueName>position</ValueName>
+                <SelectboxOptions>
+                    <Option value="top-left" sort="1">Oben links</Option>
+                    <Option value="top-right" sort="2">Oben rechts</Option>
+                    <Option value="bottom-left" sort="3">Unten links</Option>
+                    <Option value="bottom-right" sort="4">Unten rechts</Option>
+                </SelectboxOptions>
+            </Setting>
+            <Setting type="selectbox" initialValue="auto" sort="5" conf="Y">
+                <Name>Farbschema der Kennzeichnung</Name>
+                <Description>Verwendet ausschließlich die mitgelieferten Darstellungsvarianten.</Description>
+                <ValueName>theme</ValueName>
+                <SelectboxOptions>
+                    <Option value="auto" sort="1">Automatisch</Option>
+                    <Option value="light" sort="2">Hell</Option>
+                    <Option value="dark" sort="3">Dunkel</Option>
+                </SelectboxOptions>
+            </Setting>
+            <Setting type="text" initialValue="12" sort="6" conf="Y">
+                <Name>Schriftgröße</Name>
+                <Description>Ganzzahl in Pixeln; sichere Grenze: 8 bis 48.</Description>
+                <ValueName>font_size</ValueName>
+            </Setting>
+            <Setting type="text" initialValue="8" sort="7" conf="Y">
+                <Name>Außenabstand</Name>
+                <Description>Ganzzahl in Pixeln; sichere Grenze: 0 bis 64.</Description>
+                <ValueName>outer_margin</ValueName>
+            </Setting>
+            <Setting type="text" initialValue="6" sort="8" conf="Y">
+                <Name>Innenabstand</Name>
+                <Description>Ganzzahl in Pixeln; sichere Grenze: 0 bis 32.</Description>
+                <ValueName>inner_padding</ValueName>
+            </Setting>
+            <Setting type="text" initialValue="4" sort="9" conf="Y">
+                <Name>Eckenradius</Name>
+                <Description>Ganzzahl in Pixeln; sichere Grenze: 0 bis 32.</Description>
+                <ValueName>border_radius</ValueName>
+            </Setting>
+            <Setting type="text" initialValue="0" sort="10" conf="Y">
+                <Name>Hintergrundunschärfe</Name>
+                <Description>Ganzzahl in Pixeln; sichere Grenze: 0 bis 24.</Description>
+                <ValueName>blur</ValueName>
+            </Setting>
+        </Settingslink>
     </Adminmenu>
 </jtlshopplugin>
