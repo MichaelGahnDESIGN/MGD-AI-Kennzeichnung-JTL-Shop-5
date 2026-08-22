@@ -5,5 +5,11 @@
 /.idea/
 /.vscode/
 /.worktrees/
+/.superpowers/
+/.secrets/
 /dist/
+.env*
+*.bak
+*.pem
+*.sql
 .DS_Store

@@ -11,7 +11,23 @@ use ZipArchive;
 final class DocumentationAndReleaseTest extends TestCase
 {
     private const ROOT = __DIR__ . '/../..';
-    private const ZIP = self::ROOT . '/dist/MGD_AI_Kennzeichnung-1.0.0.zip';
+    private const ZIP = self::ROOT . '/dist/MGD_AI_Kennzeichnung-1.1.0.zip';
+
+    #[Test]
+    public function releaseziel_und_lokale_artefakte_sind_eindeutig_abgegrenzt(): void
+    {
+        $script = file_get_contents(self::ROOT . '/scripts/build-release.sh');
+        $gitignore = file_get_contents(self::ROOT . '/.gitignore');
+        self::assertIsString($script);
+        self::assertIsString($gitignore);
+
+        self::assertStringContainsString('MGD_AI_Kennzeichnung-1.1.0.zip', $script);
+        self::assertStringNotContainsString('MGD_AI_Kennzeichnung-1.0.0.zip', $script);
+
+        foreach (['/.superpowers/', '*.sql', '*.bak', '.env*'] as $muster) {
+            self::assertStringContainsString($muster, $gitignore);
+        }
+    }
 
     #[Test]
     public function build_erzeugt_zweimal_dasselbe_minimale_installationspaket(): void
