@@ -4,5 +4,6 @@
 /.phpstan.cache/
 /.idea/
 /.vscode/
+/.worktrees/
 /dist/
 .DS_Store
