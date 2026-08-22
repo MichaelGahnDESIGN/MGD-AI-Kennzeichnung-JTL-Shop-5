@@ -4,11 +4,20 @@ declare(strict_types=1);
 
 namespace Plugin\MGD_AI_Kennzeichnung;
 
+use JTL\Backend\AdminIO;
 use JTL\Events\Dispatcher;
 use JTL\Plugin\Bootstrapper;
 use JTL\Shop;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlAuthorizationAdapter;
+use Plugin\MGD_AI_Kennzeichnung\Admin\IO\AdminIoRegistration;
+use Plugin\MGD_AI_Kennzeichnung\Admin\IO\LoadLocalAssetLabel;
+use Plugin\MGD_AI_Kennzeichnung\Admin\IO\SaveLocalAssetLabel;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Presentation\LocalPreviewUrlResolver;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Service\LocalAssetLabelService;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\FrontendLabelRepository;
+use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\LocalAssetLabelRepository;
 use Plugin\MGD_AI_Kennzeichnung\Presentation\FrontendDocumentIntegrator;
+use Plugin\MGD_AI_Kennzeichnung\Scanner\LocalPathNormalizer;
 use Plugin\MGD_AI_Kennzeichnung\Service\DisplaySettings;
 use Plugin\MGD_AI_Kennzeichnung\Service\SystemCompatibilityCheck;
 use Plugin\MGD_AI_Kennzeichnung\Setup\PluginDataLifecycle;
@@ -31,6 +40,11 @@ class Bootstrap extends Bootstrapper
     public function boot(Dispatcher $dispatcher): void
     {
         parent::boot($dispatcher);
+        if (!Shop::isFrontend()) {
+            $this->bootAdminIo($dispatcher);
+
+            return;
+        }
         $dispatcher->listen('shop.hook.140', function (array $argumente): void {
             $plugin = $this->getPlugin();
             $konfiguration = $plugin->getConfig();
@@ -63,6 +77,48 @@ class Bootstrap extends Bootstrapper
                 );
             } catch (Throwable) {
                 return;
+            }
+        });
+    }
+
+    /**
+     * Bindet die lokale Kennzeichnung an JTLs bereits authentifizierte
+     * Admin-IO-Pipeline. Es entsteht kein eigener öffentlich erreichbarer URL.
+     */
+    private function bootAdminIo(Dispatcher $dispatcher): void
+    {
+        $plugin = $this->getPlugin();
+        $sessionId = session_id();
+        if ($sessionId === false) {
+            return;
+        }
+
+        $authorization = new JtlAuthorizationAdapter(
+            Shop::Container()->getAdminAccount(),
+            $plugin->getID(),
+            $sessionId,
+        );
+        try {
+            $authorization->assertCanManageAssets();
+        } catch (Throwable) {
+            return;
+        }
+        $service = new LocalAssetLabelService(
+            $authorization,
+            new LocalAssetLabelRepository($this->getDB()),
+            new LocalPathNormalizer(),
+            new LocalPreviewUrlResolver(),
+        );
+        $registration = new AdminIoRegistration(
+            new LoadLocalAssetLabel($service),
+            new SaveLocalAssetLabel($service),
+        );
+
+        /* HOOK_IO_HANDLE_REQUEST_ADMIN besitzt in JTL-Shop 5.7.2 die feste ID 311. */
+        $dispatcher->listen('shop.hook.311', static function (array $arguments) use ($registration): void {
+            $io = $arguments['io'] ?? null;
+            if ($io instanceof AdminIO) {
+                $registration->register($io);
             }
         });
     }

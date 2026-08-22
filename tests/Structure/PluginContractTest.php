@@ -8,6 +8,7 @@ use DOMDocument;
 use DOMXPath;
 use JTL\Events\Dispatcher;
 use JTL\Plugin\Bootstrapper as JtlBootstrapper;
+use JTL\Shop;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -238,6 +239,7 @@ final class PluginContractTest extends TestCase
         );
 
         JtlBootstrapper::$bootAufrufe = 0;
+        Shop::$frontend = true;
         $dispatcher = new Dispatcher();
         $bootstrap = $klasse->newInstance();
         $bootstrap->boot($dispatcher);

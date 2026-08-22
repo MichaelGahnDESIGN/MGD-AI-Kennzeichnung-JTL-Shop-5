@@ -155,6 +155,42 @@ class AdminAccount
     }
 }
 
+/** Beobachtbarer Ersatz für JTLs bereits authentifizierten Admin-IO-Container. */
+class AdminIO
+{
+    /** @var array<string, callable> */
+    private array $functions = [];
+
+    /**
+     * @param array{object|string, string}|callable|null $function
+     */
+    public function register(
+        string $name,
+        array|callable|null $function = null,
+        ?string $include = null,
+        ?string $permission = null,
+    ): self {
+        if (!is_callable($function) || isset($this->functions[$name])) {
+            throw new \RuntimeException('Ungültige oder doppelte Admin-IO-Registrierung.');
+        }
+        $this->functions[$name] = $function;
+
+        return $this;
+    }
+
+    /** @return list<string> */
+    public function registeredNames(): array
+    {
+        return array_keys($this->functions);
+    }
+
+    /** @param list<mixed> $params */
+    public function executeForTest(string $name, array $params): mixed
+    {
+        return ($this->functions[$name])(...$params);
+    }
+}
+
 namespace JTL\Helpers;
 
 class Form
@@ -189,6 +225,7 @@ use JTL\Services\DefaultServicesInterface;
 class Shop
 {
     public static ?DefaultServicesInterface $container = null;
+    public static bool $frontend = true;
 
     public static function Container(): DefaultServicesInterface
     {
@@ -202,6 +239,11 @@ class Shop
     public static function getLanguageCode(): string
     {
         return 'ger';
+    }
+
+    public static function isFrontend(): bool
+    {
+        return self::$frontend;
     }
 
     public static function Smarty(): \JTL\Smarty\JTLSmarty

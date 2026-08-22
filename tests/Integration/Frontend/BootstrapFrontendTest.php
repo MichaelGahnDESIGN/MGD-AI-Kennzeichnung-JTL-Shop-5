@@ -13,6 +13,7 @@ use JTL\Plugin\Data\AdminMenu;
 use JTL\Plugin\Data\Config;
 use JTL\Plugin\Data\Paths;
 use JTL\Plugin\PluginInterface;
+use JTL\Shop;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Plugin\MGD_AI_Kennzeichnung\Bootstrap;
@@ -23,6 +24,7 @@ final class BootstrapFrontendTest extends TestCase
     #[Test]
     public function outputfilter_verbindet_plugin_assets_einstellungen_und_native_labels(): void
     {
+        Shop::$frontend = true;
         $db = new TransactionalDatabaseFake();
         $db->seedScanAsset('sichtbar', 'media/sichtbar.webp', 'generated');
         $db->seedScanUsage('sichtbar', 'media/sichtbar.webp', 'produkt-1');
