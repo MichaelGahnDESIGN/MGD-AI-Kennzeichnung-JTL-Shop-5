@@ -1,6 +1,99 @@
-import { renderPreviewLabel } from './label-preview.mjs';
+import { renderPreviewLabel, statusText } from './label-preview.mjs';
 
 const FOKUS_ELEMENTE = 'button:not([disabled]), select:not([disabled]), input:not([disabled]), a[href]';
+
+/** Erstellt das exakt begrenzte POST-Formular für eine Einzelkennzeichnung. */
+export function createSingleUpdatePayload(values, context) {
+    return new URLSearchParams([
+        ['action', 'single-update'],
+        ['csrf_token', context.csrfToken],
+        ['asset_id', values.assetId],
+        ['mask[status]', '1'],
+        ['mask[position]', '1'],
+        ['mask[theme]', '1'],
+        ['values[status]', values.status],
+        ['values[position]', values.position],
+        ['values[theme]', values.theme],
+        ['kPlugin', context.pluginId],
+        ['kPluginAdminMenu', context.adminMenuId],
+    ]);
+}
+
+/**
+ * Lässt während einer laufenden Anfrage keine zweite Mutation zu. Mehrere
+ * Klicks erhalten dasselbe Promise und lösen daher genau eine Anfrage aus.
+ */
+export function createExclusiveSaveHandler(send, applySuccess) {
+    let inFlight = null;
+
+    return (values) => {
+        if (inFlight !== null) {
+            return inFlight;
+        }
+        let request;
+        try {
+            request = Promise.resolve(send(values));
+        } catch (error) {
+            request = Promise.reject(error);
+        }
+        const operation = request.then((result) => {
+            if (!result || result.ok !== true) {
+                throw new Error('Der Server hat die Speicherung nicht bestätigt.');
+            }
+            applySuccess(values, result);
+
+            return result;
+        }).finally(() => {
+            if (inFlight === operation) {
+                inFlight = null;
+            }
+        });
+        inFlight = operation;
+
+        return operation;
+    };
+}
+
+async function sendSingleUpdate(values, context) {
+    const response = await fetch(window.location.href, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: createSingleUpdatePayload(values, context),
+    });
+    if (response.status === 401 || response.status === 403) {
+        throw new Error('Die Admin-Sitzung ist abgelaufen oder nicht berechtigt.');
+    }
+    if (!response.ok) {
+        throw new Error('Der Server konnte die Anfrage nicht verarbeiten.');
+    }
+    const documentCopy = new DOMParser().parseFromString(await response.text(), 'text/html');
+    if (!documentCopy.querySelector('[data-mgd-result="success"]')) {
+        throw new Error('Der Server hat die Speicherung nicht bestätigt.');
+    }
+
+    return { ok: true };
+}
+
+function applySavedLabel(values) {
+    const card = values.card;
+    if (!card) {
+        return;
+    }
+    card.dataset.status = values.status;
+    card.dataset.position = values.position;
+    card.dataset.theme = values.theme;
+    const status = card.querySelector('.mgd-status');
+    const statusLabel = card.querySelector('[data-status-text]');
+    if (status && statusLabel) {
+        [...status.classList].filter((name) => name.startsWith('mgd-status--')).forEach((name) => status.classList.remove(name));
+        status.classList.add(`mgd-status--${values.status}`);
+        statusLabel.textContent = statusText(values.status);
+    }
+}
 
 /**
  * Initialisiert genau einen Dialog. Ohne übergebenen Speicheradapter verändert
@@ -20,6 +113,15 @@ export function initializeLabelDialog(root, saveLabel = null) {
     let activeCard = null;
 
     const field = (name) => form.elements.namedItem(name);
+    const context = {
+        csrfToken: field('csrf_token').value,
+        pluginId: field('kPlugin').value,
+        adminMenuId: field('kPluginAdminMenu').value,
+    };
+    const persist = saveLabel ?? createExclusiveSaveHandler(
+        (values) => sendSingleUpdate(values, context),
+        applySavedLabel,
+    );
     const refreshPreview = () => {
         renderPreviewLabel(preview, field('status').value, field('position').value, field('theme').value);
     };
@@ -88,13 +190,9 @@ export function initializeLabelDialog(root, saveLabel = null) {
         if (saveButton.disabled || !activeCard) {
             return;
         }
-        if (typeof saveLabel !== 'function') {
-            message.textContent = 'Die Speicherfunktion wird vorbereitet.';
-            return;
-        }
         saveButton.disabled = true;
         try {
-            await saveLabel({
+            await persist({
                 assetId: field('asset_id').value,
                 status: field('status').value,
                 position: field('position').value,
@@ -102,8 +200,10 @@ export function initializeLabelDialog(root, saveLabel = null) {
                 card: activeCard,
             });
             close();
-        } catch {
-            message.textContent = 'Die Kennzeichnung konnte nicht gespeichert werden.';
+        } catch (error) {
+            message.textContent = error instanceof Error
+                ? error.message
+                : 'Die Kennzeichnung konnte nicht gespeichert werden.';
         } finally {
             saveButton.disabled = false;
         }

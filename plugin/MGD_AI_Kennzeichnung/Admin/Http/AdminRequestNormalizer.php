@@ -24,6 +24,11 @@ final class AdminRequestNormalizer
     private const MAX_FIELDS = 32;
     private const MAX_DEPTH = 3;
     private const MAX_TOKEN_LENGTH = 256;
+    private const ALLOWED_TARGETS = [
+        'status' => ['unreviewed', 'none', 'generated', 'partially-generated', 'modified', 'deepfake'],
+        'position' => ['top-left', 'top-right', 'bottom-left', 'bottom-right'],
+        'theme' => ['auto', 'light', 'dark'],
+    ];
 
     /** @param array<string, mixed> $post */
     public function bulkPreview(array $post): BulkPreviewRequest
@@ -256,6 +261,7 @@ final class AdminRequestNormalizer
         foreach ($input as $key => $value) {
             if (!is_string($key) || !in_array($key, ['status', 'position', 'theme'], true)
                 || !is_string($value) || $value === '' || strlen($value) > $maximumLength
+                || !in_array($value, self::ALLOWED_TARGETS[$key], true)
             ) {
                 throw new ValidationException('Ein Zielwert ist ungültig.');
             }

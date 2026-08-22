@@ -8,7 +8,7 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\ViewModel\AdminRoute;
 /** @var AdminRoute $route */
 $escapedMessage = htmlspecialchars($message, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 ?>
-<div role="status" aria-label="Rückmeldung">
+<div role="status" aria-label="Rückmeldung" data-mgd-result="success">
     <p><?= $escapedMessage ?></p>
 </div>
 <p><a href="<?= htmlspecialchars($route->query(['view' => 'list']), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>">Zurück zur Bildliste</a></p>

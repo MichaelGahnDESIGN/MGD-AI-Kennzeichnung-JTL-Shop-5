@@ -12,6 +12,37 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\Http\AdminRequestNormalizer;
 final class AdminRequestNormalizerTest extends TestCase
 {
     #[Test]
+    public function einzelnes_bild_und_feste_kennzeichnungswerte_werden_exakt_normalisiert(): void
+    {
+        $request = (new AdminRequestNormalizer())->singleUpdate([
+            'action' => 'single-update',
+            'csrf_token' => 'csrf-token',
+            'asset_id' => '17',
+            'mask' => ['status' => '1', 'position' => '1', 'theme' => '1'],
+            'values' => ['status' => 'generated', 'position' => 'bottom-right', 'theme' => 'auto'],
+        ]);
+
+        self::assertSame(17, $request->assetId);
+        self::assertSame(['status' => true, 'position' => true, 'theme' => true], $request->mask);
+        self::assertSame(['status' => 'generated', 'position' => 'bottom-right', 'theme' => 'auto'], $request->values);
+
+        foreach (['status' => 'frei', 'position' => 'mitte', 'theme' => 'transparent'] as $field => $value) {
+            try {
+                (new AdminRequestNormalizer())->singleUpdate([
+                    'action' => 'single-update',
+                    'csrf_token' => 'csrf-token',
+                    'asset_id' => '17',
+                    'mask' => [$field => '1'],
+                    'values' => [$field => $value],
+                ]);
+                self::fail('Freie Kennzeichnungswerte müssen abgelehnt werden.');
+            } catch (ValidationException) {
+                self::addToAssertionCount(1);
+            }
+        }
+    }
+
+    #[Test]
     public function echtes_bulk_formular_wird_streng_in_ein_typisiertes_dto_ueberfuehrt(): void
     {
         $request = (new AdminRequestNormalizer())->bulkPreview([

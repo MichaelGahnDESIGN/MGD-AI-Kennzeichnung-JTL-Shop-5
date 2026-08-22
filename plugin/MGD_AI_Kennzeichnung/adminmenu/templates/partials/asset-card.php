@@ -30,7 +30,7 @@ $escapedDetailUrl = htmlspecialchars($route->query(['view' => 'detail', 'asset_i
         <?php endif; ?>
     </div>
     <div class="mgd-asset-card__body">
-        <p class="mgd-status mgd-status--<?= $escapedStatus ?>"><strong>Status:</strong> <?= $escapedStatusLabel ?></p>
+        <p class="mgd-status mgd-status--<?= $escapedStatus ?>"><strong>Status:</strong> <span data-status-text><?= $escapedStatusLabel ?></span></p>
         <h2 class="mgd-asset-card__title" title="<?= $escapedFileName ?>"><?= $escapedFileName ?></h2>
         <dl class="mgd-asset-card__meta">
             <div><dt>Quelle</dt><dd><?= $escapedSourceLabel ?></dd></div>
