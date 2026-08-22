@@ -18,7 +18,7 @@ use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\PhilosophyRepository;
 final class AIPhilosophie extends Portlet
 {
     protected string $title = 'AI-Philosophie';
-    protected string $group = 'content';
+    protected string $group = 'Custom Portlets';
     protected bool $active = true;
 
     public function getSanitizedContent(): string

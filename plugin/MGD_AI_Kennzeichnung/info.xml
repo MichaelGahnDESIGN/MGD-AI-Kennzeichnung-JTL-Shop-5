@@ -14,7 +14,7 @@
             <Portlet>
                 <Title>AI-Philosophie</Title>
                 <Class>AIPhilosophie</Class>
-                <Group>content</Group>
+                <Group>Custom Portlets</Group>
                 <Active>1</Active>
             </Portlet>
         </Portlets>

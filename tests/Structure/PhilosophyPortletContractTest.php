@@ -54,10 +54,13 @@ final class PhilosophyPortletContractTest extends TestCase
     public function plugin_veroeffentlicht_oder_verknuepft_keine_seite_automatisch(): void
     {
         $info = file_get_contents(self::ROOT . '/info.xml');
+        $klasse = file_get_contents(self::ROOT . '/Portlets/AIPhilosophie/AIPhilosophie.php');
         self::assertIsString($info);
+        self::assertIsString($klasse);
 
         self::assertStringContainsString('<Class>AIPhilosophie</Class>', $info);
-        self::assertStringContainsString('<Group>content</Group>', $info);
+        self::assertStringContainsString('<Group>Custom Portlets</Group>', $info);
+        self::assertStringContainsString("protected string \$group = 'Custom Portlets';", $klasse);
         self::assertStringContainsString('<Active>1</Active>', $info);
         self::assertStringContainsString('<Filename>philosophy.php</Filename>', $info);
         self::assertFileExists(self::ROOT . '/adminmenu/philosophy.php');
