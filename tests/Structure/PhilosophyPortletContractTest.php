@@ -27,6 +27,36 @@ final class PhilosophyPortletContractTest extends TestCase
     }
 
     #[Test]
+    public function opc_editor_laesst_nur_lokale_modulare_kennzeichnung_zu(): void
+    {
+        $root = self::ROOT . '/Portlets/AIPhilosophie/';
+        foreach ([
+            'editor_init.js',
+            'editor/admin-io-client.mjs',
+            'editor/image-field-detector.mjs',
+            'editor/opc-integration.mjs',
+            'editor/label-dialog.mjs',
+            'editor/label-preview.mjs',
+            'editor/editor.css',
+        ] as $datei) {
+            self::assertFileExists($root . $datei);
+        }
+
+        $entry = (string) file_get_contents($root . 'editor_init.js');
+        $all = $entry;
+        foreach (glob($root . 'editor/*') ?: [] as $file) {
+            $all .= "\n" . (string) file_get_contents($file);
+        }
+
+        self::assertStringContainsString('document.currentScript.src', $entry);
+        self::assertStringContainsString("./editor/opc-integration.mjs", $entry);
+        self::assertStringNotContainsString('eval(', $all);
+        self::assertStringNotContainsString('innerHTML', $all);
+        self::assertDoesNotMatchRegularExpression('~https?://(?!shop\.test)~i', $all);
+        self::assertDoesNotMatchRegularExpression('/(?:password|passwd|secret|api[_-]?key|private[_-]?key)/i', $all);
+    }
+
+    #[Test]
     public function template_gibt_nur_den_bereinigten_datenbankinhalt_aus(): void
     {
         $template = file_get_contents(self::ROOT . '/Portlets/AIPhilosophie/AIPhilosophie.tpl');

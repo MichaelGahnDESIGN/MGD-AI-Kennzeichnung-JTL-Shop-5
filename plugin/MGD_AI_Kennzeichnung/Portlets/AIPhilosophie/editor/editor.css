@@ -1,0 +1,82 @@
+.mgd-opc-label-button {
+    background: #16773a;
+    border: 1px solid #0d5427;
+    border-radius: .35rem;
+    color: #fff;
+    cursor: pointer;
+    display: block;
+    font-weight: 700;
+    margin-top: .5rem;
+    min-height: 2.5rem;
+    padding: .5rem .75rem;
+}
+
+.mgd-opc-label-button:focus-visible,
+.mgd-opc-dialog button:focus-visible,
+.mgd-opc-dialog select:focus-visible {
+    outline: 3px solid #0b77d5;
+    outline-offset: 2px;
+}
+
+.mgd-opc-dialog[hidden] { display: none; }
+.mgd-opc-dialog {
+    align-items: center;
+    background: rgba(8, 17, 11, .68);
+    display: flex;
+    inset: 0;
+    justify-content: center;
+    padding: 1rem;
+    position: fixed;
+    z-index: 10000;
+}
+.mgd-opc-dialog__panel {
+    background: #fff;
+    border-radius: .75rem;
+    color: #17211b;
+    max-height: calc(100vh - 2rem);
+    max-width: 50rem;
+    overflow: auto;
+    padding: 1.25rem;
+    width: 100%;
+}
+.mgd-opc-dialog__preview {
+    align-items: center;
+    background: #f4f7f5;
+    display: flex;
+    justify-content: center;
+    min-height: 16rem;
+    overflow: hidden;
+    position: relative;
+}
+.mgd-opc-dialog__preview img { height: auto; max-height: 28rem; max-width: 100%; }
+.mgd-opc-dialog__fields {
+    display: grid;
+    gap: .75rem;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    margin-top: 1rem;
+}
+.mgd-opc-dialog__field { display: grid; font-weight: 700; gap: .35rem; }
+.mgd-opc-dialog__field select { min-height: 2.6rem; }
+.mgd-opc-dialog__message { min-height: 1.5rem; }
+.mgd-opc-dialog__actions { display: flex; gap: .75rem; justify-content: flex-end; }
+.mgd-opc-button {
+    border: 1px solid #cbd5cf; border-radius: .35rem; cursor: pointer;
+    font-weight: 700; min-height: 2.6rem; padding: .5rem .85rem;
+}
+.mgd-opc-button--primary { background: #16773a; border-color: #0d5427; color: #fff; }
+.mgd-opc-button--secondary { background: #fff; color: #17211b; }
+.mgd-preview-label {
+    border: 1px solid currentColor; border-radius: .35rem; font-size: .82rem;
+    font-weight: 700; padding: .35rem .55rem; position: absolute;
+}
+.mgd-preview-label--top-left { left: .75rem; top: .75rem; }
+.mgd-preview-label--top-right { right: .75rem; top: .75rem; }
+.mgd-preview-label--bottom-left { bottom: .75rem; left: .75rem; }
+.mgd-preview-label--bottom-right { bottom: .75rem; right: .75rem; }
+.mgd-preview-label--theme-auto,
+.mgd-preview-label--theme-dark { background: rgba(18, 25, 20, .88); color: #fff; }
+.mgd-preview-label--theme-light { background: rgba(255, 255, 255, .94); color: #17211b; }
+
+@media (prefers-reduced-motion: reduce) {
+    .mgd-opc-dialog *, .mgd-opc-label-button { transition-duration: .01ms !important; }
+}
