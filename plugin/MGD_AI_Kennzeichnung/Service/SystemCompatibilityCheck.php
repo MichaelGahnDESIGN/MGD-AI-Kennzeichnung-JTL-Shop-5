@@ -4,15 +4,23 @@ declare(strict_types=1);
 
 namespace Plugin\MGD_AI_Kennzeichnung\Service;
 
-/** Prüft die beiden verbindlichen Mindestversionen ohne lose Versionsformen. */
+/** Prüft die beiden verbindlichen Mindestversionen ohne mehrdeutige Versionsformen. */
 final class SystemCompatibilityCheck
 {
-    private const VERSION_PATTERN = '/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/D';
+    private const SHOP_VERSION_PATTERN = '/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/D';
+
+    /**
+     * PHP-Hoster ergänzen PHP_VERSION teilweise um einen technischen
+     * Anbieterzusatz wie „-nmm1“. Der numerische Versionskern bleibt dabei
+     * eindeutig und kann sicher mit der Mindestversion verglichen werden.
+     */
+    private const PHP_VERSION_PATTERN =
+        '/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z][0-9A-Za-z.+~-]*)?$/D';
 
     public function supports(string $shopVersion, string $phpVersion): bool
     {
-        if (preg_match(self::VERSION_PATTERN, $shopVersion) !== 1
-            || preg_match(self::VERSION_PATTERN, $phpVersion) !== 1
+        if (preg_match(self::SHOP_VERSION_PATTERN, $shopVersion) !== 1
+            || preg_match(self::PHP_VERSION_PATTERN, $phpVersion) !== 1
         ) {
             return false;
         }

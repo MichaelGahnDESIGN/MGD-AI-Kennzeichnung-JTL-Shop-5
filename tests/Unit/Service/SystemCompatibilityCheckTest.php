@@ -22,6 +22,15 @@ final class SystemCompatibilityCheckTest extends TestCase
         self::assertTrue($check->supports('5.8.0', '8.4.2'));
     }
 
+    #[Test]
+    public function php_version_mit_serveranbieter_suffix_wird_korrekt_geprueft(): void
+    {
+        $check = new SystemCompatibilityCheck();
+
+        self::assertTrue($check->supports('5.7.2', '8.5.3-nmm1'));
+        self::assertFalse($check->supports('5.7.2', '8.0.30-nmm1'));
+    }
+
     /** @return iterable<string, array{string, string}> */
     public static function unklareVersionen(): iterable
     {
