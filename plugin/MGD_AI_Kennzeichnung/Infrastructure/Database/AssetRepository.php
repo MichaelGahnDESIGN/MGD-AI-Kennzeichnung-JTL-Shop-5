@@ -318,6 +318,7 @@ final class AssetRepository implements AdminAssetRepositoryInterface
         };
         $rows = $this->db->getObjects(
             'SELECT `asset`.`id`, `asset`.`local_path`, `asset`.`status`, `asset`.`position`, `asset`.`theme`, '
+            . '`asset`.`updated_at`, COALESCE(MIN(`usage`.`source_type`), \'unknown\') AS `source`, '
             . 'COUNT(`usage`.`id`) AS `usage_count` '
             . 'FROM `xplugin_mgd_ai_asset` AS `asset` '
             . 'LEFT JOIN `xplugin_mgd_ai_usage` AS `usage` ON `usage`.`asset_id` = `asset`.`id` '
@@ -332,7 +333,9 @@ final class AssetRepository implements AdminAssetRepositoryInterface
             'status' => is_string($row->status ?? null) ? $row->status : '',
             'position' => is_string($row->position ?? null) ? $row->position : '',
             'theme' => is_string($row->theme ?? null) ? $row->theme : '',
+            'source' => is_string($row->source ?? null) ? $row->source : 'unknown',
             'usage_count' => is_numeric($row->usage_count ?? null) ? (int) $row->usage_count : 0,
+            'updated_at' => is_string($row->updated_at ?? null) ? $row->updated_at : '',
         ], $rows));
     }
 
@@ -357,12 +360,13 @@ final class AssetRepository implements AdminAssetRepositoryInterface
         $row = $this->db->getSingleObject(
             <<<'SQL'
                 SELECT `asset`.`id`, `asset`.`local_path`, `asset`.`status`, `asset`.`position`, `asset`.`theme`,
+                       `asset`.`updated_at`, COALESCE(MIN(`usage`.`source_type`), 'unknown') AS `source`,
                        COUNT(`usage`.`id`) AS `usage_count`,
                        SUM(CASE WHEN `usage`.`is_present` = 1 THEN 1 ELSE 0 END) AS `present_usage_count`
                   FROM `xplugin_mgd_ai_asset` AS `asset`
                   LEFT JOIN `xplugin_mgd_ai_usage` AS `usage` ON `usage`.`asset_id` = `asset`.`id`
                   WHERE `asset`.`id` = :id
-                  GROUP BY `asset`.`id`, `asset`.`local_path`, `asset`.`status`, `asset`.`position`, `asset`.`theme`
+                  GROUP BY `asset`.`id`, `asset`.`local_path`, `asset`.`status`, `asset`.`position`, `asset`.`theme`, `asset`.`updated_at`
                 SQL,
             ['id' => $id],
         );
@@ -376,8 +380,10 @@ final class AssetRepository implements AdminAssetRepositoryInterface
             'status' => is_string($row->status ?? null) ? $row->status : '',
             'position' => is_string($row->position ?? null) ? $row->position : '',
             'theme' => is_string($row->theme ?? null) ? $row->theme : '',
+            'source' => is_string($row->source ?? null) ? $row->source : 'unknown',
             'usage_count' => is_numeric($row->usage_count ?? null) ? (int) $row->usage_count : 0,
             'present_usage_count' => is_numeric($row->present_usage_count ?? null) ? (int) $row->present_usage_count : 0,
+            'updated_at' => is_string($row->updated_at ?? null) ? $row->updated_at : '',
         ];
     }
 

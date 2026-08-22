@@ -31,7 +31,8 @@ final class LocalPreviewUrlResolver
     public function resolve(string $localPath, string $shopBaseUrl): ?string
     {
         $normalizedPath = $this->allowedPath($localPath);
-        if ($normalizedPath === null || !$this->isSafeShopBaseUrl($shopBaseUrl)) {
+        $origin = $this->safeOrigin($shopBaseUrl);
+        if ($normalizedPath === null || $origin === null) {
             return null;
         }
 
@@ -40,7 +41,7 @@ final class LocalPreviewUrlResolver
             explode('/', $normalizedPath),
         ));
 
-        return rtrim($shopBaseUrl, '/') . '/' . $encodedPath;
+        return $origin . '/' . $encodedPath;
     }
 
     /** Prüft dieselben Pfadregeln, ohne eine URL oder Dateisystemangabe zu erzeugen. */
@@ -70,7 +71,7 @@ final class LocalPreviewUrlResolver
      * Die Basisadresse stammt regulär aus JTL. Trotzdem wird sie fail-closed
      * geprüft, damit ein Konfigurationsfehler keine fremde Vorschau erzeugt.
      */
-    private function isSafeShopBaseUrl(string $shopBaseUrl): bool
+    private function safeOrigin(string $shopBaseUrl): ?string
     {
         $parts = parse_url($shopBaseUrl);
         if (!is_array($parts)
@@ -82,9 +83,15 @@ final class LocalPreviewUrlResolver
             || isset($parts['query'])
             || isset($parts['fragment'])
         ) {
-            return false;
+            return null;
         }
 
-        return filter_var((string) $parts['host'], FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) !== false;
+        if (filter_var((string) $parts['host'], FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) === false) {
+            return null;
+        }
+
+        $port = isset($parts['port']) ? ':' . (string) $parts['port'] : '';
+
+        return strtolower((string) $parts['scheme']) . '://' . (string) $parts['host'] . $port;
     }
 }

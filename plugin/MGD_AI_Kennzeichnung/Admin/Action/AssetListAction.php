@@ -7,9 +7,14 @@ namespace Plugin\MGD_AI_Kennzeichnung\Admin\Action;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\ValidationException;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Port\AdminAssetRepositoryInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Port\AuthorizationPortInterface;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Presentation\AssetDisplayMapper;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Presentation\LocalPreviewUrlResolver;
+use Plugin\MGD_AI_Kennzeichnung\Admin\ViewModel\AssetCardView;
 use Plugin\MGD_AI_Kennzeichnung\Admin\ViewModel\AssetListView;
 use Plugin\MGD_AI_Kennzeichnung\Domain\AssetSource;
+use Plugin\MGD_AI_Kennzeichnung\Domain\LabelPosition;
 use Plugin\MGD_AI_Kennzeichnung\Domain\LabelStatus;
+use Plugin\MGD_AI_Kennzeichnung\Domain\LabelTheme;
 
 /** Lädt eine begrenzte Übersichtsseite ohne Schreibzugriff und ohne N+1-Abfragen. */
 final class AssetListAction
@@ -17,6 +22,9 @@ final class AssetListAction
     public function __construct(
         private readonly AuthorizationPortInterface $authorization,
         private readonly AdminAssetRepositoryInterface $assets,
+        private readonly LocalPreviewUrlResolver $previewUrls,
+        private readonly AssetDisplayMapper $display,
+        private readonly string $shopBaseUrl,
     ) {}
 
     /** @param array<string, mixed> $filters */
@@ -34,14 +42,40 @@ final class AssetListAction
         $normalFilters = $this->filters($filters);
         $offset = ($page - 1) * $pageSize;
 
+        $rows = $this->assets->listPage($offset, $pageSize, $normalFilters, $sort, strtolower($direction));
+
         return new AssetListView(
-            $this->assets->listPage($offset, $pageSize, $normalFilters, $sort, strtolower($direction)),
+            array_map(fn(array $row): AssetCardView => $this->card($row), $rows),
             $this->assets->countForList($normalFilters),
             $page,
             $pageSize,
             $normalFilters,
             $sort,
             strtolower($direction),
+        );
+    }
+
+    /** @param array<string, scalar|null> $row */
+    private function card(array $row): AssetCardView
+    {
+        $localPath = is_string($row['local_path'] ?? null) ? $row['local_path'] : '';
+        $fileName = basename(str_replace('\\', '/', $localPath));
+        $status = LabelStatus::fromInput($row['status'] ?? null);
+        $source = AssetSource::fromInput($row['source'] ?? null);
+        $position = LabelPosition::fromInput($row['position'] ?? null);
+        $theme = LabelTheme::fromInput($row['theme'] ?? null);
+
+        return new AssetCardView(
+            id: is_numeric($row['id'] ?? null) ? max(0, (int) $row['id']) : 0,
+            fileName: $fileName !== '' ? $fileName : 'Unbekanntes Bild',
+            previewUrl: $this->previewUrls->resolve($localPath, $this->shopBaseUrl),
+            status: $status->value,
+            statusLabel: $this->display->statusLabel($status),
+            sourceLabel: $this->display->sourceLabel($source),
+            position: $position->value,
+            theme: $theme->value,
+            usageCount: is_numeric($row['usage_count'] ?? null) ? max(0, (int) $row['usage_count']) : 0,
+            updatedAt: is_string($row['updated_at'] ?? null) ? $row['updated_at'] : '',
         );
     }
 

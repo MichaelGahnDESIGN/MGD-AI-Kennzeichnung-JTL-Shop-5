@@ -131,6 +131,25 @@ final class AdminAssetRepositoryTest extends TestCase
         self::assertStringNotContainsString('500', $queries[0]['sql']);
     }
 
+    #[Test]
+    public function liste_und_detail_liefern_quelle_und_aenderungszeit_fuer_die_galerie(): void
+    {
+        $db = $this->database();
+        $assetKey = hash('sha256', 'media/image/storage/produkt.jpg');
+        $db->seedScanAsset($assetKey, '/media/image/storage/produkt.jpg', 'generated');
+        $db->seedScanUsage($assetKey, '/media/image/storage/produkt.jpg', 'artikel:7', 'product');
+        $repository = new AssetRepository($db);
+
+        $liste = $repository->listPage(0, 25, [], 'updated_at', 'desc');
+        $detail = $repository->detailById(1);
+
+        self::assertCount(1, $liste);
+        self::assertSame('product', $liste[0]['source'] ?? null);
+        self::assertSame('2026-08-22 12:00:00', $liste[0]['updated_at'] ?? null);
+        self::assertSame('product', $detail['source'] ?? null);
+        self::assertSame('2026-08-22 12:00:00', $detail['updated_at'] ?? null);
+    }
+
     private function database(): TransactionalDatabaseFake
     {
         $db = new TransactionalDatabaseFake();

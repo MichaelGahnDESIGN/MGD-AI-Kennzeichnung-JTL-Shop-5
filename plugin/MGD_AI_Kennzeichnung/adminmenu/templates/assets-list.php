@@ -71,7 +71,7 @@ $escapedAdminMenuId = htmlspecialchars((string) $route->adminMenuId, ENT_QUOTES 
             <tr>
                 <th scope="col">Auswahl</th>
                 <th scope="col">ID</th>
-                <th scope="col">Lokaler Pfad</th>
+                <th scope="col">Dateiname</th>
                 <th scope="col">Status</th>
                 <th scope="col">Fundstellen</th>
             </tr>
@@ -79,11 +79,11 @@ $escapedAdminMenuId = htmlspecialchars((string) $route->adminMenuId, ENT_QUOTES 
             <tbody>
             <?php foreach ($view->items as $item): ?>
                 <?php
-                $escapedId = htmlspecialchars((string) ($item['id'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-                $escapedPath = htmlspecialchars((string) ($item['local_path'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-                $escapedStatus = htmlspecialchars((string) ($item['status'] ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-                $escapedUsageCount = htmlspecialchars((string) ($item['usage_count'] ?? 0), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-                $detailUrl = $route->query(['view' => 'detail', 'asset_id' => (int) ($item['id'] ?? 0)]);
+                $escapedId = htmlspecialchars((string) $item->id, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                $escapedPath = htmlspecialchars($item->fileName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                $escapedStatus = htmlspecialchars($item->statusLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                $escapedUsageCount = htmlspecialchars((string) $item->usageCount, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                $detailUrl = $route->query(['view' => 'detail', 'asset_id' => $item->id]);
                 $escapedDetailUrl = htmlspecialchars($detailUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
                 ?>
                 <tr>

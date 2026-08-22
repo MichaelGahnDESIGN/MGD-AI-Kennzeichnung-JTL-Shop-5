@@ -15,6 +15,8 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\ValidationException;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Port\CleanupRepositoryInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Port\LogPortInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Port\ScanPortInterface;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Presentation\AssetDisplayMapper;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Presentation\LocalPreviewUrlResolver;
 use Plugin\MGD_AI_Kennzeichnung\Service\ImageScanResult;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Value\StoredOperation;
 use RuntimeException;
@@ -42,7 +44,13 @@ final class AdminActionsTest extends TestCase
     public function listenfilter_sortierung_und_seitengroesse_sind_geschlossen(): void
     {
         $trace = [];
-        $action = new AssetListAction(new RecordingAuthorization($trace, true), new RecordingAssetRepository($trace));
+        $action = new AssetListAction(
+            new RecordingAuthorization($trace, true),
+            new RecordingAssetRepository($trace),
+            new LocalPreviewUrlResolver(),
+            new AssetDisplayMapper(),
+            'https://shop.example/plugin/frontend/',
+        );
 
         foreach ([
             [1, 101, [], 'id', 'asc'],

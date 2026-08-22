@@ -26,6 +26,8 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\OneTimeConfirmationAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\SessionConfirmationStore;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Controller\AdminAssetController;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Http\AdminRequestNormalizer;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Presentation\AssetDisplayMapper;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Presentation\LocalPreviewUrlResolver;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\AssetRepository;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\ConfirmationClaimRepository;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\UsageRepository;
@@ -73,7 +75,13 @@ final class AdminRuntimeFactory
             $usages,
         );
         $handler = new AdminActionHandler(
-            new AssetListAction($authorization, $assets),
+            new AssetListAction(
+                $authorization,
+                $assets,
+                new LocalPreviewUrlResolver(),
+                new AssetDisplayMapper(),
+                $plugin->getPaths()->getFrontendURL(),
+            ),
             new AssetDetailAction($authorization, $assets),
             new CleanupListAction($authorization, $usages),
             new SingleUpdateAction($authorization, $csrf, $assets),

@@ -11,7 +11,7 @@ namespace Plugin\MGD_AI_Kennzeichnung\Admin\ViewModel;
 final class AssetListView
 {
     /**
-     * @param list<array<string, scalar|null>> $items
+     * @param list<AssetCardView> $items
      * @param array<string, scalar|null>|null $detail
      * @param array<string, string|bool> $filters
      */

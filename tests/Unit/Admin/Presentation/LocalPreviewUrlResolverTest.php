@@ -81,4 +81,15 @@ final class LocalPreviewUrlResolverTest extends TestCase
         self::assertNull($resolver->resolve('/media/image/a.jpg', 'https://user:pass@shop.example/'));
         self::assertNull($resolver->resolve('/media/image/a.jpg', '//shop.example/'));
     }
+
+    #[Test]
+    public function verwendet_aus_einer_plugin_url_nur_die_same_origin_shop_basis(): void
+    {
+        $resolver = new LocalPreviewUrlResolver();
+
+        self::assertSame(
+            'https://shop.example/media/image/a.jpg',
+            $resolver->resolve('/media/image/a.jpg', 'https://shop.example/plugins/MGD_AI_Kennzeichnung/frontend/'),
+        );
+    }
 }

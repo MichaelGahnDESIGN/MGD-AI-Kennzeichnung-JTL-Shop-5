@@ -368,6 +368,48 @@ final class TransactionalDatabaseFake implements DbInterface
 
             return is_string($assetKey) && isset($this->assets[$assetKey]) ? (object) ['id' => 1] : null;
         }
+        if (str_contains($stmt, 'FROM `xplugin_mgd_ai_asset` AS `asset`')
+            && str_contains($stmt, 'COUNT(`usage`.`id`)')
+            && isset($params['id'])
+            && is_int($params['id'])
+        ) {
+            foreach ($this->assets as $asset) {
+                if ($asset['id'] !== $params['id']) {
+                    continue;
+                }
+                $usages = array_values(array_filter(
+                    $this->usages,
+                    static fn(array $usage): bool => ($usage['asset_id'] ?? null) === $asset['id'],
+                ));
+                $sources = array_values(array_filter(array_map(
+                    static fn(array $usage): mixed => $usage['source_type'] ?? null,
+                    $usages,
+                ), 'is_string'));
+                sort($sources, SORT_STRING);
+                $row = [
+                    'id' => $asset['id'],
+                    'local_path' => $asset['local_path'],
+                    'status' => $asset['status'],
+                    'position' => $asset['position'],
+                    'theme' => $asset['theme'],
+                    'usage_count' => count($usages),
+                    'present_usage_count' => count(array_filter(
+                        $usages,
+                        static fn(array $usage): bool => ($usage['is_present'] ?? null) === 1,
+                    )),
+                ];
+                if (str_contains($stmt, 'AS `source`')) {
+                    $row['source'] = $sources[0] ?? 'unknown';
+                }
+                if (str_contains($stmt, '`asset`.`updated_at`')) {
+                    $row['updated_at'] = '2026-08-22 12:00:00';
+                }
+
+                return (object) $row;
+            }
+
+            return null;
+        }
         if (str_contains($stmt, 'FROM `xplugin_mgd_ai_asset`') && isset($params['asset_key'])) {
             $assetKey = $params['asset_key'];
             if (is_string($assetKey) && isset($this->assets[$assetKey])) {
@@ -427,6 +469,42 @@ final class TransactionalDatabaseFake implements DbInterface
             }
 
             return array_slice($ergebnis, 0, 500);
+        }
+        if (str_contains($stmt, 'FROM `xplugin_mgd_ai_asset` AS `asset`')
+            && str_contains($stmt, 'COUNT(`usage`.`id`) AS `usage_count`')
+            && str_contains($stmt, 'ORDER BY')
+        ) {
+            $rows = [];
+            foreach ($this->assets as $asset) {
+                $usages = array_values(array_filter(
+                    $this->usages,
+                    static fn(array $usage): bool => ($usage['asset_id'] ?? null) === $asset['id'],
+                ));
+                $sources = array_values(array_filter(array_map(
+                    static fn(array $usage): mixed => $usage['source_type'] ?? null,
+                    $usages,
+                ), 'is_string'));
+                sort($sources, SORT_STRING);
+                $row = [
+                    'id' => $asset['id'],
+                    'local_path' => $asset['local_path'],
+                    'status' => $asset['status'],
+                    'position' => $asset['position'],
+                    'theme' => $asset['theme'],
+                    'usage_count' => count($usages),
+                ];
+                if (str_contains($stmt, 'AS `source`')) {
+                    $row['source'] = $sources[0] ?? 'unknown';
+                }
+                if (str_contains($stmt, '`asset`.`updated_at`')) {
+                    $row['updated_at'] = '2026-08-22 12:00:00';
+                }
+                $rows[] = (object) $row;
+            }
+            $offset = $params['offset'] ?? 0;
+            $limit = $params['limit'] ?? 25;
+
+            return is_int($offset) && is_int($limit) ? array_slice($rows, $offset, $limit) : [];
         }
         if (str_contains($stmt, 'FROM `xplugin_mgd_ai_asset`') && str_contains($stmt, ' IN (')) {
             $requested = $this->integerParameterSet($params);
