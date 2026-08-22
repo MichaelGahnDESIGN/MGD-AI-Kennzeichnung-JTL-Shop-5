@@ -364,9 +364,49 @@ final class TransactionalDatabaseFake implements DbInterface
 
                 return null;
             }
+            $localPath = $params['local_path'] ?? null;
+            if (is_string($localPath)) {
+                foreach ($this->assets as $asset) {
+                    if (ltrim($asset['local_path'], '/') === ltrim($localPath, '/')) {
+                        return (object) ['id' => $asset['id']];
+                    }
+                }
+
+                return null;
+            }
             $assetKey = $params['asset_key'] ?? null;
 
-            return is_string($assetKey) && isset($this->assets[$assetKey]) ? (object) ['id' => 1] : null;
+            return is_string($assetKey) && isset($this->assets[$assetKey])
+                ? (object) ['id' => $this->assets[$assetKey]['id']]
+                : null;
+        }
+        if (str_contains($stmt, 'FROM `xplugin_mgd_ai_asset` AS `asset`')
+            && isset($params['local_path'])
+            && is_string($params['local_path'])
+        ) {
+            foreach ($this->assets as $asset) {
+                if (ltrim($asset['local_path'], '/') !== ltrim($params['local_path'], '/')) {
+                    continue;
+                }
+                $sources = [];
+                foreach ($this->usages as $usage) {
+                    if (($usage['asset_id'] ?? null) === $asset['id'] && is_string($usage['source_type'] ?? null)) {
+                        $sources[] = $usage['source_type'];
+                    }
+                }
+                sort($sources, SORT_STRING);
+
+                return (object) [
+                    'id' => $asset['id'],
+                    'local_path' => $asset['local_path'],
+                    'status' => $asset['status'],
+                    'position' => $asset['position'],
+                    'theme' => $asset['theme'],
+                    'source' => $sources[0] ?? 'unknown',
+                ];
+            }
+
+            return null;
         }
         if (str_contains($stmt, 'FROM `xplugin_mgd_ai_asset` AS `asset`')
             && str_contains($stmt, 'COUNT(`usage`.`id`)')

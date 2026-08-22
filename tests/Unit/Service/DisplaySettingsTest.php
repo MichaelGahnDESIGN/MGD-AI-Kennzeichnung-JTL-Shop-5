@@ -194,7 +194,7 @@ final class DisplaySettingsTest extends TestCase
         $dateiname = $xpath->evaluate('string(/jtlshopplugin/Install/Adminmenu/Customlink/Filename)');
         self::assertIsString($version);
         self::assertIsString($dateiname);
-        self::assertSame('1.0.0', trim($version));
+        self::assertSame('1.1.0', trim($version));
         self::assertSame('assets.php', trim($dateiname));
     }
 
