@@ -1,4 +1,5 @@
 import { createAdminIoClient } from './admin-io-client.mjs';
+import { installFileManagerIntegration } from './file-manager-integration.mjs';
 import { classifyDomField, detectSupportedImageField } from './image-field-detector.mjs';
 import { createLabelDialog } from './label-dialog.mjs';
 
@@ -35,6 +36,7 @@ export function initializeOpcIntegration(editorBaseUrl) {
     document.head.append(style);
 
     const dialog = createLabelDialog(createAdminIoClient());
+    const fileManagerInstallations = new Set();
     const connected = new WeakSet();
     let scanScheduled = false;
 
@@ -78,10 +80,44 @@ export function initializeOpcIntegration(editorBaseUrl) {
     document.addEventListener('change', scheduleScan, true);
     scheduleScan();
 
+    /* JTL öffnet elFinder unter einem festen Fensternamen, verwirft aber die
+     * Referenz. Der Wrapper reicht alle Aufrufe unverändert durch und beobachtet
+     * ausschließlich dieses anschließend vollständig geprüfte Ziel. */
+    const originalOpen = window.open;
+    const openWrapper = function (url, target, features) {
+        const child = originalOpen.call(this, url, target, features);
+        if (target !== 'elfinderWindow' || child === null) {
+            return child;
+        }
+        let attempts = 0;
+        const interval = window.setInterval(() => {
+            attempts += 1;
+            if (child.closed || attempts > 80) {
+                window.clearInterval(interval);
+                return;
+            }
+            const fileManager = installFileManagerIntegration(child, {
+                shopOrigin: window.opc?.shopUrl ?? window.location.origin,
+                openLabelDialog: (localPath, button) => dialog.open(localPath, button),
+            });
+            if (fileManager !== false) {
+                fileManagerInstallations.add(fileManager);
+                window.clearInterval(interval);
+            }
+        }, 250);
+
+        return child;
+    };
+    window.open = openWrapper;
+
     const installation = Object.freeze({
         destroy() {
             observer.disconnect();
             document.removeEventListener('change', scheduleScan, true);
+            if (window.open === openWrapper) {
+                window.open = originalOpen;
+            }
+            fileManagerInstallations.forEach((fileManager) => fileManager.cleanup());
             dialog.destroy();
             style.remove();
             delete window[INSTALLATION];
