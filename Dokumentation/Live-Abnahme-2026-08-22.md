@@ -1,5 +1,7 @@
 # Live-Abnahme vom 22. August 2026
 
+> **Historischer Stand:** Diese Installation wurde am 23. August 2026 auf Wunsch des Betreibers vollständig zurückgenommen. Die Entwicklung und weitere Erprobung finden zunächst ausschließlich auf `dev.onvis-shop.de` statt. Siehe [Live-Rollback vom 23. August 2026](Live-Rollback-2026-08-23.md).
+
 ## Ergebnis
 
 Version 1.1.0 wurde am 22. August 2026 auf `onvis-shop.de` über den offiziellen Installationsablauf von JTL-Shop installiert und aktiviert. Der Shop war vor und nach der Installation öffentlich erreichbar.
