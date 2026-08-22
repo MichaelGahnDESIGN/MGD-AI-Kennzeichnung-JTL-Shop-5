@@ -12,6 +12,7 @@ Die JTL-Mindestversion 5.7.2 steht im Element `MinShopVersion` der `info.xml`. J
 - [OPC-Kennzeichnung](OPC-Kennzeichnung.md): direkte Bildfelder und fehlertolerante Dateimanager-Kompatibilität.
 - [Rollback 1.1.0](Rollback-1.1.0.md): sicherer Rückfall ohne Löschen der Plugin-Daten.
 - [Dev-Abnahme vom 22. August 2026](Dev-Abnahme-2026-08-22.md): verifizierter Dev-Stand 1.1.0, sichere Laufzeittests und Historie des JTL-Installationsfehlers 421.
+- [Live-Abnahme vom 22. August 2026](Live-Abnahme-2026-08-22.md): Installation von 1.1.0, Integritätsprüfung, datensparsamer Laufzeittest und Rückfallzustand.
 - [Datenschutz und Sicherheit](Datenschutz-und-Sicherheit.md): gespeicherte Daten, optionale Netzwerkzugriffe und Schutzgrenzen.
 - [OPC-CSS-Klassen](OPC-CSS-Klassen.md): dokumentierte Kombinationen für bewusst markierte Elemente.
 - [Release 1.0.0](Release-1.0.0.md): freizugebender Funktionsstand und Betriebsbedingungen.
