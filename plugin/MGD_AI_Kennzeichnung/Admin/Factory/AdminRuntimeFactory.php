@@ -92,6 +92,7 @@ final class AdminRuntimeFactory
             new CleanupAction($authorization, $csrf, $confirmation, $usages),
             $csrf,
             $plugin->getPaths()->getAdminURL() . 'assets.js',
+            $plugin->getPaths()->getAdminURL() . 'assets.css',
             new AdminRoute($plugin->getID(), $adminMenuId),
         );
 

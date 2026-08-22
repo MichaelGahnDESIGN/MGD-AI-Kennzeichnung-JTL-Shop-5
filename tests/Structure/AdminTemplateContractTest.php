@@ -10,6 +10,52 @@ use PHPUnit\Framework\TestCase;
 final class AdminTemplateContractTest extends TestCase
 {
     #[Test]
+    public function bildverwaltung_besteht_aus_responsiver_barrierearmer_galerie(): void
+    {
+        $root = dirname(__DIR__, 2) . '/plugin/MGD_AI_Kennzeichnung';
+        $partials = [
+            $root . '/adminmenu/templates/partials/asset-filter.php',
+            $root . '/adminmenu/templates/partials/asset-card.php',
+            $root . '/adminmenu/templates/partials/gallery-toolbar.php',
+            $root . '/adminmenu/templates/partials/label-dialog.php',
+        ];
+
+        foreach ($partials as $partial) {
+            self::assertFileExists($partial);
+        }
+
+        $list = (string) file_get_contents($root . '/adminmenu/templates/assets-list.php');
+        $filter = (string) file_get_contents($partials[0]);
+        $card = (string) file_get_contents($partials[1]);
+        $toolbar = (string) file_get_contents($partials[2]);
+        $dialog = (string) file_get_contents($partials[3]);
+        $css = (string) file_get_contents($root . '/adminmenu/assets.css');
+        $handler = (string) file_get_contents($root . '/Admin/Action/AdminActionHandler.php');
+        $factory = (string) file_get_contents($root . '/Admin/Factory/AdminRuntimeFactory.php');
+
+        self::assertStringContainsString('assetStyleUrl', $list . $handler . $factory);
+        self::assertStringContainsString("getAdminURL() . 'assets.css'", $factory);
+        self::assertStringContainsString('Ergebnisse', $toolbar);
+        self::assertStringContainsString('Sicheren Bildscan starten', $toolbar);
+        self::assertStringContainsString('loading="lazy"', $card);
+        self::assertStringContainsString('Status:', $card);
+        self::assertStringContainsString('aria-label="Bild', $card);
+        self::assertStringNotContainsString('localPath', $card);
+        self::assertStringContainsString('role="dialog"', $dialog);
+        self::assertStringContainsString('aria-modal="true"', $dialog);
+        self::assertStringContainsString('Kennzeichnung speichern', $dialog);
+        self::assertStringContainsString('name="status"', $filter);
+        self::assertStringContainsString('name="source"', $filter);
+        self::assertStringContainsString('name="present"', $filter);
+        self::assertStringContainsString('name="sort"', $filter);
+        self::assertStringContainsString('name="direction"', $filter);
+        self::assertStringContainsString('name="page_size"', $filter);
+        self::assertStringContainsString('grid-template-columns', $css);
+        self::assertStringContainsString('prefers-reduced-motion', $css);
+        self::assertStringContainsString(':focus-visible', $css);
+    }
+
+    #[Test]
     public function getrennte_admin_templates_sind_escaped_post_csrf_und_barrierearm(): void
     {
         $root = dirname(__DIR__, 2) . '/plugin/MGD_AI_Kennzeichnung';
@@ -30,6 +76,9 @@ final class AdminTemplateContractTest extends TestCase
         }
 
         $combined = implode("\n", array_map(static fn(string $file): string => (string) file_get_contents($file), $files));
+        foreach (glob($root . '/adminmenu/templates/partials/*.php') ?: [] as $partial) {
+            $combined .= "\n" . (string) file_get_contents($partial);
+        }
         self::assertStringContainsString('method="post"', strtolower($combined));
         self::assertStringContainsString('name="csrf_token"', $combined);
         self::assertStringContainsString('<th scope="col"', $combined);

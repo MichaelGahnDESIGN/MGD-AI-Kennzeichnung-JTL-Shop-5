@@ -33,6 +33,7 @@ final class AdminActionHandler implements AdminActionHandlerInterface
         private readonly CleanupAction $cleanup,
         private readonly CsrfTokenPortInterface $csrf,
         private readonly string $assetScriptUrl,
+        private readonly string $assetStyleUrl,
         private readonly AdminRoute $route,
     ) {}
 
@@ -44,6 +45,7 @@ final class AdminActionHandler implements AdminActionHandlerInterface
             'view' => $view,
             'csrfToken' => $this->csrf->token(),
             'assetScriptUrl' => $this->assetScriptUrl,
+            'assetStyleUrl' => $this->assetStyleUrl,
             'route' => $this->route,
         ]);
     }
