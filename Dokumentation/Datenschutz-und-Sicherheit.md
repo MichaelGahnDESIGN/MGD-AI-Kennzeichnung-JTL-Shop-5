@@ -14,6 +14,8 @@ Updatehinweise sind **standardmäßig deaktiviert**. Erst nach ausdrücklicher A
 
 Schreibzugriffe verlangen eine angemeldete, berechtigte JTL-Administration, ein gültiges CSRF-Token und bei Stapel- oder Löschvorgängen eine kurzlebige Einmalbestätigung. Logs enthalten nur feste Ereigniscodes und Mengen, keine Tokens, SQL-Ausnahmen, lokalen Pfade oder eingegebenen Inhalte.
 
+Die Galerie lädt ausschließlich lokale Vorschauen aus festen Shopwurzeln. OPC und Dateimanager verwenden JTLs bestehende Admin-IO-Strecke mit derselben Sitzung und CSRF-Prüfung. Externe Bild-URLs, SVG und mehrdeutige Auswahlen werden abgelehnt. Es entsteht kein eigener öffentlicher Upload- oder Speicherendpunkt.
+
 ## Ausgabe und Deinstallation
 
 HTML, Klassen und numerische Stile stammen aus Positivlisten. Philosophie-Inhalte erlauben nur wenige semantische Elemente und HTTPS-Links ohne Zugangsdaten. Bei Deinstallation werden fremde oder veränderte Tabellen nie gelöscht.

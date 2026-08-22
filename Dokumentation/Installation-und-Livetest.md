@@ -19,27 +19,33 @@ Die Installation darf nicht unmittelbar vor einer Kampagne, einem Import oder ei
 - freien Datenbankspeicher, HTTPS und fehlerfreie Shop-Startseite prüfen;
 - SHA-256 des ZIP mit dem freigegebenen Wert vergleichen.
 
-## 3. Installation im Plugin-Manager
+## 3. Zuerst auf dev.onvis-shop.de testen
+
+Version 1.1.0 wird **vor** jeder Änderung an `onvis-shop.de` vollständig auf `dev.onvis-shop.de` geprüft. Der Dev-Shop muss im Wartungsmodus bleiben, eine eigene Datenbank verwenden und darf keine aktive Wawi-Anbindung besitzen.
+
+Vor dem Dev-Update werden das vorhandene Pluginverzeichnis und die vier Plugin-Datenbanktabellen datiert gesichert. Anschließend wird exakt das später für Live vorgesehene ZIP verwendet. Galerie, Speichern, Stapelbearbeitung, OPC, Dateimanager-Fallback und Frontend-Ausgabe müssen fehlerfrei sein. Bei einem Fehler endet die Freigabe; Live bleibt unverändert.
+
+## 4. Installation oder Update im Plugin-Manager
 
 1. Im JTL-Backend **Plugins → Plugin-Manager → Upload** öffnen.
-2. `MGD_AI_Kennzeichnung-1.0.0.zip` auswählen.
-3. Nach erfolgreicher Validierung installieren und aktivieren.
+2. `MGD_AI_Kennzeichnung-1.1.0.zip` auswählen.
+3. Bei einer bestehenden Version die von JTL angebotene Updatefunktion verwenden; sonst nach erfolgreicher Validierung installieren und aktivieren.
 4. Keine Dateien in JTL-Core, NOVA oder OnvisTheme manuell ersetzen.
 5. Updatehinweise und Footer-Nennung zunächst deaktiviert lassen.
 
-## 4. Kontrollierter Livetest auf https://onvis-shop.de
+## 5. Kontrollierter Livetest auf https://onvis-shop.de
 
-1. Startseite, Kategorie, Produktdetail, Herstellerseite und eine OPC-Seite als Gast öffnen.
-2. Browser-Konsole und Server-Fehlerprotokoll auf neue Fehler prüfen; keine personenbezogenen Daten in Tickets kopieren.
-3. Im Backend einen Scan auslösen und Zahl sowie Quellen der gefundenen Bilder plausibilisieren.
-4. Ein unkritisches Testbild auf „KI-generiert“ setzen; Position, Hell/Dunkel/Auto und Deutsch/Englisch prüfen.
-5. Mit Tastatur, 200 % Zoom und einem Screenreader-Stichprobentest prüfen, dass das Label Inhalte nicht blockiert.
-6. Ein OPC-Testelement mit den dokumentierten Klassen markieren und den CSS-Fallback bei deaktiviertem JavaScript prüfen.
-7. Das Portlet „AI-Philosophie“ zunächst nur auf einer nicht verlinkten Testseite platzieren und beide Sprachen prüfen.
-8. Warenkorb, Suche, Login und Checkout nur lesend beziehungsweise mit einem ausdrücklich freigegebenen Testkonto gegenprüfen.
+1. Erst nach dokumentierter Dev-Abnahme ein neues Live-Backup von Dateien und Plugin-Tabellen anlegen.
+2. SHA-256 des auf Dev getesteten ZIP vergleichen und exakt dasselbe Paket verwenden.
+3. Startseite, Kategorie, Produktdetail, Herstellerseite und eine OPC-Seite als Gast öffnen.
+4. Browser-Konsole und Server-Fehlerprotokoll auf neue Fehler prüfen; keine personenbezogenen Daten in Tickets kopieren.
+5. Im Backend die Bildgalerie lesend öffnen und Filter sowie Vorschauen prüfen.
+6. Ein unkritisches Testbild kennzeichnen, die Frontend-Ausgabe prüfen und anschließend auf den dokumentierten Ausgangswert zurücksetzen.
+7. OPC- und Dateimanager-Schaltflächen nur auf Vorhandensein und Öffnen prüfen; keine produktive Seite veröffentlichen.
+8. Warenkorb, Suche, Login und Checkout höchstens bis vor den verbindlichen Bestellbutton prüfen.
 
-## 5. Deaktivierung und Rollback
+## 6. Deaktivierung und Rollback
 
-Bei Fehlern das Plugin zuerst im Plugin-Manager deaktivieren. Bleibt der Fehler bestehen, Shopdateien und Datenbank aus demselben Pflichtbackup-Zeitpunkt wiederherstellen und Caches nach JTL-Vorgabe leeren.
+Bei Fehlern das Plugin zuerst im Plugin-Manager deaktivieren und [Rollback 1.1.0](Rollback-1.1.0.md) ausführen. Das gesicherte Pluginverzeichnis der Version 1.0.0 wird wiederhergestellt; Plugin-Datenbanktabellen bleiben erhalten. Danach Plugin- und Template-Caches leeren und den alten Stand prüfen.
 
-Eine Deinstallation ohne Datenlöschung bewahrt Kennzeichnungen und Philosophie-Texte. Die Option „Daten löschen“ ist irreversibel und darf nur nach erneutem Backup gewählt werden. Sie entfernt ausschließlich Tabellen, deren Eigentümermarker und Struktur vollständig zum Plugin passen; Abweichungen führen bewusst zum Abbruch.
+Eine Deinstallation mit Datenlöschung ist kein Rollback. Sie ist für diesen Ablauf ausdrücklich ausgeschlossen.

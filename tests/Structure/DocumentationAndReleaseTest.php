@@ -81,6 +81,57 @@ final class DocumentationAndReleaseTest extends TestCase
         }
     }
 
+    #[Test]
+    public function version_1_1_0_erklaert_galerie_opc_dateimanager_und_sicheren_rollback(): void
+    {
+        $dateien = [
+            'README' => self::ROOT . '/README.md',
+            'Bildverwaltung' => self::ROOT . '/Dokumentation/Admin-Bildverwaltung.md',
+            'OPC' => self::ROOT . '/Dokumentation/OPC-Kennzeichnung.md',
+            'Installation' => self::ROOT . '/Dokumentation/Installation-und-Livetest.md',
+            'Rollback' => self::ROOT . '/Dokumentation/Rollback-1.1.0.md',
+        ];
+        $inhalt = [];
+        foreach ($dateien as $name => $datei) {
+            self::assertFileExists($datei, $name . ' fehlt.');
+            $inhalt[$name] = (string) file_get_contents($datei);
+        }
+
+        foreach (['Version 1.1.0', 'Bildgalerie', 'Kennzeichnung speichern'] as $begriff) {
+            self::assertStringContainsStringIgnoringCase($begriff, $inhalt['README'] . $inhalt['Bildverwaltung']);
+        }
+        foreach (['Bild neu scannen', 'Filter', 'Stapelbearbeitung', 'Abbrechen'] as $begriff) {
+            self::assertStringContainsStringIgnoringCase($begriff, $inhalt['Bildverwaltung']);
+        }
+        foreach (['OnPage Composer', 'Dateimanager', 'Kompatibilitätsgrenze', 'same-origin'] as $begriff) {
+            self::assertStringContainsStringIgnoringCase($begriff, $inhalt['OPC']);
+        }
+        foreach (['dev.onvis-shop.de', 'vor', 'onvis-shop.de', 'Backup'] as $begriff) {
+            self::assertStringContainsStringIgnoringCase($begriff, $inhalt['Installation']);
+        }
+        foreach (['Plugin 1.1.0 deaktivieren', 'Pluginverzeichnis 1.0.0', 'Datenbanktabellen nicht löschen', 'Caches leeren'] as $begriff) {
+            self::assertStringContainsStringIgnoringCase($begriff, $inhalt['Rollback']);
+        }
+        self::assertStringNotContainsStringIgnoringCase('Deinstallation mit Datenlöschung empfehlen', $inhalt['Rollback']);
+    }
+
+    #[Test]
+    public function release_enthaelt_galerie_und_lokale_opc_module(): void
+    {
+        $this->buildRelease();
+        $eintraege = $this->entries();
+
+        foreach ([
+            'MGD_AI_Kennzeichnung/adminmenu/assets.css',
+            'MGD_AI_Kennzeichnung/adminmenu/js/label-dialog.mjs',
+            'MGD_AI_Kennzeichnung/Portlets/AIPhilosophie/editor_init.js',
+            'MGD_AI_Kennzeichnung/Portlets/AIPhilosophie/editor/opc-integration.mjs',
+            'MGD_AI_Kennzeichnung/Portlets/AIPhilosophie/editor/file-manager-integration.mjs',
+        ] as $eintrag) {
+            self::assertContains($eintrag, $eintraege);
+        }
+    }
+
     private function buildRelease(): void
     {
         $ausgabe = [];

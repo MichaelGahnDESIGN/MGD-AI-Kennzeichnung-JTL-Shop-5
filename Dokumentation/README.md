@@ -8,6 +8,9 @@ Die JTL-Mindestversion 5.7.2 steht im Element `MinShopVersion` der `info.xml`. J
 
 - [Admin-Sicherheitsbestätigungen](Admin-Sicherheitsbestaetigungen.md): Datenminimierung, automatische Löschung und sicherer Rückbau der Einmalbestätigungen.
 - [Installation und Livetest](Installation-und-Livetest.md): Pflichtbackup, Plugin-Manager, Onvis-Prüfliste und Rollback.
+- [Admin-Bildverwaltung](Admin-Bildverwaltung.md): Bildgalerie, Filter, Einzel- und Stapelkennzeichnung.
+- [OPC-Kennzeichnung](OPC-Kennzeichnung.md): direkte Bildfelder und fehlertolerante Dateimanager-Kompatibilität.
+- [Rollback 1.1.0](Rollback-1.1.0.md): sicherer Rückfall ohne Löschen der Plugin-Daten.
 - [Dev-Abnahme vom 22. August 2026](Dev-Abnahme-2026-08-22.md): Ursache und Behebung des JTL-Installationsfehlers 421 sowie der verifizierte Installationsstand.
 - [Datenschutz und Sicherheit](Datenschutz-und-Sicherheit.md): gespeicherte Daten, optionale Netzwerkzugriffe und Schutzgrenzen.
 - [OPC-CSS-Klassen](OPC-CSS-Klassen.md): dokumentierte Kombinationen für bewusst markierte Elemente.
