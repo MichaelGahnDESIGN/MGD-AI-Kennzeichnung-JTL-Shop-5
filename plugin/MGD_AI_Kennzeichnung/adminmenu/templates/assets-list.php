@@ -13,6 +13,10 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\ViewModel\AssetListView;
 $escapedCsrf = htmlspecialchars($csrfToken, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $escapedScriptUrl = htmlspecialchars($assetScriptUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $escapedStyleUrl = htmlspecialchars($assetStyleUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$assetModuleBaseUrl = substr($assetScriptUrl, 0, -strlen('assets.js')) . 'js/';
+$escapedPreviewModuleUrl = htmlspecialchars($assetModuleBaseUrl . 'label-preview.mjs', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$escapedDialogModuleUrl = htmlspecialchars($assetModuleBaseUrl . 'label-dialog.mjs', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$escapedSelectionModuleUrl = htmlspecialchars($assetModuleBaseUrl . 'gallery-selection.mjs', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $escapedPluginId = htmlspecialchars((string) $route->pluginId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $escapedAdminMenuId = htmlspecialchars((string) $route->adminMenuId, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $escapedPage = htmlspecialchars((string) $view->page, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -27,7 +31,10 @@ $previousUrl = htmlspecialchars($route->query(['page' => $previousPage] + $pagin
 $nextUrl = htmlspecialchars($route->query(['page' => $nextPage] + $pagination), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 ?>
 <link rel="stylesheet" href="<?= $escapedStyleUrl ?>">
-<section class="mgd-assets" aria-labelledby="mgd-assets-heading">
+<section class="mgd-assets" aria-labelledby="mgd-assets-heading" data-mgd-assets
+         data-preview-module-url="<?= $escapedPreviewModuleUrl ?>"
+         data-dialog-module-url="<?= $escapedDialogModuleUrl ?>"
+         data-selection-module-url="<?= $escapedSelectionModuleUrl ?>">
     <header class="mgd-assets__header">
         <p class="mgd-assets__eyebrow">MGD AI-Kennzeichnung</p>
         <h1 id="mgd-assets-heading">KI-Bildkennzeichnungen</h1>
