@@ -81,7 +81,7 @@ final class GitHubReleaseChecker
             url: self::ENDPOINT,
             headers: [
                 'Accept' => 'application/vnd.github+json',
-                'User-Agent' => 'MGD-AI-Kennzeichnung-JTL-Shop-5/1.0.0',
+                'User-Agent' => 'MGD-AI-Kennzeichnung-JTL-Shop-5/1.1.0',
             ],
             connectTimeoutSeconds: 2,
             totalTimeoutSeconds: 5,
