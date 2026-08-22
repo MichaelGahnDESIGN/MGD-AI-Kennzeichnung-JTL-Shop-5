@@ -1,51 +1,79 @@
 # Dev-Abnahme vom 22. August 2026
 
-## Ausgangslage
+## Freigabestand 1.1.0
 
-Der Upload von `MGD_AI_Kennzeichnung-1.0.0.zip` auf `dev.onvis-shop.de`
-war vollständig, die Installation brach jedoch mit JTL-Fehlercode `421` ab.
-JTL verwendet diesen Code, wenn die Methode `preInstallCheck()` des Plugins
-die Installation bewusst ablehnt.
+Version 1.1.0 wurde zuerst lokal und anschließend auf der vollständig getrennten
+Testumgebung `dev.onvis-shop.de` geprüft. Der Dev-Shop verwendet eine eigene
+Datenbank, einen eigenen Root-Pfad und eine eigene Shop-URL. Der Wartungsmodus
+blieb während der gesamten Abnahme aktiv. Der Live-Shop wurde in dieser Phase
+nicht verändert.
 
-## Ursache
+Vor dem Update wurden ausschließlich folgende pluginbezogenen Daten lokal
+gesichert:
 
-Der Dev-Server meldet seine PHP-Version als `8.5.3-nmm1`. Der technische
-Anbieterzusatz `-nmm1` wurde vom zu strengen Versionsformat des Plugins
-abgelehnt, obwohl der numerische Versionskern die Mindestanforderung PHP 8.1
-erfüllt.
+- das vollständige Pluginverzeichnis der Version 1.0.0;
+- die vier Plugin-Datenbanktabellen;
+- die zugehörigen JTL-Plugin-Metadaten.
 
-## Korrektur
+Kunden-, Bestell- und Zahlungsdaten wurden weder exportiert noch in das
+Repository übernommen. Das Backup liegt außerhalb des Repositorys unter
+`BACKUPS/MGD_AI_Kennzeichnung/` und ist durch Dateirechte auf den lokalen
+Benutzer beschränkt.
 
-Die Prüfung unterscheidet nun zwischen der weiterhin streng dreiteiligen
-JTL-Shop-Version und einer PHP-Version, die nach dem eindeutigen numerischen
-Versionskern einen begrenzten technischen Hosterzusatz enthalten darf.
+## Installation
 
-Ein Regressionstest bildet den realen Serverwert ab. Zusätzlich wird geprüft,
-dass eine zu alte PHP-Version mit demselben Zusatz weiterhin abgelehnt wird.
-
-## Verifizierter Stand
+Das exakt lokal geprüfte ZIP wurde per SHA-256 verifiziert und anschließend
+mit JTLs eigenem Extraktor, Validator und Updater installiert. Dadurch wurden
+derselbe Lebenszyklus und dieselben Datenbankaktionen verwendet wie im
+Plugin-Manager. Es gab keine manuelle Änderung an JTL-Core, NOVA oder
+OnvisTheme.
 
 - JTL-Shop: `5.7.2`
 - Server-PHP: `8.5.3-nmm1`
-- Plugin: `MGD AI Kennzeichnung 1.0.0`
+- Plugin: `MGD AI Kennzeichnung 1.1.0`
 - interne JTL-Plugin-ID auf Dev: `47`
 - Status: installiert und aktiviert
-- Adminseite: erreichbar, ohne PHP- oder JTL-Fehler
-- angelegte Tabellen: Asset-, Nutzungs-, Philosophie- und Bestätigungstabelle
-- JTL-Dateiprüfung: keine modifizierten Plugin-Dateien
-- Dev-Shop: weiterhin im Wartungsmodus
-- Live-Shop: nicht verändert
+- Release: `dist/MGD_AI_Kennzeichnung-1.1.0.zip`
+- SHA-256: `3d5719f45e2c5b661f46d63d1dfe5152e33ed2ff23d49d02d80e325260d2b95c`
 
-Vor der erneuten Installation wurden die separate Dev-Datenbank und der zuvor
-hochgeladene Pluginordner außerhalb des Webverzeichnisses gesichert.
+## Geprüfte Funktionen
 
-## Korrigiertes Installationspaket
+- JTL-Pluginvalidierung: erfolgreich;
+- PHP-Syntax auf dem Dev-Server: 135 Dateien fehlerfrei;
+- JTL-Dateiintegrität: 158 Release-Dateien unverändert;
+- Bildgalerie: reale Datenbankabfrage und Galeriekarte erfolgreich;
+- Einzelkennzeichnung: Speichern und erneutes Laden erfolgreich;
+- sichere Bildvorschau: same-origin Vorschau erfolgreich ausgeliefert;
+- Frontend-Repository: sichtbare Testkennzeichnung korrekt ausgeliefert;
+- OPC: Portlet `AI-Philosophie` aktiv in der Gruppe `Custom Portlets`;
+- öffentliche Plugin-CSS- und JavaScript-Dateien: HTTP 200;
+- Dev-Startseite: erwartetes HTTP 503 wegen des aktiven Wartungsmodus;
+- neue Plugin-, PHP-Fatal- oder Parse-Fehler in aktuellen Logs: keine.
 
-Datei: `dist/MGD_AI_Kennzeichnung-1.0.0.zip`
+Für den Laufzeittest wurde genau ein zufällig benanntes Testbild angelegt und
+gekennzeichnet. Danach wurden Bild und Testdatensatz wieder entfernt. Der
+Datenbestand entsprach anschließend exakt dem Ausgangsstand von 714 Assets und
+1.704 Fundstellen.
 
-SHA-256:
-`cee45ae0fab2242c9cf3603fe0f8cad071159512119029e64060d3d6de4f65a0`
+## Ergebnis und verbleibende Sichtprüfung
 
-Der nächste Schritt ist der funktionale Dev-Test von Bildscan, Einzel- und
-Stapelkennzeichnung, Frontendausgabe und AI-Philosophie-Portlet. Eine
-Installation auf dem Live-Shop ist erst nach dieser Abnahme vorgesehen.
+Die technische Dev-Abnahme ist **grün**. Die Galerie-, Speicher-, Vorschau-,
+Frontend- und OPC-Datenwege funktionieren im echten JTL-System. Safari hat den
+Inhalt der bereits angemeldeten Adminseite für die automatisierte
+Bildschirmaufnahme nicht sichtbar freigegeben; deshalb bleibt die rein
+optische Kontrolle der Galerie im Backend ein zusätzlicher, nicht technischer
+Abnahmeschritt. Sie verändert keine Daten und ist kein Hinweis auf einen
+Pluginfehler.
+
+## Historie: Installationsfehler 421 bei Version 1.0.0
+
+Der erste Upload von Version 1.0.0 war vollständig, wurde von JTL jedoch mit
+Fehlercode 421 abgelehnt. Ursache war der Hosterzusatz `-nmm1` in der
+PHP-Version `8.5.3-nmm1`. Die damalige Prüfung akzeptierte nur eine rein
+dreiteilige PHP-Version.
+
+Die Kompatibilitätsprüfung erkennt seitdem den eindeutigen numerischen
+Versionskern und erlaubt dahinter ausschließlich einen begrenzten technischen
+Hosterzusatz. Zu alte PHP-Versionen bleiben weiterhin gesperrt. Regressionstests
+decken beide Fälle ab. Version 1.0.0 wurde danach auf Dev erfolgreich
+installiert und bildete den gesicherten Ausgangsstand für das Update auf 1.1.0.
