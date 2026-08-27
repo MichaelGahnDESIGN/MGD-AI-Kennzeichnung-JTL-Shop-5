@@ -62,6 +62,7 @@ final class FrontendDocumentIntegrator
         $verwendeteDateinamen = [];
         $resolver = new LabelViewResolver();
         $renderer = new LabelRenderer();
+        $locator = new FrontendLabelTargetLocator();
 
         foreach ($labels as $label) {
             $dateiname = basename(str_replace('\\', '/', $label['local_path']));
@@ -88,17 +89,64 @@ final class FrontendDocumentIntegrator
                 continue;
             }
 
-            $bilder = $this->find($dokument, $this->exactImageSelector($dateiname));
-            if ($bilder === null) {
-                continue;
-            }
-            $eltern = $this->callObjectMethod($bilder, 'parent');
-            if ($eltern === null) {
-                continue;
-            }
-            $this->callVoidMethod($eltern, 'addClass', 'mgd-ai-label-host');
-            $this->callVoidMethod($eltern, 'append', $markup);
+            $bilder = $this->find($dokument, $locator->imageSelector($dateiname));
+            $pictureBilder = $this->callObjectMethod($bilder, 'filter', 'picture > img');
+            $direkteBilder = $this->callObjectMethod($bilder, 'not', 'picture > img');
+
+            // Ein <picture> darf außer <source> und <img> keine Label-Elemente
+            // enthalten. Deshalb wird sein äußerer Link oder Block verwendet.
+            $pictureRahmen = $this->parentOf($this->parentOf($pictureBilder));
+            $direkteRahmen = $this->parentOf($direkteBilder);
+            $this->decorateImageHosts($pictureRahmen, $markup);
+            $this->decorateImageHosts($direkteRahmen, $markup);
+
+            // OPC-Container geben statische und Parallax-Bilder nicht als
+            // <img>, sondern als style- oder data-image-src-Attribut aus.
+            $hintergruende = $this->find($dokument, $locator->backgroundSelector($dateiname));
+            $this->decorateHosts($hintergruende, $markup, false);
         }
+    }
+
+    /**
+     * Trennt echte Inline-Links von bereits blockförmigen JTL-Rahmen.
+     *
+     * Nur Links benötigen eine display-Korrektur. Ein vorhandener Block darf
+     * seine Breite, Zentrierung oder Rastereigenschaften unverändert behalten.
+     */
+    private function decorateImageHosts(?object $hosts, string $markup): void
+    {
+        if ($hosts === null) {
+            return;
+        }
+
+        $links = $this->callObjectMethod($hosts, 'filter', 'a');
+        $blocks = $this->callObjectMethod($hosts, 'not', 'a');
+        $this->decorateHosts($links, $markup, true);
+        $this->decorateHosts($blocks, $markup, false);
+    }
+
+    /** Fügt ein Label genau einmal in die gefundenen Positionsrahmen ein. */
+    private function decorateHosts(?object $hosts, string $markup, bool $inline): void
+    {
+        if ($hosts === null) {
+            return;
+        }
+
+        $neueHosts = $this->callObjectMethod($hosts, 'not', '.mgd-ai-label-host');
+        if ($neueHosts === null) {
+            return;
+        }
+
+        $this->callVoidMethod($neueHosts, 'addClass', 'mgd-ai-label-host');
+        if ($inline) {
+            $this->callVoidMethod($neueHosts, 'addClass', 'mgd-ai-label-host--inline');
+        }
+        $this->callVoidMethod($neueHosts, 'append', $markup);
+    }
+
+    private function parentOf(?object $elements): ?object
+    {
+        return $elements === null ? null : $this->callObjectMethod($elements, 'parent');
     }
 
     private function append(object $dokument, string $selector, string $markup): void
@@ -137,17 +185,6 @@ final class FrontendDocumentIntegrator
     private function isSafeFilename(string $dateiname): bool
     {
         return preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]{0,254}$/D', $dateiname) === 1;
-    }
-
-    /** Erfasst den Dateinamen am URL-Ende sowie vor Query oder Fragment. */
-    private function exactImageSelector(string $dateiname): string
-    {
-        return implode(', ', [
-            'img[src="' . $dateiname . '"]',
-            'img[src$="/' . $dateiname . '"]',
-            'img[src*="/' . $dateiname . '?"]',
-            'img[src*="/' . $dateiname . '#"]',
-        ]);
     }
 
     private function isSafeFrontendUrl(string $url): bool
