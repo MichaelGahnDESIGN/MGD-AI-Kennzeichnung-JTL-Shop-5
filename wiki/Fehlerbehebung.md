@@ -114,4 +114,4 @@ Der Menüpunkt erscheint nur bei genau einer lokalen Rasterbilddatei und eindeut
 5. bei Bedarf Plugin-Tabellensicherung zurückspielen.
 6. Live nicht weiter verändern, bis der Fehler auf Dev verstanden ist.
 
-Siehe auch [Release und Rollback](Release-und-Rollback).
+Siehe auch [Release und Rollback](Release-und-Rollback.md).

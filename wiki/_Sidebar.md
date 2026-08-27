@@ -1,18 +1,18 @@
 ## Benutzerhandbuch
 
-- [Startseite](Home)
-- [Erste Schritte](Erste-Schritte)
-- [Installation und Update](Installation-und-Update)
-- [Bildverwaltung](Bildverwaltung)
-- [Status und Darstellung](Status-und-Darstellung)
-- [OnPage Composer und Dateimanager](OnPage-Composer-und-Dateimanager)
-- [AI-Philosophie](AI-Philosophie)
-- [Einstellungen](Einstellungen)
-- [Datenschutz und Sicherheit](Datenschutz-und-Sicherheit)
-- [Fehlerbehebung](Fehlerbehebung)
-- [Release und Rollback](Release-und-Rollback)
-- [FAQ](FAQ)
-- [Für Entwickler](Fuer-Entwickler)
+- [Startseite](Home.md)
+- [Erste Schritte](Erste-Schritte.md)
+- [Installation und Update](Installation-und-Update.md)
+- [Bildverwaltung](Bildverwaltung.md)
+- [Status und Darstellung](Status-und-Darstellung.md)
+- [OnPage Composer und Dateimanager](OnPage-Composer-und-Dateimanager.md)
+- [AI-Philosophie](AI-Philosophie.md)
+- [Einstellungen](Einstellungen.md)
+- [Datenschutz und Sicherheit](Datenschutz-und-Sicherheit.md)
+- [Fehlerbehebung](Fehlerbehebung.md)
+- [Release und Rollback](Release-und-Rollback.md)
+- [FAQ](FAQ.md)
+- [Für Entwickler](Fuer-Entwickler.md)
 
 ---
 

@@ -205,7 +205,7 @@ Das Plugin wurde nach dem Prinzip der Datenminimierung entwickelt:
 - Updateabfrage nur nach ausdrücklicher Aktivierung und mit lokalem Zwölf-Stunden-Cache;
 - keine Secrets, Tokens oder Bildinhalte in der Updateabfrage.
 
-Weitere Details stehen in [Datenschutz und Sicherheit](Dokumentation/Datenschutz-und-Sicherheit.md) und im [GitHub-Wiki](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/wiki).
+Weitere Details stehen in [Datenschutz und Sicherheit](Dokumentation/Datenschutz-und-Sicherheit.md) und im [vollständigen GitHub-Handbuch](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/blob/main/wiki/Home.md).
 
 ## Voraussetzungen
 
@@ -244,7 +244,7 @@ Eine Deinstallation mit Datenlöschung ist kein normaler Rollback. Ohne ausdrüc
 
 ## Dokumentation
 
-- [GitHub-Wiki – vollständiges Benutzerhandbuch](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/wiki)
+- [GitHub-Handbuch – vollständige Wiki-Dokumentation](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/blob/main/wiki/Home.md)
 - [Admin-Bildverwaltung](Dokumentation/Admin-Bildverwaltung.md)
 - [OPC-Kennzeichnung](Dokumentation/OPC-Kennzeichnung.md)
 - [Installation, Test und Rollback](Dokumentation/Installation-und-Livetest.md)

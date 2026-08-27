@@ -25,12 +25,12 @@ Das Plugin hilft Ihnen, lokale Shopbilder strukturiert zu prüfen und transparen
 
 ## Empfohlener Einstieg
 
-1. [Erste Schritte](Erste-Schritte) – das Grundprinzip in wenigen Minuten.
-2. [Installation und Update](Installation-und-Update) – sicher installieren und aktualisieren.
-3. [Bildverwaltung](Bildverwaltung) – Bilder scannen, filtern und kennzeichnen.
-4. [Status und Darstellung](Status-und-Darstellung) – den passenden Hinweis auswählen.
-5. [OnPage Composer und Dateimanager](OnPage-Composer-und-Dateimanager) – direkt bei der Seitengestaltung arbeiten.
-6. [AI-Philosophie](AI-Philosophie) – Ihre Grundsätze öffentlich erläutern.
+1. [Erste Schritte](Erste-Schritte.md) – das Grundprinzip in wenigen Minuten.
+2. [Installation und Update](Installation-und-Update.md) – sicher installieren und aktualisieren.
+3. [Bildverwaltung](Bildverwaltung.md) – Bilder scannen, filtern und kennzeichnen.
+4. [Status und Darstellung](Status-und-Darstellung.md) – den passenden Hinweis auswählen.
+5. [OnPage Composer und Dateimanager](OnPage-Composer-und-Dateimanager.md) – direkt bei der Seitengestaltung arbeiten.
+6. [AI-Philosophie](AI-Philosophie.md) – Ihre Grundsätze öffentlich erläutern.
 
 ## Aktuelle Version
 
@@ -40,10 +40,10 @@ Das installierbare Paket finden Sie unter [Releases](https://github.com/MichaelG
 
 ## Hilfe und Sicherheit
 
-- Allgemeine Fragen: [FAQ](FAQ)
-- Fehlersuche: [Fehlerbehebung](Fehlerbehebung)
-- Datenschutz: [Datenschutz und Sicherheit](Datenschutz-und-Sicherheit)
-- Updates und Rückfall: [Release und Rollback](Release-und-Rollback)
-- Technische Mitarbeit: [Für Entwickler](Fuer-Entwickler)
+- Allgemeine Fragen: [FAQ](FAQ.md)
+- Fehlersuche: [Fehlerbehebung](Fehlerbehebung.md)
+- Datenschutz: [Datenschutz und Sicherheit](Datenschutz-und-Sicherheit.md)
+- Updates und Rückfall: [Release und Rollback](Release-und-Rollback.md)
+- Technische Mitarbeit: [Für Entwickler](Fuer-Entwickler.md)
 
 Sicherheitslücken gehören nicht in ein öffentliches Issue. Befolgen Sie dafür die Hinweise in der `SECURITY.md` des Repositorys und senden Sie niemals echte Zugangsdaten oder Kundendaten mit.
