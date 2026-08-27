@@ -82,7 +82,7 @@ final class DocumentationAndReleaseTest extends TestCase
     }
 
     #[Test]
-    public function version_1_1_0_erklaert_galerie_opc_dateimanager_und_sicheren_rollback(): void
+    public function version_1_1_1_erklaert_galerie_opc_dateimanager_und_sicheren_rollback(): void
     {
         $dateien = [
             'README' => self::ROOT . '/README.md',
@@ -97,7 +97,7 @@ final class DocumentationAndReleaseTest extends TestCase
             $inhalt[$name] = (string) file_get_contents($datei);
         }
 
-        foreach (['Version 1.1.0', 'Bildgalerie', 'Kennzeichnung speichern'] as $begriff) {
+        foreach (['Version 1.1.1', 'Bildgalerie', 'Kennzeichnung speichern'] as $begriff) {
             self::assertStringContainsStringIgnoringCase($begriff, $inhalt['README'] . $inhalt['Bildverwaltung']);
         }
         foreach (['Bild neu scannen', 'Filter', 'Stapelbearbeitung', 'Abbrechen'] as $begriff) {
@@ -113,6 +113,50 @@ final class DocumentationAndReleaseTest extends TestCase
             self::assertStringContainsStringIgnoringCase($begriff, $inhalt['Rollback']);
         }
         self::assertStringNotContainsStringIgnoringCase('Deinstallation mit Datenlöschung empfehlen', $inhalt['Rollback']);
+    }
+
+    #[Test]
+    public function github_wiki_deckt_funktionen_bedienung_sicherheit_und_fehlerhilfe_ab(): void
+    {
+        $seiten = [
+            'Home.md',
+            'Erste-Schritte.md',
+            'Installation-und-Update.md',
+            'Bildverwaltung.md',
+            'Status-und-Darstellung.md',
+            'OnPage-Composer-und-Dateimanager.md',
+            'AI-Philosophie.md',
+            'Einstellungen.md',
+            'Datenschutz-und-Sicherheit.md',
+            'Fehlerbehebung.md',
+            'Release-und-Rollback.md',
+            'FAQ.md',
+            'Fuer-Entwickler.md',
+            '_Sidebar.md',
+            '_Footer.md',
+        ];
+        $gesamt = '';
+        foreach ($seiten as $seite) {
+            $pfad = self::ROOT . '/wiki/' . $seite;
+            self::assertFileExists($pfad, 'Wiki-Seite fehlt: ' . $seite);
+            $inhalt = file_get_contents($pfad);
+            self::assertIsString($inhalt);
+            self::assertNotSame('', trim($inhalt), 'Wiki-Seite ist leer: ' . $seite);
+            $gesamt .= "\n" . $inhalt;
+        }
+
+        foreach ([
+            'keine automatische KI-Erkennung',
+            'Kennzeichnung speichern',
+            'Stapelbearbeitung',
+            'OnPage Composer',
+            'AI-Philosophie',
+            'Datenminimierung',
+            'Rollback',
+            'Fehlerbehebung',
+        ] as $begriff) {
+            self::assertStringContainsStringIgnoringCase($begriff, $gesamt);
+        }
     }
 
     #[Test]

@@ -1,4 +1,4 @@
-# Admin-Bildverwaltung in Version 1.1.0
+# Admin-Bildverwaltung in Version 1.1.1
 
 ## Wofür ist die Bildgalerie gedacht?
 

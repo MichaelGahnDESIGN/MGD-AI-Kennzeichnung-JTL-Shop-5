@@ -1,5 +1,23 @@
 # Änderungsprotokoll
 
+## 1.1.1 – 2026-08-27
+
+- native Frontend-Kennzeichnungen für normale, verlinkte und responsive
+  `picture`-Bilder ergänzt;
+- lokale OPC-Hintergrundbilder aus `background-image` und `data-image-src`
+  sicher erkannt und innerhalb der sichtbaren Bildfläche gekennzeichnet;
+- ungültige Label-Kindelemente innerhalb von `picture` vermieden;
+- Kompatibilität mit der in JTL-Shop 5.7.2 verwendeten phpQuery-Version
+  abgesichert;
+- Inline-Bildlinks als begrenzte Positionsrahmen stabilisiert, ohne Linkziel,
+  Bilddatei oder bestehende Blocklayouts zu verändern;
+- Tests für Selektor-Sicherheit, echte JTL-Markup-Strukturen, Hintergrundbilder,
+  doppelte Ausgabe und CSS-Verträge ergänzt;
+- README zu einer vollständigen, nutzerorientierten Produktbeschreibung
+  ausgebaut und ein umfangreiches GitHub-Wiki vorbereitet;
+- Dev-Installation 1.1.1 mit getrenntem Backup, unveränderten Bilddaten,
+  erfolgreicher JTL-Aktualisierung und visueller Frontend-Prüfung abgenommen.
+
 ## 1.1.0 – 2026-08-22
 
 - technische Pfadliste durch eine responsive Bildgalerie mit sicheren lokalen Vorschauen ersetzt;

@@ -2,13 +2,15 @@
 
 ## OnPage Composer
 
-Version 1.1.0 lädt über JTLs offizielle `editor_init.js`-Schnittstelle eine lokale Erweiterung. Bei einem eindeutig erkannten lokalen Bildfeld erscheint **„KI-Kennzeichnung bearbeiten“**. Unterstützt werden:
+Version 1.1.1 lädt über JTLs offizielle `editor_init.js`-Schnittstelle eine lokale Erweiterung. Bei einem eindeutig erkannten lokalen Bildfeld erscheint **„KI-Kennzeichnung bearbeiten“**. Unterstützt werden:
 
 - Bild-Portlet;
 - statisches Container-Hintergrundbild;
 - eindeutig erkennbare Banner- und Bilderslider-Felder.
 
 Beim Öffnen liest das Plugin den aktuellen Bildwert erneut. So wird nie versehentlich das zuvor gewählte Bild gespeichert. Der Dialog zeigt eine Live-Vorschau; erst **„Kennzeichnung speichern“** schreibt die Kennzeichnung. Die OPC-Seite wird dadurch nicht automatisch veröffentlicht.
+
+Im Frontend wird das Label innerhalb der sichtbaren Bildfläche ausgegeben. Das gilt auch für verlinkte, responsive `picture`-Bilder sowie statische oder per `data-image-src` geladene lokale Hintergrundbilder. Linkziele, Bilddateien und bestehende OPC-Inhalte bleiben unverändert.
 
 Externe URLs, leere oder versteckte Felder, mehrdeutige Werte, Videos und SVG-Dateien werden nicht angeboten. Die endgültige Prüfung erfolgt zusätzlich auf dem Server.
 

@@ -48,14 +48,42 @@ Die lokale Qualitätsprüfung vom 27. August 2026 ergab:
 Paket: `dist/MGD_AI_Kennzeichnung-1.1.1.zip`
 
 SHA-256:
-`a6232fcc279d2c25245e54ff1eebfa61aa5691636e95d7138a0ad0089a771ba3`
+`6628ac33d2437273ddd1548375c71eaaa58810f805a27e4dac6c1588f3235cce`
 
 ## Dev-Laufzeitprüfung
 
-Geprüft werden die markierten Airlineschienen-, Garten-, Werbemittel- und
-Kategorie-Bilder auf der Dev-Startseite. Die gespeicherte Position ist jeweils
-`top-right`, die Darstellung `dark`.
+Vor dem Update wurde unter
+`BACKUPS/MGD_AI_Kennzeichnung/20260827-224903-vor-1.1.1-inline` eine getrennte,
+per SHA-256 geprüfte Sicherung des Pluginverzeichnisses und der vier eigenen
+Plugin-Tabellen angelegt. Kunden-, Bestell- und Zahlungsdaten waren nicht Teil
+dieser Sicherung.
 
-Die Laufzeitprüfung beginnt erst nach der datierten Dev-Sicherung und wird in
-einem eigenen Abschlusscommit dokumentiert. Dieser Zwischenstand behauptet
-noch keine erfolgreiche Installation oder visuelle Abnahme.
+Die Installation wurde über JTLs regulären Plugin-Installer als Update auf
+Version 1.1.1 ausgeführt. Das Plugin blieb anschließend aktiv. Shop-,
+Sprach- und Plugin-Caches wurden geleert.
+
+Nach dem Update bestanden weiterhin:
+
+- 714 verwaltete Bilder;
+- 1.704 gespeicherte Fundstellen;
+- vier sichtbare Kennzeichnungen;
+- bei allen vier sichtbaren Kennzeichnungen der redaktionell gewählte Status
+  `generated`, die Position `bottom-right` und die Darstellung `dark`.
+
+Ein Laufzeittest mit der von JTL-Shop 5.7.2 eingesetzten phpQuery-Version
+bestätigte:
+
+- verlinkte responsive Bilder erhalten genau einen äußeren Bildrahmen;
+- das Label wird nicht als ungültiges Kindelement in `<picture>` eingefügt;
+- statische OPC-Hintergrundbilder erhalten genau ein Label;
+- bestehende Links und Bildquellen bleiben unverändert.
+
+Die visuelle Prüfung der Dev-Startseite bestätigte das dunkel dargestellte
+Label **„KI-GENERIERT“** unten rechts innerhalb der Karte
+**„Info & Werbetafeln“**. Die Position entsprach damit der tatsächlich
+gespeicherten Einstellung. Die übrigen gekennzeichneten OPC-Bilder wurden im
+zugänglichen Seiteninhalt ebenfalls mit barrierearmer Beschreibung erkannt.
+
+Der öffentliche Dev-Aufruf blieb wegen des beabsichtigten Wartungsmodus bei
+HTTP 503. Plugin-CSS und Plugin-JavaScript waren über HTTPS mit HTTP 200
+erreichbar. `onvis-shop.de` blieb während der gesamten Abnahme unverändert.

@@ -21,14 +21,14 @@ Die Installation darf nicht unmittelbar vor einer Kampagne, einem Import oder ei
 
 ## 3. Zuerst auf dev.onvis-shop.de testen
 
-Version 1.1.0 wird **vor** jeder Änderung an `onvis-shop.de` vollständig auf `dev.onvis-shop.de` geprüft. Der Dev-Shop muss im Wartungsmodus bleiben, eine eigene Datenbank verwenden und darf keine aktive Wawi-Anbindung besitzen.
+Version 1.1.1 wird **vor** jeder Änderung an `onvis-shop.de` vollständig auf `dev.onvis-shop.de` geprüft. Der Dev-Shop muss im Wartungsmodus bleiben, eine eigene Datenbank verwenden und darf keine aktive Wawi-Anbindung besitzen.
 
 Vor dem Dev-Update werden das vorhandene Pluginverzeichnis und die vier Plugin-Datenbanktabellen datiert gesichert. Anschließend wird exakt das später für Live vorgesehene ZIP verwendet. Galerie, Speichern, Stapelbearbeitung, OPC, Dateimanager-Fallback und Frontend-Ausgabe müssen fehlerfrei sein. Bei einem Fehler endet die Freigabe; Live bleibt unverändert.
 
 ## 4. Installation oder Update im Plugin-Manager
 
 1. Im JTL-Backend **Plugins → Plugin-Manager → Upload** öffnen.
-2. `MGD_AI_Kennzeichnung-1.1.0.zip` auswählen.
+2. `MGD_AI_Kennzeichnung-1.1.1.zip` auswählen.
 3. Bei einer bestehenden Version die von JTL angebotene Updatefunktion verwenden; sonst nach erfolgreicher Validierung installieren und aktivieren.
 4. Keine Dateien in JTL-Core, NOVA oder OnvisTheme manuell ersetzen.
 5. Updatehinweise und Footer-Nennung zunächst deaktiviert lassen.
@@ -46,6 +46,6 @@ Vor dem Dev-Update werden das vorhandene Pluginverzeichnis und die vier Plugin-D
 
 ## 6. Deaktivierung und Rollback
 
-Bei Fehlern das Plugin zuerst im Plugin-Manager deaktivieren und [Rollback 1.1.0](Rollback-1.1.0.md) ausführen. Das gesicherte Pluginverzeichnis der Version 1.0.0 wird wiederhergestellt; Plugin-Datenbanktabellen bleiben erhalten. Danach Plugin- und Template-Caches leeren und den alten Stand prüfen.
+Bei Fehlern das Plugin zuerst im Plugin-Manager deaktivieren und das vor dem Update gesicherte Pluginverzeichnis wiederherstellen. Plugin-Datenbanktabellen bleiben beim normalen Rollback erhalten. Danach Plugin- und Template-Caches leeren und den alten Stand prüfen. Für den historischen Rückfall von 1.1.0 steht zusätzlich [Rollback 1.1.0](Rollback-1.1.0.md) zur Verfügung.
 
 Eine Deinstallation mit Datenlöschung ist kein Rollback. Sie ist für diesen Ablauf ausdrücklich ausgeschlossen.
