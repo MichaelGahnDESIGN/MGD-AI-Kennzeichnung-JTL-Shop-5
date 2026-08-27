@@ -19,6 +19,7 @@
 - Ändern: `tests/Unit/Presentation/FrontendDocumentIntegratorTest.php` – responsive Bilder, Links, Hintergründe und Doppelschutz.
 - Ändern: `tests/Structure/FrontendAssetContractTest.php` – CSS-Vertrag für den neuen Rahmen.
 - Ändern: `plugin/MGD_AI_Kennzeichnung/info.xml` und `README.md` – Patchversion und verständliche Änderungserklärung.
+- Ändern: `scripts/build-release.sh`, `scripts/README.md` und `tests/Structure/DocumentationAndReleaseTest.php` – einheitlicher Paketname 1.1.1.
 - Neu: `Dokumentation/Dev-Abnahme-2026-08-27.md` – Testergebnisse, Sicherung und Dev-Abnahme.
 
 ### Aufgabe 1: Sichere Zielselektoren
@@ -248,15 +249,27 @@ git commit -m "fix: stabilisiert Inline-Rahmen für verlinkte Bilder"
 **Dateien:**
 - Ändern: `plugin/MGD_AI_Kennzeichnung/info.xml`
 - Ändern: `README.md`
+- Ändern: `scripts/build-release.sh`
+- Ändern: `scripts/README.md`
+- Ändern: `tests/Structure/DocumentationAndReleaseTest.php`
 - Erstellen: `Dokumentation/Dev-Abnahme-2026-08-27.md`
 
-- [ ] **Schritt 1: Patchversion auf 1.1.1 setzen**
+- [ ] **Schritt 1: Versions- und Paketvertrag zuerst auf 1.1.1 testen**
 
-In `info.xml` wird ausschließlich die Pluginversion von `1.1.0` auf `1.1.1`
-erhöht. Die unterstützte JTL-Version und Installations-/Update-SQL bleiben
-unverändert.
+In `DocumentationAndReleaseTest.php` werden ZIP-Pfad und erwarteter Paketname
+zuerst auf `MGD_AI_Kennzeichnung-1.1.1.zip` geändert.
 
-- [ ] **Schritt 2: Bedienwirkung verständlich dokumentieren**
+Ausführen: `vendor/bin/phpunit tests/Structure/DocumentationAndReleaseTest.php`
+
+Erwartung: Der Test schlägt fehl, weil das Buildskript noch Version 1.1.0 nennt.
+
+- [ ] **Schritt 2: Patchversion und Paketnamen auf 1.1.1 setzen**
+
+In `info.xml` wird die Pluginversion von `1.1.0` auf `1.1.1` erhöht. README,
+Buildskript und Skript-Dokumentation nennen denselben Paketnamen. Die
+unterstützte JTL-Version und Installations-/Update-SQL bleiben unverändert.
+
+- [ ] **Schritt 3: Bedienwirkung verständlich dokumentieren**
 
 README und Dev-Abnahme erklären:
 
@@ -267,7 +280,7 @@ picture-Ausgaben sowie lokale OPC-Hintergrundbilder. Bilddateien werden nicht
 verändert.
 ```
 
-- [ ] **Schritt 3: Vollständige lokale Qualitätsprüfung ausführen**
+- [ ] **Schritt 4: Vollständige lokale Qualitätsprüfung ausführen**
 
 ```bash
 composer validate --strict
@@ -281,7 +294,7 @@ Erwartung: alle Befehle enden mit Exitcode 0; PHPUnit meldet keine Fehler oder
 Fehlschläge, Node keine fehlgeschlagenen Tests, PHPStan und CS Fixer keine
 Beanstandungen.
 
-- [ ] **Schritt 4: Installationspaket reproduzierbar bauen**
+- [ ] **Schritt 5: Installationspaket reproduzierbar bauen**
 
 ```bash
 ./scripts/build-release.sh
@@ -291,10 +304,11 @@ shasum -a 256 dist/MGD_AI_Kennzeichnung-1.1.1.zip
 Erwartung: ZIP wird erzeugt und ein SHA-256-Prüfwert ausgegeben. Der Wert wird
 in der Dev-Abnahme dokumentiert.
 
-- [ ] **Schritt 5: Version und Dokumentation committen**
+- [ ] **Schritt 6: Version und Dokumentation committen**
 
 ```bash
-git add plugin/MGD_AI_Kennzeichnung/info.xml README.md \
+git add plugin/MGD_AI_Kennzeichnung/info.xml README.md scripts/build-release.sh \
+  scripts/README.md tests/Structure/DocumentationAndReleaseTest.php \
   Dokumentation/Dev-Abnahme-2026-08-27.md
 git commit -m "chore: bereitet Dev-Abnahme von Version 1.1.1 vor"
 ```
