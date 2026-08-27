@@ -1,5 +1,16 @@
 # Änderungsprotokoll
 
+## 1.2.0 – 2026-08-27
+
+- geschützten, rein lesenden **Impressum**-Tab im Plugin-Backend ergänzt;
+- freigegebene Hersteller-, Kontakt- und Steuerangaben semantisch und ohne
+  Datenbankspeicherung ausgegeben;
+- Telefon- und E-Mail-Link für berechtigte Administratoren ergänzt;
+- öffentlichen Shop, Originalbilder und vorhandene Kennzeichnungsdaten
+  unverändert gelassen;
+- README, technische Dokumentation und vollständiges Benutzerhandbuch um Zweck,
+  Datenschutzgrenzen und Bedienung des Impressum-Tabs erweitert.
+
 ## 1.1.1 – 2026-08-27
 
 - native Frontend-Kennzeichnungen für normale, verlinkte und responsive

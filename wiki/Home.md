@@ -31,10 +31,11 @@ Das Plugin hilft Ihnen, lokale Shopbilder strukturiert zu prüfen und transparen
 4. [Status und Darstellung](Status-und-Darstellung.md) – den passenden Hinweis auswählen.
 5. [OnPage Composer und Dateimanager](OnPage-Composer-und-Dateimanager.md) – direkt bei der Seitengestaltung arbeiten.
 6. [AI-Philosophie](AI-Philosophie.md) – Ihre Grundsätze öffentlich erläutern.
+7. [Impressum](Impressum.md) – Herstellerangaben des Plugins einsehen.
 
 ## Aktuelle Version
 
-Die aktuelle Version ist **1.1.1**. Sie unterstützt normale Bilder, verlinkte Bilder, responsive `picture`-Ausgaben sowie lokale OPC-Hintergrundbilder.
+Die aktuelle Version ist **1.2.0**. Sie ergänzt einen geschützten, rein lesenden Impressum-Tab und enthält weiterhin die mit 1.1.1 stabilisierte Ausgabe für normale, verlinkte und responsive Bilder sowie lokale OPC-Hintergrundbilder.
 
 Das installierbare Paket finden Sie unter [Releases](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases). Verwenden Sie stets das dort angehängte ZIP und prüfen Sie den veröffentlichten SHA-256-Wert.
 

@@ -47,9 +47,9 @@ final class PluginContractTest extends TestCase
             'Die minimale JTL-Shop-Version muss exakt 5.7.2 sein.',
         );
         self::assertSame(
-            '1.1.1',
+            '1.2.0',
             $this->liesXmlWert($xpath, 'Version'),
-            'Die Pluginversion muss exakt 1.1.1 sein.',
+            'Die Pluginversion muss exakt 1.2.0 sein.',
         );
         $phpVersionElemente = $xpath->query('//*[local-name()="PHPVersion"]');
         self::assertNotFalse($phpVersionElemente, 'Die Prüfung auf unbekannte PHP-Metadaten muss ausführbar sein.');

@@ -1,5 +1,11 @@
 # Versionsübersicht
 
+## 1.2.0 – 27. August 2026
+
+Aktueller freigegebener Stand. Ergänzt einen geschützten, rein lesenden
+Impressum-Tab für transparente Herstellerangaben. Der öffentliche Shop, die
+Bildkennzeichnung und vorhandene Plugin-Daten bleiben unverändert.
+
 ## 1.1.1 – 27. August 2026
 
 Aktueller freigegebener Stand. Stabile Kennzeichnung normaler, verlinkter und

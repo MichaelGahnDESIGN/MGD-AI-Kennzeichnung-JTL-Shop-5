@@ -8,7 +8,7 @@
     <MinShopVersion>5.7.2</MinShopVersion>
     <PluginID>MGD_AI_Kennzeichnung</PluginID>
     <CreateDate>2026-08-12</CreateDate>
-    <Version>1.1.1</Version>
+    <Version>1.2.0</Version>
     <Install>
         <Portlets>
             <Portlet>

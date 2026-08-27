@@ -77,9 +77,9 @@ Prüfen Sie, ob Status, Position und Darstellung vollständig ausgewählt sind. 
 
 ## Label liegt außerhalb des Bildes
 
-Version 1.1.1 korrigiert normale, verlinkte und responsive Bilder sowie lokale OPC-Hintergründe. Prüfen Sie zuerst:
+Version 1.1.1 und neuer korrigiert normale, verlinkte und responsive Bilder sowie lokale OPC-Hintergründe. Prüfen Sie zuerst:
 
-- wirklich Version 1.1.1 aktiv?
+- wirklich die aktuelle Version 1.2.0 aktiv?
 - Plugin-CSS mit HTTP 200 erreichbar?
 - alter Browser- oder Template-Cache?
 - stark abweichendes eigenes HTML/CSS?

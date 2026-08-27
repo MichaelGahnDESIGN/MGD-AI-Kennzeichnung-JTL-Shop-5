@@ -11,7 +11,7 @@ use ZipArchive;
 final class DocumentationAndReleaseTest extends TestCase
 {
     private const ROOT = __DIR__ . '/../..';
-    private const ZIP = self::ROOT . '/dist/MGD_AI_Kennzeichnung-1.1.1.zip';
+    private const ZIP = self::ROOT . '/dist/MGD_AI_Kennzeichnung-1.2.0.zip';
 
     #[Test]
     public function releaseziel_und_lokale_artefakte_sind_eindeutig_abgegrenzt(): void
@@ -21,7 +21,7 @@ final class DocumentationAndReleaseTest extends TestCase
         self::assertIsString($script);
         self::assertIsString($gitignore);
 
-        self::assertStringContainsString('MGD_AI_Kennzeichnung-1.1.1.zip', $script);
+        self::assertStringContainsString('MGD_AI_Kennzeichnung-1.2.0.zip', $script);
         self::assertStringNotContainsString('MGD_AI_Kennzeichnung-1.0.0.zip', $script);
 
         foreach (['/.superpowers/', '*.sql', '*.bak', '.env*'] as $muster) {
@@ -49,6 +49,8 @@ final class DocumentationAndReleaseTest extends TestCase
         self::assertContains('MGD_AI_Kennzeichnung/Bootstrap.php', $eintraege);
         self::assertContains('MGD_AI_Kennzeichnung/info.xml', $eintraege);
         self::assertContains('MGD_AI_Kennzeichnung/Portlets/AIPhilosophie/AIPhilosophie.php', $eintraege);
+        self::assertContains('MGD_AI_Kennzeichnung/adminmenu/impressum.php', $eintraege);
+        self::assertContains('MGD_AI_Kennzeichnung/adminmenu/templates/impressum.tpl', $eintraege);
 
         foreach ($eintraege as $eintrag) {
             self::assertStringStartsWith('MGD_AI_Kennzeichnung/', $eintrag);
@@ -126,6 +128,7 @@ final class DocumentationAndReleaseTest extends TestCase
             'Status-und-Darstellung.md',
             'OnPage-Composer-und-Dateimanager.md',
             'AI-Philosophie.md',
+            'Impressum.md',
             'Einstellungen.md',
             'Datenschutz-und-Sicherheit.md',
             'Fehlerbehebung.md',
@@ -151,12 +154,36 @@ final class DocumentationAndReleaseTest extends TestCase
             'Stapelbearbeitung',
             'OnPage Composer',
             'AI-Philosophie',
+            '§ 5 DDG',
             'Datenminimierung',
             'Rollback',
             'Fehlerbehebung',
         ] as $begriff) {
             self::assertStringContainsStringIgnoringCase($begriff, $gesamt);
         }
+    }
+
+    #[Test]
+    public function version_1_2_0_erklaert_den_rein_lesenden_impressum_tab(): void
+    {
+        $dateien = [
+            self::ROOT . '/README.md',
+            self::ROOT . '/Dokumentation/Impressum.md',
+            self::ROOT . '/Dokumentation/Release-1.2.0.md',
+            self::ROOT . '/wiki/Impressum.md',
+        ];
+        $gesamt = '';
+        foreach ($dateien as $datei) {
+            self::assertFileExists($datei);
+            $gesamt .= "\n" . (string) file_get_contents($datei);
+        }
+
+        foreach (['Version 1.2.0', '§ 5 DDG', 'nur im Administrationsbereich', 'keine Datenbank'] as $begriff) {
+            self::assertStringContainsStringIgnoringCase($begriff, $gesamt);
+        }
+        self::assertStringContainsString('+49 (0) 151 59156639', $gesamt);
+        self::assertStringContainsString('Anfrage@Michael-Gahn.de', $gesamt);
+        self::assertStringContainsString('ersetzt nicht das öffentliche Impressum', $gesamt);
     }
 
     #[Test]

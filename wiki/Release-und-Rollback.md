@@ -24,6 +24,12 @@ Für JTL verwenden Sie ausschließlich das explizit angehängte Plugin-ZIP.
 9. erst danach neues Live-Backup;
 10. exakt dasselbe Paket auf Live verwenden.
 
+## Release 1.2.0
+
+Version 1.2.0 ergänzt einen geschützten, rein lesenden Impressum-Tab. Er zeigt
+die freigegebenen Herstellerangaben, verwendet keine Datenbank und verändert
+weder das öffentliche Shop-Impressum noch vorhandene Plugin-Daten.
+
 ## Release 1.1.1
 
 Version 1.1.1 verbessert die Frontend-Ausgabe für:

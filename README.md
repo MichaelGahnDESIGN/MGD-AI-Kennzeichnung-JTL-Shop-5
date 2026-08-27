@@ -2,7 +2,7 @@
 
 Transparente Kennzeichnungen für KI-generierte und KI-bearbeitete Bilder – direkt in JTL-Shop 5, ohne die Originalbilder zu verändern und ohne Bilddaten an externe KI-Dienste zu senden.
 
-> **Aktuelle Version:** 1.1.1
+> **Aktuelle Version:** 1.2.0
 > **Getestet mit:** JTL-Shop 5.7.2, PHP 8.1 oder neuer, NOVA und NOVA-basierten Templates
 > **Wichtig:** Das Plugin erkennt KI-Inhalte nicht automatisch. Die fachliche Prüfung und Einstufung erfolgt bewusst durch einen berechtigten Menschen.
 
@@ -32,6 +32,7 @@ Das Plugin verändert keine Bilddatei, brennt keinen Text in ein Bild ein und ve
 - Integration in den OnPage Composer und optional in dessen JTL-Dateimanager;
 - deutsch- und englischsprachige, barrierearme Kennzeichnungstexte;
 - eigene AI-Philosophie als OPC-Portlet unter **Custom Portlets**;
+- eigener, rein lesender Impressum-Tab mit transparenten Herstellerangaben;
 - keine automatische Übertragung von Bildern oder Kundendaten an externe Dienste;
 - sichere JTL-Admin-Integration mit Berechtigungs- und CSRF-Prüfung;
 - kontrollierter Scan, Vorschau vor Stapeländerungen und sicherer Umgang mit veralteten Fundstellen;
@@ -87,7 +88,7 @@ Die sichtbaren Texte werden je nach Shop- oder Plugin-Sprache auf Deutsch oder E
 
 ### 1. Paket herunterladen
 
-Laden Sie das ZIP aus dem Bereich [GitHub Releases](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases) herunter. Verwenden Sie nicht den automatisch von GitHub erzeugten Quellcode-Download, sondern das installierbare Paket `MGD_AI_Kennzeichnung-1.1.1.zip`.
+Laden Sie das ZIP aus dem Bereich [GitHub Releases](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases) herunter. Verwenden Sie nicht den automatisch von GitHub erzeugten Quellcode-Download, sondern das installierbare Paket `MGD_AI_Kennzeichnung-1.2.0.zip`.
 
 ### 2. Vorher sichern
 
@@ -102,7 +103,7 @@ Erstellen Sie vor Installation oder Update mindestens:
 
 1. JTL-Backend öffnen.
 2. **Plugins → Plugin-Manager → Upload** wählen.
-3. `MGD_AI_Kennzeichnung-1.1.1.zip` hochladen.
+3. `MGD_AI_Kennzeichnung-1.2.0.zip` hochladen.
 4. Das Plugin installieren beziehungsweise aktualisieren.
 5. Plugin aktivieren.
 6. Shop- und Template-Cache leeren, falls JTL dies nach dem Update nicht automatisch erledigt.
@@ -171,6 +172,19 @@ Typische Inhalte einer AI-Philosophie sind:
 - welche Datenschutzgrundsätze gelten;
 - wie Kunden Fragen oder Hinweise melden können.
 
+## Plugin-Impressum
+
+Unter **Plugins → MGD AI Kennzeichnung → Impressum** finden Betreiber die
+geschäftlichen Kontaktdaten des Plugin-Herstellers. Der Tab ist nur im
+Administrationsbereich erreichbar und dient ausschließlich der transparenten
+Herstellerinformation.
+
+Die Seite ist statisch und rein lesend: Sie verwendet keine Datenbank, nimmt
+keine Eingaben entgegen, lädt keine Drittanbieter und verarbeitet keine Kunden-
+oder Administratordaten. Sie ersetzt nicht das öffentliche Impressum des Shops.
+Telefonnummer und E-Mail-Adresse sind für berechtigte Administratoren direkt
+anklickbar.
+
 ## Plugin-Einstellungen
 
 | Einstellung | Standard | Zweck |
@@ -216,7 +230,7 @@ Weitere Details stehen in [Datenschutz und Sicherheit](Dokumentation/Datenschutz
 - ein berechtigtes JTL-Admin-Konto;
 - empfohlen: Standardtemplate NOVA oder ein sauber abgeleitetes NOVA-Child-Theme.
 
-Getestet wurde Version 1.1.1 mit NOVA sowie OnvisTheme auf Basis NOVA 1.7.1. Andere Templates können funktionieren, sollten aber zuerst in einer getrennten Testumgebung geprüft werden.
+Die Bildausgabe wurde mit Version 1.1.1 unter NOVA sowie OnvisTheme auf Basis NOVA 1.7.1 geprüft. Version 1.2.0 ergänzt ausschließlich den geschützten Impressum-Tab. Andere Templates können funktionieren, sollten aber zuerst in einer getrennten Testumgebung geprüft werden.
 
 ## Bewusste Grenzen
 
@@ -249,6 +263,7 @@ Eine Deinstallation mit Datenlöschung ist kein normaler Rollback. Ohne ausdrüc
 - [OPC-Kennzeichnung](Dokumentation/OPC-Kennzeichnung.md)
 - [Installation, Test und Rollback](Dokumentation/Installation-und-Livetest.md)
 - [Datenschutz und Sicherheit](Dokumentation/Datenschutz-und-Sicherheit.md)
+- [Plugin-Impressum](Dokumentation/Impressum.md)
 - [Technische Dokumentationsübersicht](Dokumentation/README.md)
 - [Änderungsprotokoll](CHANGELOG.md)
 - [Sicherheitsmeldungen](SECURITY.md)
@@ -263,8 +278,8 @@ composer test:js
 composer analyse
 composer style
 bash scripts/build-release.sh
-unzip -t dist/MGD_AI_Kennzeichnung-1.1.1.zip
-shasum -a 256 dist/MGD_AI_Kennzeichnung-1.1.1.zip
+unzip -t dist/MGD_AI_Kennzeichnung-1.2.0.zip
+shasum -a 256 dist/MGD_AI_Kennzeichnung-1.2.0.zip
 ```
 
 Die Testumgebung umfasst PHP-Unit- und Integrationstests, JavaScript-Tests, statische PHP-Analyse, Formatprüfung, Strukturverträge und die Prüfung des installierbaren ZIP-Pakets.

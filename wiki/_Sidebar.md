@@ -7,6 +7,7 @@
 - [Status und Darstellung](Status-und-Darstellung.md)
 - [OnPage Composer und Dateimanager](OnPage-Composer-und-Dateimanager.md)
 - [AI-Philosophie](AI-Philosophie.md)
+- [Impressum](Impressum.md)
 - [Einstellungen](Einstellungen.md)
 - [Datenschutz und Sicherheit](Datenschutz-und-Sicherheit.md)
 - [Fehlerbehebung](Fehlerbehebung.md)
