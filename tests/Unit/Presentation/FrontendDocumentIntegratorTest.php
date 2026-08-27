@@ -224,13 +224,9 @@ final class RecordingTarget
     {
         $this->filters[] = $selector;
         if ($selector === '.mgd-ai-label-host' && in_array('mgd-ai-label-host', $this->classes, true)) {
-            return new RecordingTarget(false);
+            return new RecordingTarget();
         }
 
         return $this->routes['not:' . $selector] ?? $this;
-    }
-
-    public function __construct(private readonly bool $recordsChanges = true)
-    {
     }
 }

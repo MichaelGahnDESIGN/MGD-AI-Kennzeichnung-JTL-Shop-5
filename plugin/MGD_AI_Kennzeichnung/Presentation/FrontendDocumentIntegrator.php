@@ -163,8 +163,12 @@ final class FrontendDocumentIntegrator
         return $this->callObjectMethod($dokument, 'find', $selector);
     }
 
-    private function callObjectMethod(object $objekt, string $methode, ?string $argument = null): ?object
+    private function callObjectMethod(?object $objekt, string $methode, ?string $argument = null): ?object
     {
+        if ($objekt === null) {
+            return null;
+        }
+
         $aufruf = [$objekt, $methode];
         if (!is_callable($aufruf)) {
             return null;

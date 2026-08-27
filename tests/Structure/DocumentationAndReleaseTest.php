@@ -11,7 +11,7 @@ use ZipArchive;
 final class DocumentationAndReleaseTest extends TestCase
 {
     private const ROOT = __DIR__ . '/../..';
-    private const ZIP = self::ROOT . '/dist/MGD_AI_Kennzeichnung-1.1.0.zip';
+    private const ZIP = self::ROOT . '/dist/MGD_AI_Kennzeichnung-1.1.1.zip';
 
     #[Test]
     public function releaseziel_und_lokale_artefakte_sind_eindeutig_abgegrenzt(): void
@@ -21,7 +21,7 @@ final class DocumentationAndReleaseTest extends TestCase
         self::assertIsString($script);
         self::assertIsString($gitignore);
 
-        self::assertStringContainsString('MGD_AI_Kennzeichnung-1.1.0.zip', $script);
+        self::assertStringContainsString('MGD_AI_Kennzeichnung-1.1.1.zip', $script);
         self::assertStringNotContainsString('MGD_AI_Kennzeichnung-1.0.0.zip', $script);
 
         foreach (['/.superpowers/', '*.sql', '*.bak', '.env*'] as $muster) {

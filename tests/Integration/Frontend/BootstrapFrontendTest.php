@@ -53,8 +53,9 @@ final class BootstrapFrontendTest extends TestCase
 
         self::assertStringContainsString('mgd-ai-labels.css', $dokument->head->markup[0]);
         self::assertStringContainsString('mgd-ai-marked-elements.js', $dokument->body->markup[0]);
-        self::assertStringContainsString('KI-GENERIERT', $dokument->bilder->markup[0]);
-        self::assertContains('mgd-ai-label-host', $dokument->bilder->classes);
+        self::assertStringContainsString('KI-GENERIERT', $dokument->linkRahmen->markup[0]);
+        self::assertContains('mgd-ai-label-host', $dokument->linkRahmen->classes);
+        self::assertContains('mgd-ai-label-host--inline', $dokument->linkRahmen->classes);
     }
 
     private function plugin(Config $config): PluginInterface
@@ -90,12 +91,34 @@ final class FrontendDocument
     public FrontendTarget $head;
     public FrontendTarget $body;
     public FrontendTarget $bilder;
+    public FrontendTarget $pictureBilder;
+    public FrontendTarget $direkteBilder;
+    public FrontendTarget $picture;
+    public FrontendTarget $bildRahmen;
+    public FrontendTarget $linkRahmen;
+    public FrontendTarget $blockRahmen;
+    public FrontendTarget $hintergruende;
 
     public function __construct()
     {
         $this->head = new FrontendTarget();
         $this->body = new FrontendTarget();
         $this->bilder = new FrontendTarget();
+        $this->pictureBilder = new FrontendTarget();
+        $this->direkteBilder = new FrontendTarget();
+        $this->picture = new FrontendTarget();
+        $this->bildRahmen = new FrontendTarget();
+        $this->linkRahmen = new FrontendTarget();
+        $this->blockRahmen = new FrontendTarget();
+        $this->hintergruende = new FrontendTarget();
+
+        $this->bilder->routes['filter:picture > img'] = $this->pictureBilder;
+        $this->bilder->routes['not:picture > img'] = $this->direkteBilder;
+        $this->pictureBilder->routes['parent'] = $this->picture;
+        $this->picture->routes['parent'] = $this->bildRahmen;
+        $this->direkteBilder->routes['parent'] = $this->bildRahmen;
+        $this->bildRahmen->routes['filter:a'] = $this->linkRahmen;
+        $this->bildRahmen->routes['not:a'] = $this->blockRahmen;
     }
 
     public function find(string $selector): FrontendTarget
@@ -104,7 +127,11 @@ final class FrontendDocument
             return $this->head;
         }
 
-        return $selector === 'body' ? $this->body : $this->bilder;
+        if ($selector === 'body') {
+            return $this->body;
+        }
+
+        return str_starts_with($selector, '[style*=') ? $this->hintergruende : $this->bilder;
     }
 }
 
@@ -114,6 +141,8 @@ final class FrontendTarget
     public array $markup = [];
     /** @var list<string> */
     public array $classes = [];
+    /** @var array<string, self> */
+    public array $routes = [];
 
     public function append(string $markup): void
     {
@@ -122,11 +151,25 @@ final class FrontendTarget
 
     public function parent(): self
     {
-        return $this;
+        return $this->routes['parent'] ?? $this;
     }
 
     public function addClass(string $class): void
     {
         $this->classes[] = $class;
+    }
+
+    public function filter(string $selector): self
+    {
+        return $this->routes['filter:' . $selector] ?? $this;
+    }
+
+    public function not(string $selector): self
+    {
+        if ($selector === '.mgd-ai-label-host' && in_array('mgd-ai-label-host', $this->classes, true)) {
+            return new self();
+        }
+
+        return $this->routes['not:' . $selector] ?? $this;
     }
 }
