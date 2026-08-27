@@ -91,8 +91,7 @@ final class FrontendDocument
     public FrontendTarget $head;
     public FrontendTarget $body;
     public FrontendTarget $bilder;
-    public FrontendTarget $pictureBilder;
-    public FrontendTarget $direkteBilder;
+    public FrontendTarget $bildEltern;
     public FrontendTarget $picture;
     public FrontendTarget $bildRahmen;
     public FrontendTarget $linkRahmen;
@@ -104,19 +103,17 @@ final class FrontendDocument
         $this->head = new FrontendTarget();
         $this->body = new FrontendTarget();
         $this->bilder = new FrontendTarget();
-        $this->pictureBilder = new FrontendTarget();
-        $this->direkteBilder = new FrontendTarget();
+        $this->bildEltern = new FrontendTarget();
         $this->picture = new FrontendTarget();
         $this->bildRahmen = new FrontendTarget();
         $this->linkRahmen = new FrontendTarget();
         $this->blockRahmen = new FrontendTarget();
         $this->hintergruende = new FrontendTarget();
 
-        $this->bilder->routes['filter:picture > img'] = $this->pictureBilder;
-        $this->bilder->routes['not:picture > img'] = $this->direkteBilder;
-        $this->pictureBilder->routes['parent'] = $this->picture;
+        $this->bilder->routes['parent'] = $this->bildEltern;
+        $this->bildEltern->routes['filter:picture'] = $this->picture;
+        $this->bildEltern->routes['not:picture'] = $this->bildRahmen;
         $this->picture->routes['parent'] = $this->bildRahmen;
-        $this->direkteBilder->routes['parent'] = $this->bildRahmen;
         $this->bildRahmen->routes['filter:a'] = $this->linkRahmen;
         $this->bildRahmen->routes['not:a'] = $this->blockRahmen;
     }

@@ -76,7 +76,7 @@ final class FrontendDocumentIntegratorTest extends TestCase
         self::assertNotContains('img', $dokument->selectors);
         self::assertStringContainsString('role="note"', $dokument->linkHosts->markup[0]);
         self::assertStringContainsString('KI-GENERIERT', $dokument->linkHosts->markup[0]);
-        self::assertContains('picture > img', $dokument->images->filters);
+        self::assertContains('picture', $dokument->imageParents->filters);
         self::assertContains('a', $dokument->pictureHosts->filters);
         self::assertContains('mgd-ai-label-host', $dokument->linkHosts->classes);
         self::assertContains('mgd-ai-label-host--inline', $dokument->linkHosts->classes);
@@ -131,8 +131,7 @@ final class RecordingDocument
     public RecordingTarget $head;
     public RecordingTarget $body;
     public RecordingTarget $images;
-    public RecordingTarget $pictureImages;
-    public RecordingTarget $directImages;
+    public RecordingTarget $imageParents;
     public RecordingTarget $pictureElements;
     public RecordingTarget $pictureHosts;
     public RecordingTarget $directHosts;
@@ -148,8 +147,7 @@ final class RecordingDocument
         $this->head = new RecordingTarget();
         $this->body = new RecordingTarget();
         $this->images = new RecordingTarget();
-        $this->pictureImages = new RecordingTarget();
-        $this->directImages = new RecordingTarget();
+        $this->imageParents = new RecordingTarget();
         $this->pictureElements = new RecordingTarget();
         $this->pictureHosts = new RecordingTarget();
         $this->directHosts = new RecordingTarget();
@@ -157,11 +155,10 @@ final class RecordingDocument
         $this->blockHosts = new RecordingTarget();
         $this->backgrounds = new RecordingTarget();
 
-        $this->images->routes['filter:picture > img'] = $this->pictureImages;
-        $this->images->routes['not:picture > img'] = $this->directImages;
-        $this->pictureImages->routes['parent'] = $this->pictureElements;
+        $this->images->routes['parent'] = $this->imageParents;
+        $this->imageParents->routes['filter:picture'] = $this->pictureElements;
+        $this->imageParents->routes['not:picture'] = $this->directHosts;
         $this->pictureElements->routes['parent'] = $this->pictureHosts;
-        $this->directImages->routes['parent'] = $this->directHosts;
 
         foreach ([$this->pictureHosts, $this->directHosts] as $hosts) {
             $hosts->routes['filter:a'] = $this->linkHosts;

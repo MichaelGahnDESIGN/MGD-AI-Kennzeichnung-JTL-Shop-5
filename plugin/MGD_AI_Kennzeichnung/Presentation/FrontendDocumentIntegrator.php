@@ -90,13 +90,13 @@ final class FrontendDocumentIntegrator
             }
 
             $bilder = $this->find($dokument, $locator->imageSelector($dateiname));
-            $pictureBilder = $this->callObjectMethod($bilder, 'filter', 'picture > img');
-            $direkteBilder = $this->callObjectMethod($bilder, 'not', 'picture > img');
+            $direkteEltern = $this->parentOf($bilder);
+            $pictureElemente = $this->callObjectMethod($direkteEltern, 'filter', 'picture');
+            $direkteRahmen = $this->callObjectMethod($direkteEltern, 'not', 'picture');
 
             // Ein <picture> darf außer <source> und <img> keine Label-Elemente
             // enthalten. Deshalb wird sein äußerer Link oder Block verwendet.
-            $pictureRahmen = $this->parentOf($this->parentOf($pictureBilder));
-            $direkteRahmen = $this->parentOf($direkteBilder);
+            $pictureRahmen = $this->parentOf($pictureElemente);
             $this->decorateImageHosts($pictureRahmen, $markup);
             $this->decorateImageHosts($direkteRahmen, $markup);
 
