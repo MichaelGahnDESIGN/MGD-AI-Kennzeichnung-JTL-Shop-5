@@ -27,7 +27,11 @@
             <Name>AI-Philosophie</Name>
             <Filename>philosophy.php</Filename>
         </Customlink>
-        <Settingslink sort="3">
+        <Customlink sort="3">
+            <Name>Impressum</Name>
+            <Filename>impressum.php</Filename>
+        </Customlink>
+        <Settingslink sort="4">
             <Name>Einstellungen</Name>
             <Setting type="selectbox" initialValue="N" sort="1" conf="Y">
                 <Name>Herstellernennung im Footer anzeigen</Name>
