@@ -37,6 +37,23 @@
     position: relative;
 }
 
+/*
+ * Ein Link ist standardmäßig inline und besitzt dadurch keinen verlässlichen
+ * rechteckigen Positionsrahmen. Nur ausdrücklich erkannte Bildlinks werden
+ * deshalb zu einem größenbegrenzten Inline-Block. Vorhandene JTL-Blockelemente
+ * behalten dagegen unverändert ihre Raster- und Breitenregeln.
+ */
+.mgd-ai-label-host--inline {
+    display: inline-block;
+    max-width: 100%;
+    vertical-align: top;
+}
+
+.mgd-ai-label-host--inline > picture,
+.mgd-ai-label-host--inline > img {
+    display: block;
+}
+
 .mgd-ai-label:not([role="note"])::after,
 .mgd-ai-label__badge,
 .mgd-ai-label--native {

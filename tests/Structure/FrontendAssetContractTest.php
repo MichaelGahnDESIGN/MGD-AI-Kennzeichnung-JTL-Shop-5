@@ -44,6 +44,10 @@ final class FrontendAssetContractTest extends TestCase
 
         self::assertStringContainsString('pointer-events: none', $css);
         self::assertStringContainsString('@media (prefers-reduced-motion: reduce)', $css);
+        self::assertStringContainsString('.mgd-ai-label-host--inline', $css);
+        self::assertStringContainsString('display: inline-block', $css);
+        self::assertStringContainsString('max-width: 100%', $css);
+        self::assertStringContainsString('vertical-align: top', $css);
     }
 
     #[Test]
