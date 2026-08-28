@@ -37,6 +37,7 @@ final class LabelRendererTest extends TestCase
             innerPadding: 7,
             borderRadius: 5,
             blur: 3,
+            transparency: 8,
         );
 
         $html = $renderer->render($view);
@@ -49,6 +50,7 @@ final class LabelRendererTest extends TestCase
         self::assertStringContainsString('aria-label="Dieser Inhalt wurde vollständig mit künstlicher Intelligenz erzeugt."', $html);
         self::assertStringContainsString('>KI-GENERIERT</span>', $html);
         self::assertStringContainsString('--mgd-ai-font-size:16px', $html);
+        self::assertStringContainsString('--mgd-ai-background-opacity:0.92', $html);
         self::assertStringNotContainsString('<script', strtolower($html));
     }
 

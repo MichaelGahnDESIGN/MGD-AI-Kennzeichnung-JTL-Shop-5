@@ -83,6 +83,7 @@ final class FrontendDocumentIntegrator
                 innerPadding: $settings->innerPadding,
                 borderRadius: $settings->borderRadius,
                 blur: $settings->blur,
+                transparency: $settings->transparency,
             );
             $markup = $renderer->render($view);
             if ($markup === '') {

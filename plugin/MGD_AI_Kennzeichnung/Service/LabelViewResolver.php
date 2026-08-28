@@ -25,6 +25,7 @@ final class LabelViewResolver
     private const DEFAULT_INNER_PADDING = 6;
     private const DEFAULT_BORDER_RADIUS = 4;
     private const DEFAULT_BLUR = 0;
+    private const DEFAULT_TRANSPARENCY = 8;
 
     /**
      * Erstellt das vollständig normalisierte Darstellungsmodell.
@@ -45,6 +46,7 @@ final class LabelViewResolver
         mixed $innerPadding = self::DEFAULT_INNER_PADDING,
         mixed $borderRadius = self::DEFAULT_BORDER_RADIUS,
         mixed $blur = self::DEFAULT_BLUR,
+        mixed $transparency = self::DEFAULT_TRANSPARENCY,
     ): LabelView {
         $normalisierterStatus = LabelStatus::fromInput($status);
 
@@ -65,6 +67,7 @@ final class LabelViewResolver
             innerPadding: $this->boundedInteger($innerPadding, self::DEFAULT_INNER_PADDING, 0, 32),
             borderRadius: $this->boundedInteger($borderRadius, self::DEFAULT_BORDER_RADIUS, 0, 32),
             blur: $this->boundedInteger($blur, self::DEFAULT_BLUR, 0, 24),
+            transparency: $this->boundedInteger($transparency, self::DEFAULT_TRANSPARENCY, 0, 90),
         );
     }
 

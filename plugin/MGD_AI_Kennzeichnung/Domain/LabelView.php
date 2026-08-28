@@ -32,6 +32,8 @@ final class LabelView
         public readonly int $innerPadding,
         public readonly int $borderRadius,
         public readonly int $blur,
+        public readonly int $transparency,
+        public readonly string $backgroundOpacity,
     ) {}
 
     /**
@@ -52,6 +54,7 @@ final class LabelView
         int $innerPadding,
         int $borderRadius,
         int $blur,
+        int $transparency = 8,
     ): self {
         if (!$status->isVisible()) {
             return self::hidden();
@@ -72,6 +75,8 @@ final class LabelView
             innerPadding: self::boundedInteger($innerPadding, 0, 32),
             borderRadius: self::boundedInteger($borderRadius, 0, 32),
             blur: self::boundedInteger($blur, 0, 24),
+            transparency: self::boundedInteger($transparency, 0, 90),
+            backgroundOpacity: self::backgroundOpacity($transparency),
         );
     }
 
@@ -93,6 +98,8 @@ final class LabelView
             innerPadding: 0,
             borderRadius: 0,
             blur: 0,
+            transparency: 0,
+            backgroundOpacity: '1.00',
         );
     }
 
@@ -157,5 +164,19 @@ final class LabelView
     private static function boundedInteger(int $value, int $minimum, int $maximum): int
     {
         return max($minimum, min($maximum, $value));
+    }
+
+    /**
+     * Leitet die CSS-Deckkraft aus der erlaubten Transparenz ab.
+     *
+     * Das Ergebnis besitzt stets zwei Nachkommastellen und bleibt damit als
+     * CSS-Variable sowie in Templates eindeutig und stabil darstellbar.
+     */
+    private static function backgroundOpacity(int $transparency): string
+    {
+        $transparency = self::boundedInteger($transparency, 0, 90);
+        $opacity = 100 - $transparency;
+
+        return sprintf('%d.%02d', intdiv($opacity, 100), $opacity % 100);
     }
 }

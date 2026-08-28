@@ -30,12 +30,13 @@ final class LabelRenderer
             $view->sourceClass,
         ]);
         $stil = sprintf(
-            '--mgd-ai-font-size:%dpx;--mgd-ai-outer-margin:%dpx;--mgd-ai-inner-padding:%dpx;--mgd-ai-border-radius:%dpx;--mgd-ai-blur:%dpx',
+            '--mgd-ai-font-size:%dpx;--mgd-ai-outer-margin:%dpx;--mgd-ai-inner-padding:%dpx;--mgd-ai-border-radius:%dpx;--mgd-ai-blur:%dpx;--mgd-ai-background-opacity:%s',
             $view->fontSize,
             $view->outerMargin,
             $view->innerPadding,
             $view->borderRadius,
             $view->blur,
+            $view->backgroundOpacity,
         );
 
         return sprintf(

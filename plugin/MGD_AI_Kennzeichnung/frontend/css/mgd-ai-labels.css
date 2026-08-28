@@ -9,6 +9,7 @@
     --mgd-ai-inner-padding: 6px;
     --mgd-ai-border-radius: 4px;
     --mgd-ai-blur: 0px;
+    --mgd-ai-background-opacity: 0.92;
 }
 
 .mgd-ai-label--native,
@@ -91,18 +92,18 @@
 .mgd-ai-label--theme-auto,
 .mgd-ai-label--theme-dark {
     color: #fff;
-    background: rgba(17, 24, 39, 0.92);
+    background: rgba(17, 24, 39, var(--mgd-ai-background-opacity));
 }
 
 .mgd-ai-label--theme-light {
     color: #111827;
-    background: rgba(255, 255, 255, 0.94);
+    background: rgba(255, 255, 255, var(--mgd-ai-background-opacity));
 }
 
 @media (prefers-color-scheme: light) {
     .mgd-ai-label--theme-auto {
         color: #111827;
-        background: rgba(255, 255, 255, 0.94);
+        background: rgba(255, 255, 255, var(--mgd-ai-background-opacity));
     }
 }
 

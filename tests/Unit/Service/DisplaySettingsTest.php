@@ -10,8 +10,6 @@ use DOMXPath;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Plugin\MGD_AI_Kennzeichnung\Domain\LabelLanguage;
-use Plugin\MGD_AI_Kennzeichnung\Domain\LabelPosition;
-use Plugin\MGD_AI_Kennzeichnung\Domain\LabelTheme;
 use Plugin\MGD_AI_Kennzeichnung\Service\DisplaySettings;
 use ReflectionClass;
 
@@ -35,9 +33,9 @@ final class DisplaySettingsTest extends TestCase
         self::assertFalse($einstellungen->showCredit);
         self::assertFalse($einstellungen->updateNoticesEnabled);
         self::assertSame(LabelLanguage::Auto, $einstellungen->language);
-        self::assertSame(LabelPosition::BottomRight, $einstellungen->position);
-        self::assertSame(LabelTheme::Auto, $einstellungen->theme);
-        self::assertSame([12, 8, 6, 4, 0], $this->zahlen($einstellungen));
+        self::assertSame([12, 8, 6, 4, 0, 8], $this->zahlen($einstellungen));
+        self::assertFalse(property_exists($einstellungen, 'position'));
+        self::assertFalse(property_exists($einstellungen, 'theme'));
     }
 
     #[Test]
@@ -49,43 +47,37 @@ final class DisplaySettingsTest extends TestCase
             'showCredit' => true,
             'updateNoticesEnabled' => true,
             'language' => 'de',
-            'position' => 'top-left',
-            'theme' => 'dark',
             'fontSize' => 48,
             'outerMargin' => 64,
             'innerPadding' => 32,
             'borderRadius' => 32,
             'blur' => 24,
+            'transparency' => 90,
             'cssClass' => 'eingeschleust',
         ]);
 
         self::assertTrue($gueltig->showCredit);
         self::assertTrue($gueltig->updateNoticesEnabled);
         self::assertSame(LabelLanguage::De, $gueltig->language);
-        self::assertSame(LabelPosition::TopLeft, $gueltig->position);
-        self::assertSame(LabelTheme::Dark, $gueltig->theme);
-        self::assertSame([48, 64, 32, 32, 24], $this->zahlen($gueltig));
+        self::assertSame([48, 64, 32, 32, 24, 90], $this->zahlen($gueltig));
         self::assertFalse(property_exists($gueltig, 'cssClass'));
 
         $manipuliert = DisplaySettings::fromInput([
             'showCredit' => 'Y',
             'updateNoticesEnabled' => 1,
             'language' => ' DE ',
-            'position' => 'top-left eigene-klasse',
-            'theme' => ['dark'],
             'fontSize' => '48',
             'outerMargin' => 1.5,
             'innerPadding' => 'NaN',
             'borderRadius' => INF,
             'blur' => '<24>',
+            'transparency' => '90',
         ]);
 
         self::assertFalse($manipuliert->showCredit);
         self::assertFalse($manipuliert->updateNoticesEnabled);
         self::assertSame(LabelLanguage::Auto, $manipuliert->language);
-        self::assertSame(LabelPosition::BottomRight, $manipuliert->position);
-        self::assertSame(LabelTheme::Auto, $manipuliert->theme);
-        self::assertSame([12, 8, 6, 4, 0], $this->zahlen($manipuliert));
+        self::assertSame([12, 8, 6, 4, 0, 8], $this->zahlen($manipuliert));
     }
 
     #[Test]
@@ -99,6 +91,7 @@ final class DisplaySettingsTest extends TestCase
             'innerPadding' => -1,
             'borderRadius' => -1,
             'blur' => -1,
+            'transparency' => -1,
         ]);
         $oben = DisplaySettings::fromInput([
             'fontSize' => PHP_INT_MAX,
@@ -106,10 +99,11 @@ final class DisplaySettingsTest extends TestCase
             'innerPadding' => PHP_INT_MAX,
             'borderRadius' => PHP_INT_MAX,
             'blur' => PHP_INT_MAX,
+            'transparency' => PHP_INT_MAX,
         ]);
 
-        self::assertSame([8, 0, 0, 0, 0], $this->zahlen($unten));
-        self::assertSame([48, 64, 32, 32, 24], $this->zahlen($oben));
+        self::assertSame([8, 0, 0, 0, 0, 0], $this->zahlen($unten));
+        self::assertSame([48, 64, 32, 32, 24, 90], $this->zahlen($oben));
     }
 
     #[Test]
@@ -121,21 +115,18 @@ final class DisplaySettingsTest extends TestCase
             'show_credit' => 'Y',
             'update_notices' => 'Y',
             'language' => 'en',
-            'position' => 'bottom-left',
-            'theme' => 'light',
             'font_size' => '18',
             'outer_margin' => '14',
             'inner_padding' => '10',
             'border_radius' => '7',
             'blur' => '5',
+            'transparency' => '8',
         ]);
 
         self::assertTrue($gueltig->showCredit);
         self::assertTrue($gueltig->updateNoticesEnabled);
         self::assertSame(LabelLanguage::En, $gueltig->language);
-        self::assertSame(LabelPosition::BottomLeft, $gueltig->position);
-        self::assertSame(LabelTheme::Light, $gueltig->theme);
-        self::assertSame([18, 14, 10, 7, 5], $this->zahlen($gueltig));
+        self::assertSame([18, 14, 10, 7, 5, 8], $this->zahlen($gueltig));
 
         $manipuliert = DisplaySettings::fromJtlConfig([
             'show_credit' => 'yes',
@@ -145,11 +136,22 @@ final class DisplaySettingsTest extends TestCase
             'inner_padding' => 'NaN',
             'border_radius' => [],
             'blur' => ' 5 ',
+            'transparency' => '8px',
         ]);
 
         self::assertFalse($manipuliert->showCredit);
         self::assertFalse($manipuliert->updateNoticesEnabled);
-        self::assertSame([12, 8, 6, 4, 0], $this->zahlen($manipuliert));
+        self::assertSame([12, 8, 6, 4, 0, 8], $this->zahlen($manipuliert));
+    }
+
+    #[Test]
+    public function jtl_transparenz_wird_streng_normalisiert_und_auf_den_sicheren_bereich_begrenzt(): void
+    {
+        $this->erwarteEinstellungenKlasse();
+
+        self::assertSame(0, DisplaySettings::fromJtlConfig(['transparency' => '-1'])->transparency);
+        self::assertSame(90, DisplaySettings::fromJtlConfig(['transparency' => '91'])->transparency);
+        self::assertSame(8, DisplaySettings::fromJtlConfig(['transparency' => '8px'])->transparency);
     }
 
     #[Test]
@@ -198,7 +200,7 @@ final class DisplaySettingsTest extends TestCase
         self::assertSame('assets.php', trim($dateiname));
     }
 
-    /** @return array{int, int, int, int, int} */
+    /** @return array{int, int, int, int, int, int} */
     private function zahlen(DisplaySettings $einstellungen): array
     {
         return [
@@ -207,6 +209,7 @@ final class DisplaySettingsTest extends TestCase
             $einstellungen->innerPadding,
             $einstellungen->borderRadius,
             $einstellungen->blur,
+            $einstellungen->transparency,
         ];
     }
 

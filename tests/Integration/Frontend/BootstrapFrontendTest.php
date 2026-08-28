@@ -28,7 +28,11 @@ final class BootstrapFrontendTest extends TestCase
         $db = new TransactionalDatabaseFake();
         $db->seedScanAsset('sichtbar', 'media/sichtbar.webp', 'generated');
         $db->seedScanUsage('sichtbar', 'media/sichtbar.webp', 'produkt-1');
-        $plugin = $this->plugin(new Config(['language' => 'auto', 'show_credit' => 'N']));
+        $plugin = $this->plugin(new Config([
+            'language' => 'auto',
+            'show_credit' => 'N',
+            'transparency' => '8',
+        ]));
         $bootstrap = new class ($db, $plugin) extends Bootstrap {
             public function __construct(
                 private readonly DbInterface $db,
@@ -54,6 +58,7 @@ final class BootstrapFrontendTest extends TestCase
         self::assertStringContainsString('mgd-ai-labels.css', $dokument->head->markup[0]);
         self::assertStringContainsString('mgd-ai-marked-elements.js', $dokument->body->markup[0]);
         self::assertStringContainsString('KI-GENERIERT', $dokument->linkRahmen->markup[0]);
+        self::assertStringContainsString('--mgd-ai-background-opacity:0.92', $dokument->linkRahmen->markup[0]);
         self::assertContains('mgd-ai-label-host', $dokument->linkRahmen->classes);
         self::assertContains('mgd-ai-label-host--inline', $dokument->linkRahmen->classes);
     }

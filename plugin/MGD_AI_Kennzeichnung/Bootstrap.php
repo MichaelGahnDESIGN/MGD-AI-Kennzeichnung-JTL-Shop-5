@@ -52,13 +52,12 @@ class Bootstrap extends Bootstrapper
                 'show_credit' => $konfiguration->getValue('show_credit'),
                 'update_notices' => $konfiguration->getValue('update_notices'),
                 'language' => $konfiguration->getValue('language'),
-                'position' => $konfiguration->getValue('position'),
-                'theme' => $konfiguration->getValue('theme'),
                 'font_size' => $konfiguration->getValue('font_size'),
                 'outer_margin' => $konfiguration->getValue('outer_margin'),
                 'inner_padding' => $konfiguration->getValue('inner_padding'),
                 'border_radius' => $konfiguration->getValue('border_radius'),
                 'blur' => $konfiguration->getValue('blur'),
+                'transparency' => $konfiguration->getValue('transparency'),
             ]);
             $integrator = new FrontendDocumentIntegrator();
             $integrator->integrate(

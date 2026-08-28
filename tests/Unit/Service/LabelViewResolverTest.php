@@ -51,6 +51,7 @@ final class LabelViewResolverTest extends TestCase
             innerPadding: 99,
             borderRadius: 99,
             blur: 99,
+            transparency: 90,
         );
 
         self::assertFalse($view->visible);
@@ -64,6 +65,8 @@ final class LabelViewResolverTest extends TestCase
         self::assertSame(0, $view->innerPadding);
         self::assertSame(0, $view->borderRadius);
         self::assertSame(0, $view->blur);
+        self::assertSame(0, $view->transparency);
+        self::assertSame('1.00', $view->backgroundOpacity);
     }
 
     /**
@@ -247,6 +250,21 @@ final class LabelViewResolverTest extends TestCase
 
         $this->expectException(Error::class);
         $eigenschaft->setValue($view, 'eingeschleuster Text');
+    }
+
+    #[Test]
+    public function transparenz_wird_im_sichtbaren_modell_begrenzt_und_als_deckkraft_abgeleitet(): void
+    {
+        $resolver = $this->erstelleResolver();
+
+        $standard = $resolver->resolve(status: 'generated', transparency: 8);
+        $deckend = $resolver->resolve(status: 'generated', transparency: 0);
+        $transparent = $resolver->resolve(status: 'generated', transparency: 90);
+
+        self::assertSame(8, $standard->transparency);
+        self::assertSame('0.92', $standard->backgroundOpacity);
+        self::assertSame('1.00', $deckend->backgroundOpacity);
+        self::assertSame('0.10', $transparent->backgroundOpacity);
     }
 
     /**
