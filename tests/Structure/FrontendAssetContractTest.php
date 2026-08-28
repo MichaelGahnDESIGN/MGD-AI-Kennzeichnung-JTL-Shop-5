@@ -73,4 +73,16 @@ final class FrontendAssetContractTest extends TestCase
         );
         self::assertStringNotContainsString('nofilter', $template);
     }
+
+    #[Test]
+    public function footer_fallback_verlinkt_ausschliesslich_den_herstellernamen_sicher(): void
+    {
+        $template = file_get_contents(self::FRONTEND . '/template/layout/footer.tpl');
+        self::assertIsString($template);
+
+        self::assertMatchesRegularExpression(
+            '~<p\\s+class="mgd-ai-footer-credit">\\s*supported by:\\s*<a\\s+href="https://Michael-Gahn\\.de"\\s+target="_blank"\\s+rel="noopener noreferrer"\\s+aria-label="Michael Gahn DESIGN – Herstellerseite in neuem Fenster öffnen">Michael Gahn DESIGN</a>\\s*</p>~u',
+            $template,
+        );
+    }
 }

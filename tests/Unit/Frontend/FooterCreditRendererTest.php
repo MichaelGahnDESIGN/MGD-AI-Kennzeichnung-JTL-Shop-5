@@ -32,9 +32,10 @@ final class FooterCreditRendererTest extends TestCase
     {
         $html = $this->erstelleRenderer()->render(true);
 
-        self::assertStringContainsString('>supported by: <a ', $html);
-        self::assertStringContainsString('>Michael Gahn DESIGN</a>', $html);
-        self::assertStringNotContainsString('>supported by: <a href="https://Michael-Gahn.de" target="_blank" rel="noopener noreferrer" aria-label="Michael Gahn DESIGN – Herstellerseite in neuem Fenster öffnen">supported by:', $html);
+        self::assertMatchesRegularExpression(
+            '~<p class="mgd-ai-footer-credit">supported by: <a\\b[^>]*>Michael Gahn DESIGN</a></p>~u',
+            $html,
+        );
         self::assertStringNotContainsString('<script', strtolower($html));
         self::assertStringNotContainsString('javascript:', strtolower($html));
     }
