@@ -37,28 +37,18 @@ final class DisplaySettingsAdminServiceTest extends TestCase
     }
 
     #[Test]
-    public function speichern_bewahrt_die_nicht_editierbaren_sichtbaren_optionen_aus_der_geladenen_konfiguration(): void
+    public function speichern_liefert_nur_die_geprueften_darstellungswerte_ohne_nachladen_der_konfiguration(): void
     {
-        $config = new RecordingDisplayConfigPort([
-            'show_credit' => 'Y',
-            'update_notices' => 'Y',
-            'language' => 'auto',
-            'font_size' => '8',
-            'outer_margin' => '0',
-            'inner_padding' => '0',
-            'border_radius' => '0',
-            'blur' => '0',
-            'transparency' => '0',
-        ]);
+        $config = new RecordingDisplayConfigPort();
         $service = new DisplaySettingsAdminService(new AllowedAuthorization(), new ValidCsrf(), $config);
 
         $settings = $service->save('csrf', self::validPost());
 
-        self::assertTrue($settings->showCredit);
-        self::assertTrue($settings->updateNoticesEnabled);
+        self::assertFalse($settings->showCredit);
+        self::assertFalse($settings->updateNoticesEnabled);
         self::assertSame(LabelLanguage::De, $settings->language);
         self::assertSame(18, $settings->fontSize);
-        self::assertSame(1, $config->loadCalls);
+        self::assertSame(0, $config->loadCalls);
     }
 
     #[Test]
