@@ -32,8 +32,12 @@ final class DisplaySettingsAdminService
         $this->authorization->assertCanManageAssets();
         $this->csrf->assertValid($csrfToken);
         $input = DisplaySettingsInput::fromPost($post);
-        $this->config->save($input->toJtlConfig());
+        $savedValues = $input->toJtlConfig();
+        $this->config->save($savedValues);
 
-        return DisplaySettings::fromJtlConfig($input->toJtlConfig());
+        return DisplaySettings::fromJtlConfig([
+            ...$this->config->load(),
+            ...$savedValues,
+        ]);
     }
 }

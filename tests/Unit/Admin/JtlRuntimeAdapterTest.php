@@ -10,6 +10,7 @@ require_once __DIR__ . '/../../Support/TransactionalDatabaseFake.php';
 
 use JTL\Backend\AdminAccount;
 use JTL\Cache\JTLCache;
+use JTL\Cache\JTLCacheInterface;
 use JTL\DB\DbInterface;
 use JTL\Helpers\Form;
 use JTL\Plugin\Data\AdminMenu;
@@ -23,12 +24,16 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlCsrfAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlDisplayConfigAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\AccessDeniedException;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\CsrfException;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\DisplayConfigCommittedException;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\ValidationException;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlHttpRequestAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlSessionContext;
 use RuntimeException;
 use stdClass;
+use Throwable;
 use Tests\Support\TransactionStatePdo;
+
+use const CACHING_GROUP_PLUGIN;
 
 final class JtlRuntimeAdapterTest extends TestCase
 {
@@ -242,15 +247,18 @@ final class JtlRuntimeAdapterTest extends TestCase
         self::assertSame(1, $db->begins);
         self::assertSame(1, $db->commits);
         self::assertSame(0, $db->rollbacks);
+        self::assertCount(7, $db->lockedRows);
         self::assertCount(7, $db->updates);
+        self::assertSame(['lock', 'lock', 'lock', 'lock', 'lock', 'lock', 'lock'], array_slice($db->events, 0, 7));
+        self::assertStringContainsString('FOR UPDATE', $db->lockedRows[0]['sql']);
         self::assertSame([
             'value' => 'de',
             'plugin_id' => 17,
             'name' => 'language',
         ], $db->updates[0]['params']);
         self::assertSame([[
-            JTLCache::CACHING_GROUP_PLUGIN,
-            JTLCache::CACHING_GROUP_PLUGIN . '_17',
+            CACHING_GROUP_PLUGIN,
+            CACHING_GROUP_PLUGIN . '_17',
         ]], $cache->flushedTags);
     }
 
@@ -338,6 +346,116 @@ final class JtlRuntimeAdapterTest extends TestCase
         }
     }
 
+    #[Test]
+    public function jtl_konfigurationsadapter_rollt_bei_fehlender_datenbankoption_vor_jedem_update_zurueck(): void
+    {
+        $db = new JtlDisplayConfigDatabaseFake();
+        $db->rowsByName['blur'] = [];
+        $cache = new JTLCache();
+        $adapter = new JtlDisplayConfigAdapter($db, new DisplayConfigPluginFake(17, self::displayValues()), $cache);
+
+        $this->expectException(RuntimeException::class);
+        try {
+            $adapter->save(self::displayValues());
+        } finally {
+            self::assertSame(1, $db->rollbacks);
+            self::assertSame([], $db->updates);
+            self::assertSame([], $cache->flushedTags);
+        }
+    }
+
+    #[Test]
+    public function jtl_konfigurationsadapter_weist_duplikate_unabhaengig_vom_bisherigen_wert_ab(): void
+    {
+        foreach ([
+            'gleiche Werte' => [(object) ['cWert' => '18'], (object) ['cWert' => '18']],
+            'unterschiedliche Werte' => [(object) ['cWert' => '18'], (object) ['cWert' => '99']],
+        ] as $description => $rows) {
+            $db = new JtlDisplayConfigDatabaseFake();
+            $db->rowsByName['font_size'] = $rows;
+            $adapter = new JtlDisplayConfigAdapter($db, new DisplayConfigPluginFake(17, self::displayValues()), new JTLCache());
+
+            try {
+                $adapter->save(self::displayValues());
+                self::fail(sprintf('Doppelte Optionen mit %s müssen abgewiesen werden.', $description));
+            } catch (RuntimeException) {
+                self::assertSame(1, $db->rollbacks);
+                self::assertSame([], $db->updates);
+            }
+        }
+    }
+
+    #[Test]
+    public function jtl_konfigurationsadapter_akzeptiert_unveraenderte_werte_mit_null_betroffenen_zeilen(): void
+    {
+        $db = new JtlDisplayConfigDatabaseFake();
+        $db->affectedRows = 0;
+        foreach (self::displayValues() as $name => $value) {
+            $db->rowsByName[$name] = [(object) ['cWert' => $value]];
+        }
+        $adapter = new JtlDisplayConfigAdapter($db, new DisplayConfigPluginFake(17, self::displayValues()), new JTLCache());
+
+        $adapter->save(self::displayValues());
+
+        self::assertSame(1, $db->commits);
+        self::assertSame(0, $db->rollbacks);
+        self::assertCount(7, $db->updates);
+    }
+
+    #[Test]
+    public function jtl_konfigurationsadapter_meldet_fehlgeschlagenen_rollback_mit_dem_urspruenglichen_fehler(): void
+    {
+        $db = new JtlDisplayConfigDatabaseFake();
+        $db->rowsByName['language'] = [];
+        $db->rollbackSucceeds = false;
+        $adapter = new JtlDisplayConfigAdapter($db, new DisplayConfigPluginFake(17, self::displayValues()), new JTLCache());
+
+        try {
+            $adapter->save(self::displayValues());
+            self::fail('Ein fehlgeschlagener Rollback muss sichtbar sein.');
+        } catch (RuntimeException $error) {
+            self::assertStringContainsString('zurückgenommen', $error->getMessage());
+            self::assertInstanceOf(RuntimeException::class, $error->getPrevious());
+            self::assertStringNotContainsString('18', $error->getMessage());
+        }
+    }
+
+    #[Test]
+    public function jtl_konfigurationsadapter_behaelt_den_urspruenglichen_fehler_bei_geworfenem_rollback(): void
+    {
+        $db = new JtlDisplayConfigDatabaseFake();
+        $db->rowsByName['language'] = [];
+        $db->rollbackFailure = new RuntimeException('Datenbank-Rollbackfehler.');
+        $adapter = new JtlDisplayConfigAdapter($db, new DisplayConfigPluginFake(17, self::displayValues()), new JTLCache());
+
+        try {
+            $adapter->save(self::displayValues());
+            self::fail('Ein geworfener Rollbackfehler muss sichtbar sein.');
+        } catch (RuntimeException $error) {
+            self::assertStringContainsString('zurückgenommen', $error->getMessage());
+            self::assertInstanceOf(RuntimeException::class, $error->getPrevious());
+            self::assertStringNotContainsString('Datenbank-Rollbackfehler', $error->getMessage());
+        }
+    }
+
+    #[Test]
+    public function jtl_konfigurationsadapter_meldet_cachefehler_nach_commit_ohne_rollback(): void
+    {
+        $db = new JtlDisplayConfigDatabaseFake();
+        $cache = new ThrowingDisplayConfigCache();
+        $adapter = new JtlDisplayConfigAdapter($db, new DisplayConfigPluginFake(17, self::displayValues()), $cache);
+
+        try {
+            $adapter->save(self::displayValues());
+            self::fail('Ein Cachefehler nach Commit muss ausdrücklich gemeldet werden.');
+        } catch (DisplayConfigCommittedException $error) {
+            self::assertSame(1, $db->commits);
+            self::assertSame(0, $db->rollbacks);
+            self::assertInstanceOf(RuntimeException::class, $error->getPrevious());
+            self::assertStringNotContainsString('18', $error->getMessage());
+        }
+    }
+
     /** @return array<string, string> */
     private static function displayValues(): array
     {
@@ -389,9 +507,18 @@ final class JtlDisplayConfigDatabaseFake implements DbInterface
     public int $rollbacks = 0;
     public int $affectedRows = 1;
     public bool $commitSucceeds = true;
+    public bool $rollbackSucceeds = true;
+    public ?Throwable $rollbackFailure = null;
+
+    /** @var array<string, list<stdClass>> */
+    public array $rowsByName = [];
 
     /** @var list<array{sql: string, params: array<string, mixed>}> */
     public array $updates = [];
+    /** @var list<array{sql: string, params: array<string, mixed>}> */
+    public array $lockedRows = [];
+    /** @var list<'lock'|'update'> */
+    public array $events = [];
 
     public function __construct()
     {
@@ -406,7 +533,14 @@ final class JtlDisplayConfigDatabaseFake implements DbInterface
     /** @return list<stdClass> */
     public function getObjects(string $stmt, array $params = []): array
     {
-        return [];
+        $this->lockedRows[] = ['sql' => $stmt, 'params' => $params];
+        $this->events[] = 'lock';
+        $name = $params['name'] ?? null;
+        if (!is_string($name)) {
+            throw new RuntimeException('Der Optionsname fehlt im Testbinding.');
+        }
+
+        return $this->rowsByName[$name] ?? [(object) ['cWert' => 'bestehend']];
     }
 
     public function getSingleObject(string $stmt, array $params = []): ?stdClass
@@ -417,6 +551,7 @@ final class JtlDisplayConfigDatabaseFake implements DbInterface
     public function getAffectedRows(string $stmt, array $params = []): int
     {
         $this->updates[] = ['sql' => $stmt, 'params' => $params];
+        $this->events[] = 'update';
 
         return $this->affectedRows;
     }
@@ -444,6 +579,20 @@ final class JtlDisplayConfigDatabaseFake implements DbInterface
         ++$this->rollbacks;
         $this->pdo->transactionActive = false;
 
-        return true;
+        if ($this->rollbackFailure !== null) {
+            throw $this->rollbackFailure;
+        }
+
+        return $this->rollbackSucceeds;
+    }
+}
+
+/** Erzwingt einen Cachefehler, ohne Datenbank- oder Eingabewerte preiszugeben. */
+final class ThrowingDisplayConfigCache implements JTLCacheInterface
+{
+    /** @param list<string> $tags */
+    public function flushTags(array $tags): int
+    {
+        throw new RuntimeException('Interner Cachefehler.');
     }
 }

@@ -9,6 +9,7 @@ require_once __DIR__ . '/../../Stubs/JtlPluginStubs.php';
 
 use JTL\Backend\AdminAccount;
 use JTL\Cache\JTLCache;
+use JTL\Cache\JTLCacheInterface;
 use JTL\DB\DbInterface;
 use JTL\Plugin\Data\Paths;
 use JTL\Plugin\Data\AdminMenu;
@@ -70,7 +71,7 @@ final class AdminEntryPointTest extends TestCase
                 return $this->account;
             }
 
-            public function getCache(): JTLCache
+            public function getCache(): JTLCacheInterface
             {
                 return $this->cache;
             }

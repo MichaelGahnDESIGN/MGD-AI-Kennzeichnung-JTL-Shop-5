@@ -10,6 +10,7 @@ require_once __DIR__ . '/../../Stubs/JtlPluginStubs.php';
 use JTL\Backend\AdminAccount;
 use JTL\Backend\AdminIO;
 use JTL\Cache\JTLCache;
+use JTL\Cache\JTLCacheInterface;
 use JTL\DB\DbInterface;
 use JTL\Events\Dispatcher;
 use JTL\Plugin\Data\AdminMenu;
@@ -82,7 +83,7 @@ final class AdminIoServicesFake implements DefaultServicesInterface
         return $this->account;
     }
 
-    public function getCache(): JTLCache
+    public function getCache(): JTLCacheInterface
     {
         return new JTLCache();
     }
