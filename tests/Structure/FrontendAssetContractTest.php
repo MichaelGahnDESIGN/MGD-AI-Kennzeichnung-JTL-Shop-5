@@ -48,6 +48,15 @@ final class FrontendAssetContractTest extends TestCase
         self::assertStringContainsString('display: inline-block', $css);
         self::assertStringContainsString('max-width: 100%', $css);
         self::assertStringContainsString('vertical-align: top', $css);
+        self::assertStringContainsString('--mgd-ai-background-opacity: 0.92', $css);
+        self::assertStringContainsString(
+            ".mgd-ai-label--theme-auto,\n.mgd-ai-label--theme-dark {\n    color: #fff;\n    background: rgba(17, 24, 39, var(--mgd-ai-background-opacity));",
+            $css,
+        );
+        self::assertStringContainsString(
+            ".mgd-ai-label--theme-light {\n    color: #111827;\n    background: rgba(255, 255, 255, var(--mgd-ai-background-opacity));",
+            $css,
+        );
     }
 
     #[Test]
@@ -58,6 +67,10 @@ final class FrontendAssetContractTest extends TestCase
 
         self::assertStringContainsString('role="note"', $template);
         self::assertGreaterThanOrEqual(4, substr_count($template, '|escape'));
+        self::assertStringContainsString(
+            "--mgd-ai-background-opacity:{\$mgdAiLabel.backgroundOpacity|escape:'html':'UTF-8'}",
+            $template,
+        );
         self::assertStringNotContainsString('nofilter', $template);
     }
 }

@@ -267,6 +267,23 @@ final class LabelViewResolverTest extends TestCase
         self::assertSame('0.10', $transparent->backgroundOpacity);
     }
 
+    #[Test]
+    public function transparenz_eingaben_werden_wie_alle_darstellungswerte_streng_normalisiert(): void
+    {
+        $resolver = $this->erstelleResolver();
+
+        $untergrenze = $resolver->resolve(status: 'generated', transparency: -1);
+        $obergrenze = $resolver->resolve(status: 'generated', transparency: 91);
+        $manipuliert = $resolver->resolve(status: 'generated', transparency: '8px');
+
+        self::assertSame(0, $untergrenze->transparency);
+        self::assertSame('1.00', $untergrenze->backgroundOpacity);
+        self::assertSame(90, $obergrenze->transparency);
+        self::assertSame('0.10', $obergrenze->backgroundOpacity);
+        self::assertSame(8, $manipuliert->transparency);
+        self::assertSame('0.92', $manipuliert->backgroundOpacity);
+    }
+
     /**
      * Liefert erst nach einer verständlichen Existenzprüfung den echten Dienst.
      * Damit dokumentiert der initiale Rotlauf eindeutig die fehlende Funktion.

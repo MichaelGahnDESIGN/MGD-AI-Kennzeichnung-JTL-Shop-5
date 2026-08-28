@@ -24,15 +24,38 @@ final class BootstrapFrontendTest extends TestCase
     #[Test]
     public function outputfilter_verbindet_plugin_assets_einstellungen_und_native_labels(): void
     {
+        $dokument = $this->rendereFrontend(new Config([
+            'language' => 'auto',
+            'show_credit' => 'N',
+            'transparency' => '37',
+        ]));
+
+        self::assertStringContainsString('mgd-ai-labels.css', $dokument->head->markup[0]);
+        self::assertStringContainsString('mgd-ai-marked-elements.js', $dokument->body->markup[0]);
+        self::assertStringContainsString('KI-GENERIERT', $dokument->linkRahmen->markup[0]);
+        self::assertStringContainsString('--mgd-ai-background-opacity:0.63', $dokument->linkRahmen->markup[0]);
+        self::assertContains('mgd-ai-label-host', $dokument->linkRahmen->classes);
+        self::assertContains('mgd-ai-label-host--inline', $dokument->linkRahmen->classes);
+    }
+
+    #[Test]
+    public function fehlende_transparenz_konfiguration_verwendet_den_rueckwaertskompatiblen_standardwert(): void
+    {
+        $dokument = $this->rendereFrontend(new Config([
+            'language' => 'auto',
+            'show_credit' => 'N',
+        ]));
+
+        self::assertStringContainsString('--mgd-ai-background-opacity:0.92', $dokument->linkRahmen->markup[0]);
+    }
+
+    private function rendereFrontend(Config $config): FrontendDocument
+    {
         Shop::$frontend = true;
         $db = new TransactionalDatabaseFake();
         $db->seedScanAsset('sichtbar', 'media/sichtbar.webp', 'generated');
         $db->seedScanUsage('sichtbar', 'media/sichtbar.webp', 'produkt-1');
-        $plugin = $this->plugin(new Config([
-            'language' => 'auto',
-            'show_credit' => 'N',
-            'transparency' => '8',
-        ]));
+        $plugin = $this->plugin($config);
         $bootstrap = new class ($db, $plugin) extends Bootstrap {
             public function __construct(
                 private readonly DbInterface $db,
@@ -55,12 +78,7 @@ final class BootstrapFrontendTest extends TestCase
         $bootstrap->boot($dispatcher);
         $dispatcher->dispatch('shop.hook.140', ['document' => $dokument]);
 
-        self::assertStringContainsString('mgd-ai-labels.css', $dokument->head->markup[0]);
-        self::assertStringContainsString('mgd-ai-marked-elements.js', $dokument->body->markup[0]);
-        self::assertStringContainsString('KI-GENERIERT', $dokument->linkRahmen->markup[0]);
-        self::assertStringContainsString('--mgd-ai-background-opacity:0.92', $dokument->linkRahmen->markup[0]);
-        self::assertContains('mgd-ai-label-host', $dokument->linkRahmen->classes);
-        self::assertContains('mgd-ai-label-host--inline', $dokument->linkRahmen->classes);
+        return $dokument;
     }
 
     private function plugin(Config $config): PluginInterface
