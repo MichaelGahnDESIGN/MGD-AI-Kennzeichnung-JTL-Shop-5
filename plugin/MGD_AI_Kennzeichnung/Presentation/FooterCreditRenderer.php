@@ -14,8 +14,9 @@ namespace Plugin\MGD_AI_Kennzeichnung\Presentation;
 final class FooterCreditRenderer
 {
     private const URL = 'https://Michael-Gahn.de';
-    private const TEXT = 'Plugin von Michael Gahn DESIGN';
-    private const ACCESSIBLE_LABEL = 'Plugin von Michael Gahn DESIGN – Herstellerseite in neuem Fenster öffnen';
+    private const PREFIX = 'supported by: ';
+    private const LINK_TEXT = 'Michael Gahn DESIGN';
+    private const ACCESSIBLE_LABEL = 'Michael Gahn DESIGN – Herstellerseite in neuem Fenster öffnen';
 
     /**
      * Liefert bei deaktivierter Nennung garantiert eine vollständig leere Ausgabe.
@@ -27,14 +28,16 @@ final class FooterCreditRenderer
         }
 
         $url = htmlspecialchars(self::URL, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5, 'UTF-8');
-        $text = htmlspecialchars(self::TEXT, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5, 'UTF-8');
+        $prefix = htmlspecialchars(self::PREFIX, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5, 'UTF-8');
+        $linkText = htmlspecialchars(self::LINK_TEXT, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5, 'UTF-8');
         $label = htmlspecialchars(self::ACCESSIBLE_LABEL, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5, 'UTF-8');
 
         return sprintf(
-            '<p class="mgd-ai-footer-credit"><a href="%s" target="_blank" rel="noopener noreferrer" aria-label="%s">%s</a></p>',
+            '<p class="mgd-ai-footer-credit">%s<a href="%s" target="_blank" rel="noopener noreferrer" aria-label="%s">%s</a></p>',
+            $prefix,
             $url,
             $label,
-            $text,
+            $linkText,
         );
     }
 }

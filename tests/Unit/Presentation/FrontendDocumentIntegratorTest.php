@@ -40,7 +40,8 @@ final class FrontendDocumentIntegratorTest extends TestCase
             true,
         );
 
-        self::assertStringContainsString('Plugin von Michael Gahn DESIGN', $dokument->body->markup[0]);
+        self::assertStringContainsString('supported by: <a ', $dokument->body->markup[0]);
+        self::assertStringContainsString('>Michael Gahn DESIGN</a>', $dokument->body->markup[0]);
         self::assertStringContainsString('rel="noopener noreferrer"', $dokument->body->markup[0]);
     }
 
