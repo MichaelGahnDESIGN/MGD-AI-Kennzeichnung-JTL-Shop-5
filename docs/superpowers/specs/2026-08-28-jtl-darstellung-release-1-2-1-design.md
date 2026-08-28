@@ -98,6 +98,8 @@ Nur **Michael Gahn DESIGN** ist verlinkt. Das Ziel ist `https://Michael-Gahn.de`
 
 Die Prüfung wird erstmals vollständig an den geschützten Plugin-Adminbereich angebunden. Ein Aufruf durch Shop-Kunden oder normale Frontend-Seiten darf niemals eine GitHub-Abfrage auslösen. Die vorhandenen Datenschutz- und Lastschutzregeln bleiben bestehen: Es werden höchstens einmal innerhalb von zwölf Stunden Release-Metadaten abgefragt, ohne Bilder, Kunden- oder Bestelldaten zu übertragen. GitHub erhält technisch die Server-IP, den Zeitpunkt und einen auf Version 1.2.1 aktualisierten Plugin-User-Agent; die Dokumentation weist verständlich darauf hin.
 
+Der lokale Cache speichert zusätzlich den Zeitpunkt jedes versuchten Abrufs. Diese negative Zwischenspeicherung gilt auch bei `404`, Rate-Limit, Timeout, Netzwerkfehlern und ungültigen oder zu großen Antworten. Dadurch kann ein nicht erreichbares oder privates Repository nicht bei jedem erneuten Admin-Seitenaufruf kontaktiert werden. Erst nach Ablauf der zwölf Stunden ist ein weiterer Versuch zulässig.
+
 Das GitHub-Repository ist zum Entwurfszeitpunkt privat. Eine anonyme GitHub-API-Abfrage kann deshalb keinen Release erkennen. Das Plugin speichert aus Sicherheitsgründen keinen persönlichen GitHub-Token und umgeht diese Einschränkung nicht. Der Schalter und der sichere Checker werden vorbereitet; ein sichtbarer automatischer Hinweis funktioniert erst, wenn der Release-Endpunkt öffentlich erreichbar ist.
 
 Version 1.2.1 implementiert **keinen automatischen Download und keine automatische Installation**. Der vorgesehene Updateweg ist der kontrollierte Upload des signierten beziehungsweise per SHA-256 geprüften Plugin-ZIPs im JTL-Plugin-Manager. Der anschließende Shop-Test prüft diesen Updateweg von 1.2.0 auf 1.2.1 und nicht einen unbeaufsichtigten Auto-Updater.
@@ -144,7 +146,7 @@ Die Umsetzung ist abgenommen, wenn:
 5. ungültige, fremde oder nicht autorisierte Anfragen sicher abgewiesen werden;
 6. Transparenz in allen Theme- und Ausgabewegen wirkt und der öffentliche Shop bei fehlenden Darstellungswerten mit sicheren Rückfallwerten weiterläuft;
 7. die Herstellernennung exakt wie freigegeben ausgegeben und sicher verlinkt wird;
-8. Updatehinweise bei Neuinstallationen standardmäßig aktiviert sind, ausschließlich im authentifizierten Adminbereich prüfen und bestehende Entscheidungen nicht überschreiben;
+8. Updatehinweise bei Neuinstallationen standardmäßig aktiviert sind, ausschließlich im authentifizierten Adminbereich prüfen, auch Fehler zwölf Stunden negativ zwischenspeichern und bestehende Entscheidungen nicht überschreiben;
 9. alle automatisierten Tests, statischen Analysen und Release-Paketprüfungen erfolgreich sind;
 10. ein Updateversuch mit dem 1.2.1-ZIP vorhandene Plugin-Daten erhält und bei Fehlern nachvollziehbar abbricht;
 11. GitHub `v1.2.1` mit dokumentiertem ZIP und SHA-256-Prüfsumme veröffentlicht und alle Versionsangaben exakt übereinstimmen.
