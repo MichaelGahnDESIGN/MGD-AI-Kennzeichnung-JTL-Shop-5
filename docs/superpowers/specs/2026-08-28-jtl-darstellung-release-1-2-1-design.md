@@ -22,13 +22,13 @@ Auf schmalen Bildschirmen werden die Bereiche untereinander angeordnet. Die Vors
 Die Seite übernimmt alle bereits vorhandenen globalen Darstellungswerte:
 
 - Sprache der Kennzeichnung;
-- Position;
-- Farbschema;
 - Schriftgröße;
 - Außenabstand;
 - Innenabstand;
 - Eckenradius;
 - Hintergrundunschärfe.
+
+Position und Farbschema bleiben Eigenschaften der jeweiligen Bildkennzeichnung und werden weiterhin in der Bildverwaltung gespeichert. Die derzeit zusätzlich vorhandenen, aber im Frontend wirkungslosen globalen Felder werden aus der allgemeinen Einstellungsansicht entfernt. In der Vorschau dürfen Position und Farbschema weiterhin ausprobiert werden; die Oberfläche kennzeichnet diese beiden Bedienelemente eindeutig als **Vorschau**, damit kein wirkungsloser globaler Wert vorgetäuscht wird.
 
 Neu hinzu kommt die **Transparenz des Label-Hintergrunds**. Sie wird in Prozent angegeben. `0 %` bedeutet einen vollständig deckenden Hintergrund; `90 %` ist die zugelassene Obergrenze. Text und Rahmen bleiben unabhängig davon sichtbar. Der Standardwert beträgt `8 %` und entspricht annähernd der bisherigen dunklen Darstellung.
 
@@ -62,16 +62,11 @@ Ohne JavaScript bleibt das Formular vollständig speicherbar; lediglich die unmi
 
 ## Speicherung und Abwärtskompatibilität
 
-Die Darstellungswerte werden in einer eigenen, eigentumsmarkierten Plugin-Tabelle gespeichert. Dadurch muss das Plugin keine internen JTL-Konfigurationstabellen direkt verändern.
+Die Darstellungswerte bleiben bewusst in JTLs vorhandener Plugin-Konfiguration. JTL-Shop unterstützt seit Version 5 den Einstellungstyp `none`: Der Wert bleibt Bestandteil der Plugininstanz, wird aber nicht zusätzlich in der generischen Einstellungsansicht ausgegeben. Genau dieser vorgesehene Weg wird für Sprache, Schriftgröße, Außenabstand, Innenabstand, Eckenradius, Hintergrundunschärfe und Transparenz verwendet.
 
-Beim ersten Aufruf beziehungsweise solange noch kein eigener Datensatz vorhanden ist, werden die bisherigen Werte aus der JTL-Plugin-Konfiguration übernommen. So bleibt die bereits eingerichtete Positionierung und Gestaltung nach dem Update erhalten. Nach dem ersten bewussten Speichern ist der neue Datensatz die maßgebliche Quelle für die Darstellung.
+Der neue Darstellungstab liest und schreibt damit dieselben kanonischen Werte wie das Frontend. Es entstehen weder eine zweite Einstellungsquelle noch eine zusätzliche Datenbanktabelle. Nach dem Speichern wird der zugehörige JTL-Plugin-Cache gezielt invalidiert, damit die neuen Werte ohne manuellen Cache-Eingriff gelten.
 
-Die neue Migration:
-
-- prüft vor dem Anlegen, ob der Tabellenname frei oder nachweislich Eigentum des Plugins ist;
-- verwendet denselben Eigentumsmarker und dieselbe Sperrstrategie wie die vorhandenen Plugin-Tabellen;
-- wird in der sicheren Datenlöschung des Plugins berücksichtigt;
-- speichert ausschließlich globale Darstellungswerte, keine Kunden-, Bestell- oder Nutzungsdaten.
+Beim Update werden die unveränderten `ValueName`-Schlüssel weiterverwendet. Dadurch bleiben die bisherigen wirksamen Werte erhalten. Die neuen Transparenzwerte erhalten nur dann den Standardwert, wenn noch kein Wert gespeichert ist. Die bisher sichtbaren globalen Positionierungs- und Farbschemafelder werden nicht übernommen, weil diese Werte im Frontend nie ausgewertet wurden; die tatsächlich je Bild gespeicherten Werte bleiben unverändert erhalten.
 
 ## Validierung und Sicherheit
 
@@ -82,9 +77,9 @@ Beim Speichern gelten folgende Regeln:
 - ausschließlich POST für Änderungen;
 - gültiges JTL-CSRF-Token;
 - feste Liste erlaubter Formularfelder;
-- feste Auswahlwerte für Sprache, Position und Farbschema;
+- feste Auswahlwerte für Sprache sowie getrennte, nicht gespeicherte Vorschauwerte für Position und Farbschema;
 - streng geprüfte Ganzzahlen innerhalb der dokumentierten Grenzen;
-- atomare Speicherung in einer Datenbanktransaktion;
+- Speicherung ausschließlich über die vorhandene JTL-Plugin-Konfiguration mit anschließender Cache-Invalidierung;
 - keine Ausgabe roher Eingabewerte in Fehlermeldungen oder Logs.
 
 Freie CSS-Klassen, HTML, URLs oder beliebige Labeltexte werden nicht angenommen. Dadurch kann die neue Seite weder Skriptcode noch fremde Ressourcen in den Shop einschleusen.
@@ -101,22 +96,27 @@ Nur **Michael Gahn DESIGN** ist verlinkt. Das Ziel ist `https://Michael-Gahn.de`
 
 `Updatehinweise über GitHub abrufen` erhält für **Neuinstallationen** den Standardwert **Ja**. Bestehende Installationen behalten ihren bereits gespeicherten Wert und werden durch das Update nicht ungefragt überschrieben.
 
-Die vorhandenen Datenschutz- und Lastschutzregeln bleiben bestehen: Es werden ausschließlich öffentliche Release-Metadaten abgefragt, höchstens einmal innerhalb von zwölf Stunden und ohne Übertragung von Kunden- oder Bestelldaten.
+Die Prüfung wird erstmals vollständig an den geschützten Plugin-Adminbereich angebunden. Ein Aufruf durch Shop-Kunden oder normale Frontend-Seiten darf niemals eine GitHub-Abfrage auslösen. Die vorhandenen Datenschutz- und Lastschutzregeln bleiben bestehen: Es werden höchstens einmal innerhalb von zwölf Stunden Release-Metadaten abgefragt, ohne Bilder, Kunden- oder Bestelldaten zu übertragen. GitHub erhält technisch die Server-IP, den Zeitpunkt und einen auf Version 1.2.1 aktualisierten Plugin-User-Agent; die Dokumentation weist verständlich darauf hin.
+
+Das GitHub-Repository ist zum Entwurfszeitpunkt privat. Eine anonyme GitHub-API-Abfrage kann deshalb keinen Release erkennen. Das Plugin speichert aus Sicherheitsgründen keinen persönlichen GitHub-Token und umgeht diese Einschränkung nicht. Der Schalter und der sichere Checker werden vorbereitet; ein sichtbarer automatischer Hinweis funktioniert erst, wenn der Release-Endpunkt öffentlich erreichbar ist.
+
+Version 1.2.1 implementiert **keinen automatischen Download und keine automatische Installation**. Der vorgesehene Updateweg ist der kontrollierte Upload des signierten beziehungsweise per SHA-256 geprüften Plugin-ZIPs im JTL-Plugin-Manager. Der anschließende Shop-Test prüft diesen Updateweg von 1.2.0 auf 1.2.1 und nicht einen unbeaufsichtigten Auto-Updater.
 
 ## Technische Struktur
 
 Die Umsetzung wird in klar getrennte Dateien gegliedert:
 
 - Menü-Einstieg und Template für den Darstellungstab;
-- Admin-Service für Berechtigung, CSRF-Prüfung, Validierung und Transaktion;
-- Repository und Migration für die globalen Darstellungswerte;
+- Admin-Service für Berechtigung, CSRF-Prüfung, Validierung und JTL-Konfigurationsspeicherung;
 - unveränderliches Wertemodell für geprüfte Einstellungen;
 - getrennte CSS-Datei für das zweispaltige Layout und die Vorschau;
 - getrennte JavaScript-Module für Feldkopplung und Live-Vorschau;
 - lokale Bilddatei für den fiktiven Schuh;
 - kleine Unit-, Integrations-, Struktur- und JavaScript-Tests.
 
-Der Frontend-Bootstrap lädt die gespeicherten Darstellungswerte fehlertolerant. Bei einem unerwarteten Datenbankproblem fallen die Werte auf die bisherige JTL-Konfiguration zurück; die öffentliche Shop-Seite darf deshalb nicht ausfallen.
+Der Frontend-Bootstrap lädt ausschließlich geprüfte Werte aus der JTL-Plugin-Konfiguration. Bei fehlenden oder ungültigen Werten gelten sichere interne Standards; die öffentliche Shop-Seite darf deshalb nicht ausfallen.
+
+Die Transparenz wird vollständig durch alle Ausgabewege geführt: Konfigurationsmodell, Resolver, unveränderliches Label-Modell, PHP-Renderer, Smarty-Template, JavaScript-Erweiterung und CSS. Tests decken dunkles, helles und automatisches Farbschema sowie native, JavaScript-erweiterte und JavaScript-freie Labels ab.
 
 ## Dokumentation und Veröffentlichung
 
@@ -129,19 +129,22 @@ Folgende Artefakte werden für **1.2.1** aktualisiert:
 - Installations-ZIP mit Prüfsumme;
 - Git-Commit auf `main`, Tag `v1.2.1` und GitHub-Release mit dem ZIP als Asset.
 
-Eine Installation auf `dev.onvis-shop.de` oder `onvis-shop.de` ist nicht Bestandteil dieses Schritts. Anschließend wird geprüft, ob JTL-Shop das veröffentlichte GitHub-Release als Updatehinweis erkennt und den vorgesehenen Updateablauf anbietet.
+Eine Installation auf `dev.onvis-shop.de` oder `onvis-shop.de` ist nicht Bestandteil dieses Schritts. Anschließend kann das veröffentlichte ZIP im JTL-Plugin-Manager als Update von 1.2.0 auf 1.2.1 getestet werden. Wegen des privaten Repositorys wird ausdrücklich nicht behauptet, dass JTL oder die anonyme GitHub-Prüfung das Release automatisch erkennen kann.
+
+Die Releaseprüfung stellt zusätzlich sicher, dass ZIP-Dateiname, interne `info.xml`-Version, Buildskript, Git-Tag, GitHub-Release-Asset und SHA-256-Datei exakt Version 1.2.1 nennen. Der aktuell veraltete ZIP-Pfad im CI-Workflow wird korrigiert.
 
 ## Abnahme
 
 Die Umsetzung ist abgenommen, wenn:
 
 1. der neue Darstellungstab ohne Änderung am JTL-Shop-Kern erreichbar ist;
-2. gespeicherte Werte eines Updates auf 1.2.1 erhalten bleiben;
+2. die wirksamen gespeicherten Werte eines Updates auf 1.2.1 erhalten bleiben und nur die tatsächlich pro Bild gespeicherten Werte Position und Farbschema bestimmen;
 3. Eckenradius, Unschärfe und Transparenz Zahlenfeld und Regler synchron anbieten;
 4. alle Designwerte die lokale Vorschau unmittelbar und korrekt verändern;
 5. ungültige, fremde oder nicht autorisierte Anfragen sicher abgewiesen werden;
-6. der öffentliche Shop bei fehlenden Darstellungsdaten oder einem Lesefehler mit sicheren Rückfallwerten weiterläuft;
+6. Transparenz in allen Theme- und Ausgabewegen wirkt und der öffentliche Shop bei fehlenden Darstellungswerten mit sicheren Rückfallwerten weiterläuft;
 7. die Herstellernennung exakt wie freigegeben ausgegeben und sicher verlinkt wird;
-8. Updatehinweise bei Neuinstallationen standardmäßig aktiviert sind, ohne bestehende Entscheidungen zu überschreiben;
+8. Updatehinweise bei Neuinstallationen standardmäßig aktiviert sind, ausschließlich im authentifizierten Adminbereich prüfen und bestehende Entscheidungen nicht überschreiben;
 9. alle automatisierten Tests, statischen Analysen und Release-Paketprüfungen erfolgreich sind;
-10. GitHub `v1.2.1` mit dokumentiertem ZIP und SHA-256-Prüfsumme veröffentlicht.
+10. ein Updateversuch mit dem 1.2.1-ZIP vorhandene Plugin-Daten erhält und bei Fehlern nachvollziehbar abbricht;
+11. GitHub `v1.2.1` mit dokumentiertem ZIP und SHA-256-Prüfsumme veröffentlicht und alle Versionsangaben exakt übereinstimmen.
