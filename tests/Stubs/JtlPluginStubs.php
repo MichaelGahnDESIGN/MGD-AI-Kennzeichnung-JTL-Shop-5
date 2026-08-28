@@ -206,6 +206,7 @@ class Form
 namespace JTL\Services;
 
 use JTL\Backend\AdminAccount;
+use JTL\Cache\JTLCache;
 use JTL\DB\DbInterface;
 use Psr\Log\LoggerInterface;
 
@@ -213,9 +214,30 @@ interface DefaultServicesInterface
 {
     public function getDB(): DbInterface;
 
+    public function getCache(): JTLCache;
+
     public function getAdminAccount(): AdminAccount;
 
     public function getLogService(): LoggerInterface;
+}
+
+namespace JTL\Cache;
+
+/** Beobachtbarer Ersatz für JTLs tagbasierten Plugin-Cache. */
+class JTLCache
+{
+    public const CACHING_GROUP_PLUGIN = 'plugin';
+
+    /** @var list<list<string>> */
+    public array $flushedTags = [];
+
+    /** @param list<string> $tags */
+    public function flushTags(array $tags): int
+    {
+        $this->flushedTags[] = $tags;
+
+        return count($tags);
+    }
 }
 
 namespace JTL;

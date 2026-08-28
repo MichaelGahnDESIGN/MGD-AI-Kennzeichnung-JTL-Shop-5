@@ -8,6 +8,7 @@ require_once __DIR__ . '/../../Stubs/JtlDatabaseStubs.php';
 require_once __DIR__ . '/../../Stubs/JtlPluginStubs.php';
 
 use JTL\Backend\AdminAccount;
+use JTL\Cache\JTLCache;
 use JTL\DB\DbInterface;
 use JTL\Plugin\Data\Paths;
 use JTL\Plugin\Data\AdminMenu;
@@ -49,11 +50,13 @@ final class AdminEntryPointTest extends TestCase
         $db->setMarker('xplugin_mgd_ai_usage', SchemaOwnershipGuard::OWNERSHIP_MARKER);
         Shop::$container = new class ($db) implements DefaultServicesInterface {
             private readonly AdminAccount $account;
+            private readonly JTLCache $cache;
             private readonly LoggerInterface $logger;
 
             public function __construct(private readonly DbInterface $db)
             {
                 $this->account = new AdminAccount(['PLUGIN_DETAIL_VIEW_17'], 5);
+                $this->cache = new JTLCache();
                 $this->logger = new NullLogger();
             }
 
@@ -65,6 +68,11 @@ final class AdminEntryPointTest extends TestCase
             public function getAdminAccount(): AdminAccount
             {
                 return $this->account;
+            }
+
+            public function getCache(): JTLCache
+            {
+                return $this->cache;
             }
 
             public function getLogService(): LoggerInterface
