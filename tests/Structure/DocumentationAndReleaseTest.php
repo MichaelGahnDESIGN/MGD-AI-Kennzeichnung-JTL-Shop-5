@@ -168,6 +168,19 @@ final class DocumentationAndReleaseTest extends TestCase
     }
 
     #[Test]
+    public function herstellerhinweis_verwendet_auch_in_den_pluginmetadaten_den_freigegebenen_wortlaut(): void
+    {
+        $infoXml = file_get_contents(self::ROOT . '/plugin/MGD_AI_Kennzeichnung/info.xml');
+        self::assertIsString($infoXml);
+
+        self::assertStringContainsString(
+            '<Description>Zeigt optional den festen Hinweis „supported by: Michael Gahn DESIGN“ an.</Description>',
+            $infoXml,
+        );
+        self::assertStringNotContainsString('Plugin von Michael Gahn DESIGN', $infoXml);
+    }
+
+    #[Test]
     public function version_1_1_1_erklaert_galerie_opc_dateimanager_und_sicheren_rollback(): void
     {
         $dateien = [

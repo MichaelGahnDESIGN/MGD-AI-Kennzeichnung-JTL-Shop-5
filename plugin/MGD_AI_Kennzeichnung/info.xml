@@ -39,7 +39,7 @@
             <Name>Einstellungen</Name>
             <Setting type="selectbox" initialValue="N" sort="1" conf="Y">
                 <Name>Herstellernennung im Footer anzeigen</Name>
-                <Description>Zeigt optional den festen Hinweis „Plugin von Michael Gahn DESIGN“ an.</Description>
+                <Description>Zeigt optional den festen Hinweis „supported by: Michael Gahn DESIGN“ an.</Description>
                 <ValueName>show_credit</ValueName>
                 <SelectboxOptions>
                     <Option value="N" sort="1">Nein</Option>
