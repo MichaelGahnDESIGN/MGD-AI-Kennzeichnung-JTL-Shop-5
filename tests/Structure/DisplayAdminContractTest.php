@@ -215,6 +215,26 @@ final class DisplayAdminContractTest extends TestCase
         self::assertStringNotContainsString('var_dump', $entryPoint);
     }
 
+    #[Test]
+    public function updatehinweis_ist_auf_den_adressierten_darstellungstab_und_einen_sicheren_releaselink_begrenzt(): void
+    {
+        $root = self::ROOT . '/plugin/MGD_AI_Kennzeichnung/adminmenu/';
+        $entryPoint = (string) file_get_contents($root . 'display.php');
+        $template = (string) file_get_contents($root . 'templates/display.tpl');
+
+        self::assertStringContainsString('GitHubReleaseChecker', $entryPoint);
+        self::assertStringContainsString('FileReleaseCache', $entryPoint);
+        self::assertStringContainsString('$scope->isAddressed', $entryPoint);
+        self::assertStringContainsString("'update_notices'", $entryPoint);
+        self::assertStringContainsString('$updateNotice', $entryPoint);
+        self::assertStringContainsString('{if $updateNotice !== null}', $template);
+        self::assertStringContainsString('{$updateNotice->tag|escape:', $template);
+        self::assertStringContainsString('{$updateNotice->url|escape:', $template);
+        self::assertStringContainsString('target="_blank" rel="noopener noreferrer"', $template);
+        self::assertStringContainsString('aria-label=', $template);
+        self::assertStringNotContainsString('javascript:', strtolower($template));
+    }
+
     /**
      * Liest eine maximal 2 MB große PNG-Datei und prüft ausschließlich ihre Chunk-Kopfzeilen.
      *

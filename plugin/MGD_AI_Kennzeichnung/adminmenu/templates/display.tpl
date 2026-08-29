@@ -10,6 +10,12 @@
 
     <div class="mgd-display__notice" aria-live="polite">
         {if $message !== ''}<p class="alert alert-success" role="status">{$message|escape:'html':'UTF-8'}</p>{/if}
+        {if $updateNotice !== null}
+            <p class="alert alert-info" role="status">
+                Für MGD AI Kennzeichnung ist die Version {$updateNotice->tag|escape:'html':'UTF-8'} verfügbar.
+                <a href="{$updateNotice->url|escape:'html':'UTF-8'}" target="_blank" rel="noopener noreferrer" aria-label="Release-Seite für MGD AI Kennzeichnung {$updateNotice->tag|escape:'html':'UTF-8'} in neuem Fenster öffnen">Release-Seite öffnen</a>
+            </p>
+        {/if}
     </div>
 
     <div class="mgd-display-layout">

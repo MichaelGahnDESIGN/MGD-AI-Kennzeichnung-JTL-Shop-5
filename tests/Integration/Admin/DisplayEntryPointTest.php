@@ -47,6 +47,24 @@ final class DisplayEntryPointTest extends TestCase
     }
 
     #[Test]
+    public function deaktivierte_persistente_updatehinweise_bleiben_im_gueltigen_display_get_ohne_nebenwirkung(): void
+    {
+        $db = new DisplayEntryDatabase();
+        $logger = new DisplayEntryLogger();
+        $this->bereiteKontextVor(new AdminAccount(['PLUGIN_DETAIL_VIEW_17']), $db, $logger);
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_GET = $this->aktiveGetRoute(9);
+        $_POST = [];
+
+        $output = $this->fuehreEinstiegAus();
+
+        self::assertSame('', $output);
+        self::assertSame([], $db->updates);
+        self::assertSame([], $logger->records);
+        self::assertSame('N', (new DisplayEntryPlugin())->getConfig()->getValue('update_notices'));
+    }
+
+    #[Test]
     public function gueltiger_post_prueft_die_route_und_speichert_nur_die_sieben_darstellungswerte(): void
     {
         $db = new DisplayEntryDatabase();
@@ -359,6 +377,7 @@ final class DisplayEntryPlugin implements PluginInterface
     private const VALUES = [
         'language' => 'auto', 'font_size' => '12', 'outer_margin' => '8', 'inner_padding' => '6',
         'border_radius' => '4', 'blur' => '0', 'transparency' => '8',
+        'update_notices' => 'N',
     ];
 
     public function getID(): int

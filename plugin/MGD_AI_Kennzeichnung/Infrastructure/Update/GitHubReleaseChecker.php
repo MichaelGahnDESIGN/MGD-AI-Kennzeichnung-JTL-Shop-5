@@ -10,6 +10,7 @@ use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Update\Port\HttpClientInterface;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Update\Port\ReleaseCacheInterface;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Update\Value\CachedRelease;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Update\Value\HttpRequest;
+use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Update\Value\ReleaseCheckState;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Update\Value\UpdateNotice;
 use Throwable;
 
@@ -71,17 +72,41 @@ final class GitHubReleaseChecker
     private function checkExclusively(string $currentVersion): ?UpdateNotice
     {
         $now = $this->clock->now();
-        $cached = $this->cache->load();
-
-        if ($cached !== null && $cached->fetchedAt <= $now && $now - $cached->fetchedAt < self::CACHE_SECONDS) {
-            return $this->noticeWhenNewer($cached, $currentVersion);
+        if ($now < 0) {
+            return null;
         }
 
+        $cached = $this->cache->load();
+
+        if ($cached !== null
+            && $cached->attemptedAt <= $now
+            && $now - $cached->attemptedAt < self::CACHE_SECONDS
+        ) {
+            return $cached->release === null ? null : $this->noticeWhenNewer($cached->release, $currentVersion);
+        }
+
+        $release = null;
+        try {
+            $release = $this->fetchValidatedRelease($now);
+
+            return $release === null ? null : $this->noticeWhenNewer($release, $currentVersion);
+        } finally {
+            try {
+                $this->cache->save(new ReleaseCheckState($now, $release));
+            } catch (Throwable) {
+                // Ein lokaler Cachefehler darf den geschützten Adminbereich nicht beeinträchtigen.
+            }
+        }
+    }
+
+    /** Ruft ausschließlich den fest eingebauten GitHub-Endpunkt ab und validiert die Minimaldaten. */
+    private function fetchValidatedRelease(int $now): ?CachedRelease
+    {
         $response = $this->http->send(new HttpRequest(
             url: self::ENDPOINT,
             headers: [
                 'Accept' => 'application/vnd.github+json',
-                'User-Agent' => 'MGD-AI-Kennzeichnung-JTL-Shop-5/1.1.0',
+                'User-Agent' => 'MGD-AI-Kennzeichnung-JTL-Shop-5/1.2.1',
             ],
             connectTimeoutSeconds: 2,
             totalTimeoutSeconds: 5,
@@ -114,9 +139,7 @@ final class GitHubReleaseChecker
             return null;
         }
 
-        $this->cache->save($release);
-
-        return $this->noticeWhenNewer($release, $currentVersion);
+        return $release;
     }
 
     /**
