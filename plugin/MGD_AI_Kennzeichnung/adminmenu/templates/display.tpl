@@ -51,24 +51,24 @@
                     <fieldset class="mgd-display__range-fieldset">
                         <legend id="mgd-display-border-radius-legend">Eckenradius <span>in px</span></legend>
                         <div class="mgd-display__range-pair">
-                            <input id="mgd-display-border_radius-number" name="border_radius" type="number" min="0" max="32" step="1" value="{$borderRadius|escape:'html':'UTF-8'}" data-mgd-display-control="border_radius" data-mgd-display-number aria-labelledby="mgd-display-border-radius-legend" aria-describedby="mgd-display-border-radius-help">
-                            <input id="mgd-display-border_radius-range" type="range" min="0" max="32" step="1" value="{$borderRadius|escape:'html':'UTF-8'}" data-mgd-display-control="border_radius" data-mgd-display-range aria-labelledby="mgd-display-border-radius-legend" aria-describedby="mgd-display-border-radius-help">
+                            <input id="mgd-display-border_radius-number" name="border_radius" type="number" min="0" max="32" step="1" value="{$borderRadius|escape:'html':'UTF-8'}" data-mgd-number data-mgd-setting="borderRadius" aria-labelledby="mgd-display-border-radius-legend" aria-describedby="mgd-display-border-radius-help">
+                            <input id="mgd-display-border_radius-range" type="range" min="0" max="32" step="1" value="{$borderRadius|escape:'html':'UTF-8'}" data-mgd-range data-mgd-setting="borderRadius" aria-labelledby="mgd-display-border-radius-legend" aria-describedby="mgd-display-border-radius-help">
                         </div>
                         <small id="mgd-display-border-radius-help">0–32 px</small>
                     </fieldset>
                     <fieldset class="mgd-display__range-fieldset">
                         <legend id="mgd-display-blur-legend">Hintergrundunschärfe <span>in px</span></legend>
                         <div class="mgd-display__range-pair">
-                            <input id="mgd-display-blur-number" name="blur" type="number" min="0" max="24" step="1" value="{$blur|escape:'html':'UTF-8'}" data-mgd-display-control="blur" data-mgd-display-number aria-labelledby="mgd-display-blur-legend" aria-describedby="mgd-display-blur-help">
-                            <input id="mgd-display-blur-range" type="range" min="0" max="24" step="1" value="{$blur|escape:'html':'UTF-8'}" data-mgd-display-control="blur" data-mgd-display-range aria-labelledby="mgd-display-blur-legend" aria-describedby="mgd-display-blur-help">
+                            <input id="mgd-display-blur-number" name="blur" type="number" min="0" max="24" step="1" value="{$blur|escape:'html':'UTF-8'}" data-mgd-number data-mgd-setting="blur" aria-labelledby="mgd-display-blur-legend" aria-describedby="mgd-display-blur-help">
+                            <input id="mgd-display-blur-range" type="range" min="0" max="24" step="1" value="{$blur|escape:'html':'UTF-8'}" data-mgd-range data-mgd-setting="blur" aria-labelledby="mgd-display-blur-legend" aria-describedby="mgd-display-blur-help">
                         </div>
                         <small id="mgd-display-blur-help">0–24 px</small>
                     </fieldset>
                     <fieldset class="mgd-display__range-fieldset">
                         <legend id="mgd-display-transparency-legend">Transparenz <span>in %</span></legend>
                         <div class="mgd-display__range-pair">
-                            <input id="mgd-display-transparency-number" name="transparency" type="number" min="0" max="90" step="1" value="{$transparency|escape:'html':'UTF-8'}" data-mgd-display-control="transparency" data-mgd-display-number aria-labelledby="mgd-display-transparency-legend" aria-describedby="mgd-display-transparency-help">
-                            <input id="mgd-display-transparency-range" type="range" min="0" max="90" step="1" value="{$transparency|escape:'html':'UTF-8'}" data-mgd-display-control="transparency" data-mgd-display-range aria-labelledby="mgd-display-transparency-legend" aria-describedby="mgd-display-transparency-help">
+                            <input id="mgd-display-transparency-number" name="transparency" type="number" min="0" max="90" step="1" value="{$transparency|escape:'html':'UTF-8'}" data-mgd-number data-mgd-setting="transparency" aria-labelledby="mgd-display-transparency-legend" aria-describedby="mgd-display-transparency-help">
+                            <input id="mgd-display-transparency-range" type="range" min="0" max="90" step="1" value="{$transparency|escape:'html':'UTF-8'}" data-mgd-range data-mgd-setting="transparency" aria-labelledby="mgd-display-transparency-legend" aria-describedby="mgd-display-transparency-help">
                         </div>
                         <small id="mgd-display-transparency-help">0–90 %</small>
                     </fieldset>

@@ -127,14 +127,24 @@ final class DisplayAdminContractTest extends TestCase
             self::assertStringContainsString($expectedInput, $template, sprintf('Das Zahlenfeld %s benötigt seine exakten Grenzen.', $field));
         }
         foreach ([
-            'border_radius' => ['0', '32'],
-            'blur' => ['0', '24'],
-            'transparency' => ['0', '90'],
-        ] as $field => [$minimum, $maximum]) {
+            'border_radius' => ['borderRadius', '0', '32'],
+            'blur' => ['blur', '0', '24'],
+            'transparency' => ['transparency', '0', '90'],
+        ] as $field => [$setting, $minimum, $maximum]) {
             self::assertStringContainsString(
                 sprintf('<input id="mgd-display-%s-range" type="range" min="%s" max="%s" step="1"', $field, $minimum, $maximum),
                 $template,
                 sprintf('Der Regler %s muss exakt zum Zahlenfeld passen.', $field),
+            );
+            self::assertStringContainsString(
+                sprintf('data-mgd-number data-mgd-setting="%s"', $setting),
+                $template,
+                sprintf('Das Zahlenfeld %s braucht einen stabilen gemeinsamen Paar-Schlüssel.', $field),
+            );
+            self::assertStringContainsString(
+                sprintf('data-mgd-range data-mgd-setting="%s"', $setting),
+                $template,
+                sprintf('Der Regler %s braucht einen stabilen gemeinsamen Paar-Schlüssel.', $field),
             );
         }
         foreach (['border-radius', 'blur', 'transparency'] as $field) {

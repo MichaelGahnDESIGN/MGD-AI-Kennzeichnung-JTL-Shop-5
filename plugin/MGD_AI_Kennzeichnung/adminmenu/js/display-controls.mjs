@@ -1,14 +1,11 @@
 import { createPreviewModel, PREVIEW_POSITION_CLASSES, PREVIEW_THEME_CLASSES } from './display-preview.mjs';
 import { bindNumberAndRange } from './display-range-sync.mjs';
 
-/** Feste Grenzen der serverseitig gespeicherten Darstellungswerte. */
-const FIELD_CONFIGURATIONS = Object.freeze({
-    blur: Object.freeze({ minimum: 0, maximum: 24, fallback: 0 }),
-    border_radius: Object.freeze({ minimum: 0, maximum: 32, fallback: 4 }),
-    font_size: Object.freeze({ minimum: 8, maximum: 48, fallback: 12 }),
-    inner_padding: Object.freeze({ minimum: 0, maximum: 32, fallback: 6 }),
-    outer_margin: Object.freeze({ minimum: 0, maximum: 64, fallback: 8 }),
-    transparency: Object.freeze({ minimum: 0, maximum: 90, fallback: 8 }),
+/** Stabile, voneinander unabhängige Schlüssel der drei gekoppelten Eingabepaare. */
+const RANGE_PAIR_CONFIGURATIONS = Object.freeze({
+    blur: Object.freeze({ fallback: 0, maximum: 24, minimum: 0, setting: 'blur' }),
+    borderRadius: Object.freeze({ fallback: 4, maximum: 32, minimum: 0, setting: 'borderRadius' }),
+    transparency: Object.freeze({ fallback: 8, maximum: 90, minimum: 0, setting: 'transparency' }),
 });
 
 /** Diese sechs CSS-Variablen sind der vollständige Schreibvertrag der Vorschau. */
@@ -47,27 +44,24 @@ export function initializeDisplayControls(root) {
         return () => {};
     }
 
-    const controls = {};
-    const removePairListeners = [];
+    const controls = {
+        fontSize: form.querySelector('[data-mgd-display-control="font_size"]'),
+        innerPadding: form.querySelector('[data-mgd-display-control="inner_padding"]'),
+        language: form.querySelector('[data-mgd-display-control="language"]'),
+        outerMargin: form.querySelector('[data-mgd-display-control="outer_margin"]'),
+    };
+    const rangePairs = [];
 
-    for (const [name, configuration] of Object.entries(FIELD_CONFIGURATIONS)) {
-        const numberInput = form.querySelector(`[data-mgd-display-control="${name}"]`);
+    for (const [name, configuration] of Object.entries(RANGE_PAIR_CONFIGURATIONS)) {
+        const numberInput = form.querySelector(`[data-mgd-number][data-mgd-setting="${configuration.setting}"]`);
+        const rangeInput = form.querySelector(`[data-mgd-range][data-mgd-setting="${configuration.setting}"]`);
         controls[name] = numberInput;
 
-        const rangeInput = form.querySelector(`[data-mgd-display-control="${name}"][data-mgd-display-range]`);
-
-        if (rangeInput) {
-            removePairListeners.push(bindNumberAndRange(
-                numberInput,
-                rangeInput,
-                configuration.minimum,
-                configuration.maximum,
-                configuration.fallback,
-            ));
+        if (numberInput && rangeInput) {
+            rangePairs.push({ configuration, numberInput, rangeInput });
         }
     }
 
-    controls.language = form.querySelector('[data-mgd-display-control="language"]');
     const position = root.querySelector('[data-mgd-display-preview-position]');
     const theme = root.querySelector('[data-mgd-display-preview-theme]');
 
@@ -77,10 +71,10 @@ export function initializeDisplayControls(root) {
             language: readValue(controls.language),
             position: readValue(position),
             theme: readValue(theme),
-            fontSize: readValue(controls.font_size),
-            outerMargin: readValue(controls.outer_margin),
-            innerPadding: readValue(controls.inner_padding),
-            borderRadius: readValue(controls.border_radius),
+            fontSize: readValue(controls.fontSize),
+            outerMargin: readValue(controls.outerMargin),
+            innerPadding: readValue(controls.innerPadding),
+            borderRadius: readValue(controls.borderRadius),
             blur: readValue(controls.blur),
             transparency: readValue(controls.transparency),
         });
@@ -95,17 +89,33 @@ export function initializeDisplayControls(root) {
     };
     const observedControls = [
         controls.language,
-        controls.font_size,
-        controls.outer_margin,
-        controls.inner_padding,
-        controls.border_radius,
+        controls.fontSize,
+        controls.outerMargin,
+        controls.innerPadding,
+        controls.borderRadius,
         controls.blur,
         controls.transparency,
+        ...rangePairs.flatMap(({ rangeInput, numberInput }) => [numberInput, rangeInput]),
         position,
         theme,
-    ].filter((element) => element && typeof element.addEventListener === 'function');
+    ].filter((element, index, elements) => element
+        && typeof element.addEventListener === 'function'
+        && elements.indexOf(element) === index);
+    const pairedControls = new Set(rangePairs.flatMap(({ rangeInput, numberInput }) => [numberInput, rangeInput]));
+    const removePairListeners = rangePairs.map(({ configuration, numberInput, rangeInput }) => bindNumberAndRange(
+        numberInput,
+        rangeInput,
+        configuration.minimum,
+        configuration.maximum,
+        configuration.fallback,
+        updatePreview,
+    ));
 
     for (const element of observedControls) {
+        if (pairedControls.has(element)) {
+            continue;
+        }
+
         element.addEventListener('input', updatePreview);
         element.addEventListener('change', updatePreview);
     }
@@ -114,6 +124,10 @@ export function initializeDisplayControls(root) {
 
     return () => {
         for (const element of observedControls) {
+            if (pairedControls.has(element)) {
+                continue;
+            }
+
             if (typeof element.removeEventListener === 'function') {
                 element.removeEventListener('input', updatePreview);
                 element.removeEventListener('change', updatePreview);

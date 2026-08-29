@@ -77,9 +77,10 @@ export function normalizeInteger(value, minimum, maximum, fallback) {
  * @param {number} minimum Untere Grenze.
  * @param {number} maximum Obere Grenze.
  * @param {number} fallback Sicherer Standardwert.
+ * @param {(() => void) | undefined} afterSynchronize Optionale, lokale Folgeaktion nach einem Nutzerevent.
  * @returns {() => void} Entfernt die registrierten Listener wieder.
  */
-export function bindNumberAndRange(numberInput, rangeInput, minimum, maximum, fallback) {
+export function bindNumberAndRange(numberInput, rangeInput, minimum, maximum, fallback, afterSynchronize) {
     if (!numberInput || !rangeInput || typeof numberInput.addEventListener !== 'function' || typeof rangeInput.addEventListener !== 'function') {
         return () => {};
     }
@@ -90,10 +91,20 @@ export function bindNumberAndRange(numberInput, rangeInput, minimum, maximum, fa
         numberInput.value = normalizedValue;
         rangeInput.value = normalizedValue;
     };
-    const synchronizeNumber = () => synchronize(numberInput.value);
-    const synchronizeRange = () => synchronize(rangeInput.value);
+    const synchronizeNumber = () => {
+        synchronize(numberInput.value);
+        if (typeof afterSynchronize === 'function') {
+            afterSynchronize();
+        }
+    };
+    const synchronizeRange = () => {
+        synchronize(rangeInput.value);
+        if (typeof afterSynchronize === 'function') {
+            afterSynchronize();
+        }
+    };
 
-    synchronizeNumber();
+    synchronize(numberInput.value);
 
     for (const eventName of ['input', 'change']) {
         numberInput.addEventListener(eventName, synchronizeNumber);
