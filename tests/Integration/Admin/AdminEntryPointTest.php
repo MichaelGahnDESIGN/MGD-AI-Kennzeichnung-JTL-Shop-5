@@ -39,6 +39,8 @@ final class AdminEntryPointTest extends TestCase
         $_SESSION = ['jtl_token' => 'csrf'];
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_GET = [
+            'kPlugin' => '17',
+            'kPluginAdminMenu' => '9',
             'view' => 'list',
             'status' => 'generated',
             'sort' => 'status',
@@ -94,7 +96,12 @@ final class AdminEntryPointTest extends TestCase
 
             public function getAdminMenu(): AdminMenu
             {
-                return new AdminMenu([9]);
+                return new AdminMenu([
+                    9 => 'assets.php',
+                    10 => 'philosophy.php',
+                    11 => 'display.php',
+                    12 => 'impressum.php',
+                ]);
             }
 
             public function getConfig(): \JTL\Plugin\Data\Config
@@ -115,5 +122,14 @@ final class AdminEntryPointTest extends TestCase
         self::assertStringContainsString('kPlugin=17&amp;kPluginAdminMenu=9&amp;view=cleanup', $html);
         self::assertStringContainsString('sort=status&amp;direction=desc&amp;status=generated', $html);
         self::assertStringNotContainsString('evil=', $html);
+
+        $otherOutput = '';
+        foreach ([['philosophy.php', 10], ['display.php', 11], ['impressum.php', 12]] as [$file, $menuId]) {
+            $menu = (object) ['kPluginAdminMenu' => $menuId];
+            ob_start();
+            include dirname(__DIR__, 3) . '/plugin/MGD_AI_Kennzeichnung/adminmenu/' . $file;
+            $otherOutput .= (string) ob_get_clean();
+        }
+        self::assertSame('', $otherOutput, 'Inaktive Tabs dürfen die Assets-Query weder verarbeiten noch Fehler ausgeben.');
     }
 }

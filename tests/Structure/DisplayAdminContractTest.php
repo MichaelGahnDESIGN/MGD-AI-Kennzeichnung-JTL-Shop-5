@@ -91,7 +91,7 @@ final class DisplayAdminContractTest extends TestCase
         self::assertStringContainsString('KI-GENERIERT', $template);
         self::assertStringContainsString('Nur Vorschau', $template);
         self::assertStringContainsString('display.css', $template);
-        self::assertStringContainsString('{$adminUrl|escape:\'html\':\'UTF-8\'}js/display-controls.mjs', $template);
+        self::assertStringNotContainsString('display-controls.mjs', $template);
         self::assertDoesNotMatchRegularExpression('~(?:src|href)="https?://~i', $template);
         self::assertDoesNotMatchRegularExpression('~\bon\w+\s*=~i', $template);
         self::assertStringNotContainsString('<style', strtolower($template));
@@ -147,12 +147,17 @@ final class DisplayAdminContractTest extends TestCase
         self::assertStringContainsString('JtlDisplayConfigAdapter', $entryPoint);
         self::assertStringContainsString('DisplaySettingsAdminService', $entryPoint);
         self::assertStringContainsString('DisplayConfigCommittedException', $entryPoint);
-        self::assertStringContainsString("cDateiname !== 'display.php'", $entryPoint);
+        self::assertStringContainsString('AdminTabScope::capture', $entryPoint);
         self::assertStringContainsString("'kPlugin'", $entryPoint);
         self::assertStringContainsString("'kPluginAdminMenu'", $entryPoint);
         self::assertStringContainsString('array_diff_key($request->post', $entryPoint);
         self::assertStringContainsString("'display_request_failed'", $entryPoint);
+        self::assertStringContainsString("'display_cache_invalidation_failed'", $entryPoint);
         self::assertStringNotContainsString("'count' => 0", $entryPoint);
+        self::assertStringContainsString('AdminTabScope::error', $entryPoint);
+        self::assertSame(1, substr_count($entryPoint, 'http_response_code(403)'));
+        self::assertStringNotContainsString('http_response_code(400)', $entryPoint);
+        self::assertStringNotContainsString('http_response_code(500)', $entryPoint);
         self::assertStringNotContainsString('$_COOKIE', $entryPoint);
         self::assertStringNotContainsString('var_dump', $entryPoint);
     }

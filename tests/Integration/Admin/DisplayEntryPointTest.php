@@ -35,7 +35,7 @@ final class DisplayEntryPointTest extends TestCase
         $logger = new DisplayEntryLogger();
         $this->bereiteKontextVor(new AdminAccount(['PLUGIN_DETAIL_VIEW_17']), $db, $logger);
         $_SERVER['REQUEST_METHOD'] = 'GET';
-        $_GET = [];
+        $_GET = $this->aktiveGetRoute(9);
         $_POST = [];
 
         $output = $this->fuehreEinstiegAus();
@@ -70,23 +70,24 @@ final class DisplayEntryPointTest extends TestCase
     }
 
     #[Test]
-    public function unberechtigter_admin_erhaelt_403_ohne_konfigurationszugriff(): void
+    public function unberechtigter_admin_erhaelt_im_jtl_zyklus_einen_inline_alert_bei_status_200(): void
     {
         $db = new DisplayEntryDatabase();
         $this->bereiteKontextVor(new AdminAccount([]), $db, new DisplayEntryLogger());
         $_SERVER['REQUEST_METHOD'] = 'GET';
-        $_GET = [];
+        $_GET = $this->aktiveGetRoute(9);
         $_POST = [];
 
         $output = $this->fuehreEinstiegAus();
 
-        self::assertSame(403, http_response_code());
+        self::assertSame(200, http_response_code());
+        self::assertStringContainsString('role="alert"', $output);
         self::assertStringContainsString('keine Berechtigung', $output);
         self::assertSame([], $db->updates);
     }
 
     #[Test]
-    public function ungueltiger_adminmenue_kontext_wird_wie_ein_direktzugriff_mit_403_abgewiesen(): void
+    public function fehlende_oder_fremde_route_wird_im_jtl_zyklus_neutral_ignoriert(): void
     {
         $db = new DisplayEntryDatabase();
         $this->bereiteKontextVor(new AdminAccount(['PLUGIN_DETAIL_VIEW_17']), $db, new DisplayEntryLogger());
@@ -96,8 +97,8 @@ final class DisplayEntryPointTest extends TestCase
 
         $output = $this->fuehreEinstiegAus(99);
 
-        self::assertSame(403, http_response_code());
-        self::assertStringContainsString('gültigen JTL-Administrationskontext', $output);
+        self::assertSame(200, http_response_code());
+        self::assertSame('', $output);
         self::assertSame([], $db->updates);
     }
 
@@ -107,13 +108,13 @@ final class DisplayEntryPointTest extends TestCase
         $db = new DisplayEntryDatabase();
         $this->bereiteKontextVor(new AdminAccount(['PLUGIN_DETAIL_VIEW_17']), $db, new DisplayEntryLogger());
         $_SERVER['REQUEST_METHOD'] = 'GET';
-        $_GET = [];
+        $_GET = $this->aktiveGetRoute(10);
         $_POST = [];
 
         $output = $this->fuehreEinstiegAus(10);
 
-        self::assertSame(403, http_response_code());
-        self::assertStringContainsString('gültigen JTL-Administrationskontext', $output);
+        self::assertSame(200, http_response_code());
+        self::assertSame('', $output);
         self::assertSame([], $db->updates);
     }
 
@@ -129,8 +130,8 @@ final class DisplayEntryPointTest extends TestCase
 
         $output = $this->fuehreEinstiegAus();
 
-        self::assertSame(403, http_response_code());
-        self::assertStringContainsString('gültigen JTL-Administrationskontext', $output);
+        self::assertSame(200, http_response_code());
+        self::assertStringContainsString('role="alert"', $output);
         self::assertSame([], $db->updates);
     }
 
@@ -149,7 +150,8 @@ final class DisplayEntryPointTest extends TestCase
 
             $output = $this->fuehreEinstiegAus();
 
-            self::assertSame(400, http_response_code(), $beschreibung);
+            self::assertSame(200, http_response_code(), $beschreibung);
+            self::assertStringContainsString('role="alert"', $output, $beschreibung);
             self::assertStringContainsString('nicht sicher verarbeiten', $output);
             self::assertSame([], $db->updates, $beschreibung);
         }
@@ -169,7 +171,8 @@ final class DisplayEntryPointTest extends TestCase
 
         $output = $this->fuehreEinstiegAus();
 
-        self::assertSame(500, http_response_code());
+        self::assertSame(200, http_response_code());
+        self::assertStringContainsString('role="alert"', $output);
         self::assertStringContainsString('nicht abschließen', $output);
         self::assertSame([['mgd_ai_admin_event', ['event_code' => 'display_request_failed']]], $logger->records);
         self::assertStringNotContainsString('geheimer-token', serialize($logger->records));
@@ -192,8 +195,26 @@ final class DisplayEntryPointTest extends TestCase
 
         $output = $this->fuehreEinstiegAus();
 
-        self::assertSame(500, http_response_code());
-        self::assertStringContainsString('Werte wurden gespeichert', $output);
+        self::assertSame(200, http_response_code());
+        self::assertStringContainsString('Werte gespeichert, Cache nicht aktualisiert', $output);
+        self::assertCount(7, $db->updates);
+        self::assertSame([['mgd_ai_admin_event', ['event_code' => 'display_cache_invalidation_failed']]], $logger->records);
+    }
+
+    #[Test]
+    public function vollstaendiger_customlink_zyklus_speichert_den_display_post_genau_einmal(): void
+    {
+        $db = new DisplayEntryDatabase();
+        $logger = new DisplayEntryLogger();
+        $this->bereiteKontextVor(new AdminAccount(['PLUGIN_DETAIL_VIEW_17']), $db, $logger);
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_GET = [];
+        $_POST = $this->gueltigerPost();
+
+        foreach ([['assets.php', 7], ['philosophy.php', 8], ['display.php', 9], ['impressum.php', 10]] as [$file, $menuId]) {
+            $this->fuehreCustomlinkAus($file, $menuId);
+        }
+
         self::assertCount(7, $db->updates);
         self::assertSame([], $logger->records);
     }
@@ -218,6 +239,12 @@ final class DisplayEntryPointTest extends TestCase
         ];
     }
 
+    /** @return array<string, string> */
+    private function aktiveGetRoute(int $menuId): array
+    {
+        return ['kPlugin' => '17', 'kPluginAdminMenu' => (string) $menuId];
+    }
+
     private function bereiteKontextVor(
         AdminAccount $account,
         DisplayEntryDatabase $db,
@@ -239,10 +266,15 @@ final class DisplayEntryPointTest extends TestCase
 
     private function fuehreEinstiegAus(int $menuId = 9): string
     {
+        return $this->fuehreCustomlinkAus('display.php', $menuId);
+    }
+
+    private function fuehreCustomlinkAus(string $file, int $menuId): string
+    {
         $oPlugin = new DisplayEntryPlugin();
         $menu = (object) ['kPluginAdminMenu' => $menuId];
         ob_start();
-        include dirname(__DIR__, 3) . '/plugin/MGD_AI_Kennzeichnung/adminmenu/display.php';
+        include dirname(__DIR__, 3) . '/plugin/MGD_AI_Kennzeichnung/adminmenu/' . $file;
 
         return (string) ob_get_clean();
     }
@@ -304,7 +336,7 @@ final class DisplayEntryPlugin implements PluginInterface
 
     public function getAdminMenu(): AdminMenu
     {
-        return new AdminMenu([9 => 'display.php', 10 => 'assets.php']);
+        return new AdminMenu([7 => 'assets.php', 8 => 'philosophy.php', 9 => 'display.php', 10 => 'impressum.php']);
     }
 
     public function getConfig(): Config

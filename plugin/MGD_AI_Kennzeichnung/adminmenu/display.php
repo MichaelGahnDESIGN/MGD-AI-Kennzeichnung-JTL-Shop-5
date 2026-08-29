@@ -7,13 +7,13 @@ use JTL\Shop;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlAuthorizationAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlCsrfAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlDisplayConfigAdapter;
-use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlHttpRequestAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlSessionContext;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Display\DisplaySettingsAdminService;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\AccessDeniedException;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\CsrfException;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\DisplayConfigCommittedException;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\ValidationException;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Http\AdminTabScope;
 
 /* JTLs PluginController definiert PFAD_ROOT und stellt $oPlugin bereit. */
 if (!defined('PFAD_ROOT') || !isset($oPlugin) || !$oPlugin instanceof PluginInterface) {
@@ -28,24 +28,21 @@ try {
     $session = &JtlSessionContext::current();
     $sessionId = session_id();
     $adminMenuId = is_object($menu ?? null) ? ($menu->kPluginAdminMenu ?? null) : null;
+    $scope = AdminTabScope::capture($oPlugin, $adminMenuId, 'display.php', true);
+    if (!$scope->isAddressed) {
+        return;
+    }
     $sessionToken = $session['jtl_token'] ?? null;
-    $adminMenuItem = is_int($adminMenuId) ? $oPlugin->getAdminMenu()->getItemByID($adminMenuId) : null;
     if (!is_string($sessionId) || $sessionId === ''
-        || !is_int($adminMenuId) || $adminMenuId < 1
-        || !is_object($adminMenuItem)
-        || !isset($adminMenuItem->cDateiname) || !is_string($adminMenuItem->cDateiname)
-        || $adminMenuItem->cDateiname !== 'display.php'
         || !is_string($sessionToken) || $sessionToken === '' || strlen($sessionToken) > 256
     ) {
-        /* Fehlender Laufzeitkontext ist kein Formularfehler, sondern ein gesperrter Direktzugriff. */
-        http_response_code(403);
-        echo 'Die Darstellung ist nur in einem gültigen JTL-Administrationskontext verfügbar.';
+        echo AdminTabScope::error('Die Darstellung ist im aktuellen Administrationskontext nicht verfügbar.');
 
         return;
     }
 
     /* Die Route wird vor der Formularprüfung kanonisch an Plugin und Menü gebunden. */
-    $request = (new JtlHttpRequestAdapter())->capture($oPlugin->getID(), $adminMenuId, true);
+    $request = $scope->request;
     $authorization = new JtlAuthorizationAdapter(
         $container->getAdminAccount(),
         $oPlugin->getID(),
@@ -107,18 +104,17 @@ try {
         ->assign('message', $message)
         ->fetch(__DIR__ . '/templates/display.tpl');
 } catch (AccessDeniedException) {
-    http_response_code(403);
-    echo 'Sie besitzen keine Berechtigung für die Darstellung.';
+    echo AdminTabScope::error('Sie besitzen keine Berechtigung für die Darstellung.');
 } catch (DisplayConfigCommittedException) {
-    http_response_code(500);
-    echo 'Die Werte wurden gespeichert, aber der Plugin-Cache konnte nicht aktualisiert werden.';
+    $container->getLogService()->warning('mgd_ai_admin_event', [
+        'event_code' => 'display_cache_invalidation_failed',
+    ]);
+    echo AdminTabScope::error('Werte gespeichert, Cache nicht aktualisiert.');
 } catch (ValidationException|CsrfException) {
-    http_response_code(400);
-    echo 'Die Darstellung konnte die Eingabe nicht sicher verarbeiten.';
+    echo AdminTabScope::error('Die Darstellung konnte die Eingabe nicht sicher verarbeiten.');
 } catch (Throwable) {
-    http_response_code(500);
     $container->getLogService()->warning('mgd_ai_admin_event', [
         'event_code' => 'display_request_failed',
     ]);
-    echo 'Die Darstellung konnte die Anfrage nicht abschließen.';
+    echo AdminTabScope::error('Die Darstellung konnte die Anfrage nicht abschließen.');
 }

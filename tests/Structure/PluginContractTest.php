@@ -49,7 +49,7 @@ final class PluginContractTest extends TestCase
         self::assertSame(
             '1.2.1',
             $this->liesXmlWert($xpath, 'Version'),
-            'Die Pluginversion muss exakt 1.2.0 sein.',
+            'Die Pluginversion muss exakt 1.2.1 sein.',
         );
         $phpVersionElemente = $xpath->query('//*[local-name()="PHPVersion"]');
         self::assertNotFalse($phpVersionElemente, 'Die Prüfung auf unbekannte PHP-Metadaten muss ausführbar sein.');

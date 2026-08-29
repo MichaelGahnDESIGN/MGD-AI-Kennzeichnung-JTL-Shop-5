@@ -6,11 +6,11 @@ use JTL\Plugin\PluginInterface;
 use JTL\Shop;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlAuthorizationAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlCsrfAdapter;
-use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlHttpRequestAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlSessionContext;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\AccessDeniedException;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\CsrfException;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\ValidationException;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Http\AdminTabScope;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Philosophy\PhilosophyAdminService;
 
 /* JTLs PluginController definiert PFAD_ROOT und stellt $oPlugin bereit. */
@@ -23,17 +23,19 @@ if (!defined('PFAD_ROOT') || !isset($oPlugin) || !$oPlugin instanceof PluginInte
 
 $container = Shop::Container();
 try {
+    $adminMenuId = is_object($menu ?? null) ? ($menu->kPluginAdminMenu ?? null) : null;
+    $scope = AdminTabScope::capture($oPlugin, $adminMenuId, 'philosophy.php');
+    if (!$scope->isAddressed) {
+        return;
+    }
     $session = &JtlSessionContext::current();
     $sessionId = session_id();
-    $adminMenuId = is_object($menu ?? null) ? ($menu->kPluginAdminMenu ?? null) : null;
     if (!is_string($sessionId) || $sessionId === ''
-        || !is_int($adminMenuId) || $adminMenuId < 1
-        || $oPlugin->getAdminMenu()->getItemByID($adminMenuId) === null
     ) {
         throw new ValidationException('Der JTL-Admin-Menükontext ist ungültig.');
     }
 
-    $request = (new JtlHttpRequestAdapter())->capture($oPlugin->getID(), $adminMenuId);
+    $request = $scope->request;
     $authorization = new JtlAuthorizationAdapter(
         $container->getAdminAccount(),
         $oPlugin->getID(),
@@ -72,13 +74,10 @@ try {
         ->assign('message', $message)
         ->fetch(__DIR__ . '/templates/philosophy.tpl');
 } catch (AccessDeniedException) {
-    http_response_code(403);
-    echo 'Sie besitzen keine Berechtigung für die AI-Philosophie.';
+    echo AdminTabScope::error('Sie besitzen keine Berechtigung für die AI-Philosophie.');
 } catch (ValidationException|CsrfException) {
-    http_response_code(400);
-    echo 'Die AI-Philosophie konnte die Eingabe nicht sicher verarbeiten.';
+    echo AdminTabScope::error('Die AI-Philosophie konnte die Eingabe nicht sicher verarbeiten.');
 } catch (Throwable) {
-    http_response_code(500);
     $container->getLogService()->warning('mgd_ai_admin_event', ['event_code' => 'philosophy_request_failed', 'count' => 0]);
-    echo 'Die AI-Philosophie konnte die Anfrage nicht abschließen.';
+    echo AdminTabScope::error('Die AI-Philosophie konnte die Anfrage nicht abschließen.');
 }

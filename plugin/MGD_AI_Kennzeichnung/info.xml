@@ -48,7 +48,7 @@
             </Setting>
             <Setting type="selectbox" initialValue="Y" sort="2" conf="Y">
                 <Name>Updatehinweise über GitHub abrufen</Name>
-                <Description>Datenschutzfreundlich deaktiviert. Bei Aktivierung wird höchstens alle zwölf Stunden die neueste Release-Information bei api.github.com abgefragt.</Description>
+                <Description>Standardmäßig aktiviert: Beim Öffnen des Darstellungstabs wird höchstens alle zwölf Stunden anonym bei GitHub auf eine öffentliche Release-Information geprüft. Es werden keine Tokens, Shop- oder Kundendaten übertragen; ein privates Repository kann keine Information liefern.</Description>
                 <ValueName>update_notices</ValueName>
                 <SelectboxOptions>
                     <Option value="N" sort="1">Nein</Option>
