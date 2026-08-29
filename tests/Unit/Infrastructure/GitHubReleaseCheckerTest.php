@@ -473,13 +473,16 @@ final class GitHubReleaseCheckerTest extends TestCase
                 PHP_BINARY,
                 '-r',
                 '$handle = fopen($argv[1], "c+b"); flock($handle, LOCK_EX); fwrite(STDOUT, "ready\\n"); sleep(2);',
-                $path . '.lock',
+                $path,
             ], $descriptors, $pipes);
             self::assertIsResource($process);
             self::assertSame("ready\n", fgets($pipes[1]));
 
             $startedAt = microtime(true);
-            self::assertNull((new FileReleaseCache($path))->load());
+            $reader = new FileReleaseCache($path);
+            self::assertTrue($reader->acquire());
+            self::assertNull($reader->load());
+            $reader->release();
             self::assertLessThan(0.5, microtime(true) - $startedAt);
         } finally {
             if (is_resource($process)) {

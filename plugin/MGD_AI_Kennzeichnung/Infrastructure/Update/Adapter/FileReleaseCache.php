@@ -247,7 +247,7 @@ final class FileReleaseCache implements ReleaseCacheInterface
         }
 
         try {
-            if (!$this->hasPrivateRegularPermissions($handle, $this->path) || !flock($handle, LOCK_SH)) {
+            if (!$this->hasPrivateRegularPermissions($handle, $this->path) || !flock($handle, LOCK_SH | LOCK_NB)) {
                 return null;
             }
             $content = stream_get_contents($handle, 65_537);
