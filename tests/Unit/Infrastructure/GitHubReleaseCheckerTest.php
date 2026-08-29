@@ -283,6 +283,9 @@ final class GitHubReleaseCheckerTest extends TestCase
             self::assertSame(1_700_000_000, $geladen->attemptedAt);
             self::assertSame(0600, fileperms($pfad) & 0777);
         } finally {
+            if (is_file($pfad . '.lock')) {
+                unlink($pfad . '.lock');
+            }
             if (is_file($pfad)) {
                 unlink($pfad);
             }
@@ -311,6 +314,9 @@ final class GitHubReleaseCheckerTest extends TestCase
             file_put_contents($path, '{"attemptedAt":1700000000,"release":{"tag":"v1.2.2","url":"https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases/tag/v1.2.2","fetchedAt":1700000001}}');
             self::assertNull((new FileReleaseCache($path))->load());
         } finally {
+            if (is_file($path . '.lock')) {
+                unlink($path . '.lock');
+            }
             if (is_file($path)) {
                 unlink($path);
             }
@@ -335,11 +341,109 @@ final class GitHubReleaseCheckerTest extends TestCase
             $this->expectException(RuntimeException::class);
             (new FileReleaseCache($link))->acquire();
         } finally {
+            if (is_file($path . '.lock')) {
+                unlink($path . '.lock');
+            }
             if (is_file($path)) {
                 unlink($path);
             }
             if (is_link($directory . DIRECTORY_SEPARATOR . 'release-link.json')) {
                 unlink($directory . DIRECTORY_SEPARATOR . 'release-link.json');
+            }
+            if (is_dir($directory)) {
+                rmdir($directory);
+            }
+        }
+    }
+
+    #[Test]
+    public function dateicache_bewahrt_den_alten_zustand_wenn_das_atomare_schreiben_fehlsschlaegt(): void
+    {
+        $directory = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'mgd-release-atomic-' . bin2hex(random_bytes(8));
+        self::assertTrue(mkdir($directory, 0700));
+        $path = $directory . DIRECTORY_SEPARATOR . 'release.json';
+        $oldState = new ReleaseCheckState(1_700_000_000, null);
+        $newState = new ReleaseCheckState(1_700_043_200, null);
+        $cache = new FileReleaseCache($path);
+
+        try {
+            self::assertTrue($cache->acquire());
+            $cache->save($oldState);
+            $cache->release();
+
+            self::assertTrue($cache->acquire());
+            self::assertTrue(chmod($directory, 0500));
+            try {
+                $cache->save($newState);
+                self::fail('Der atomare Schreibversuch muss bei einem nicht beschreibbaren Verzeichnis fehlschlagen.');
+            } catch (RuntimeException) {
+                // Der alte Inhalt muss trotz fehlgeschlagenem neuen Versuch lesbar bleiben.
+            } finally {
+                chmod($directory, 0700);
+                $cache->release();
+            }
+
+            self::assertSame($oldState->attemptedAt, (new FileReleaseCache($path))->load()?->attemptedAt);
+        } finally {
+            chmod($directory, 0700);
+            if (is_file($path . '.lock')) {
+                unlink($path . '.lock');
+            }
+            if (is_file($path)) {
+                unlink($path);
+            }
+            if (is_dir($directory)) {
+                rmdir($directory);
+            }
+        }
+    }
+
+    #[Test]
+    public function dateicache_verwirft_bestehende_gruppen_oder_weltlesbare_dateien_fail_closed(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'mgd-release-permissions-');
+        self::assertIsString($path);
+
+        try {
+            file_put_contents($path, '{"attemptedAt":1700000000,"release":null}');
+            self::assertTrue(chmod($path, 0644));
+
+            self::assertNull((new FileReleaseCache($path))->load());
+            $this->expectException(RuntimeException::class);
+            (new FileReleaseCache($path))->acquire();
+        } finally {
+            chmod($path, 0600);
+            if (is_file($path . '.lock')) {
+                unlink($path . '.lock');
+            }
+            if (is_file($path)) {
+                unlink($path);
+            }
+        }
+    }
+
+    #[Test]
+    public function dateicache_verwirft_einen_ersetzten_sperrdateipfad_vor_dem_schreiben(): void
+    {
+        $directory = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'mgd-release-lock-replace-' . bin2hex(random_bytes(8));
+        self::assertTrue(mkdir($directory, 0700));
+        $path = $directory . DIRECTORY_SEPARATOR . 'release.json';
+        $lockPath = $path . '.lock';
+        $cache = new FileReleaseCache($path);
+
+        try {
+            self::assertTrue($cache->acquire());
+            self::assertTrue(unlink($lockPath));
+
+            $this->expectException(RuntimeException::class);
+            $cache->save(new ReleaseCheckState(1_700_000_000, null));
+        } finally {
+            $cache->release();
+            if (is_file($lockPath)) {
+                unlink($lockPath);
+            }
+            if (is_file($path)) {
+                unlink($path);
             }
             if (is_dir($directory)) {
                 rmdir($directory);
