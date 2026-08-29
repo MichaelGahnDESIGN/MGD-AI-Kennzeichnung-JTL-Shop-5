@@ -80,12 +80,19 @@ namespace JTL\Plugin\Data;
 
 class AdminMenu
 {
-    /** @param list<int> $ids */
-    public function __construct(private readonly array $ids = []) {}
+    /** @param array<int, int|string> $items Adminmenü-ID mit optionalem Dateinamen für echte Tab-Tests. */
+    public function __construct(private readonly array $items = []) {}
 
     public function getItemByID(int $menuID): ?\stdClass
     {
-        return in_array($menuID, $this->ids, true) ? (object) ['kPluginAdminMenu' => $menuID] : null;
+        if (array_key_exists($menuID, $this->items) && is_string($this->items[$menuID])) {
+            return (object) [
+                'kPluginAdminMenu' => $menuID,
+                'cDateiname' => $this->items[$menuID],
+            ];
+        }
+
+        return in_array($menuID, $this->items, true) ? (object) ['kPluginAdminMenu' => $menuID] : null;
     }
 }
 

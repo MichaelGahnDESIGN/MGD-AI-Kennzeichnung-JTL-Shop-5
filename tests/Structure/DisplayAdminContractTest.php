@@ -91,7 +91,7 @@ final class DisplayAdminContractTest extends TestCase
         self::assertStringContainsString('KI-GENERIERT', $template);
         self::assertStringContainsString('Nur Vorschau', $template);
         self::assertStringContainsString('display.css', $template);
-        self::assertStringContainsString('display-controls.mjs', $template);
+        self::assertStringContainsString('{$adminUrl|escape:\'html\':\'UTF-8\'}js/display-controls.mjs', $template);
         self::assertDoesNotMatchRegularExpression('~(?:src|href)="https?://~i', $template);
         self::assertDoesNotMatchRegularExpression('~\bon\w+\s*=~i', $template);
         self::assertStringNotContainsString('<style', strtolower($template));
@@ -107,8 +107,32 @@ final class DisplayAdminContractTest extends TestCase
         self::assertStringContainsString('name="preview_position"', $template);
         self::assertStringContainsString('name="preview_theme"', $template);
 
+        foreach ([
+            'font_size' => '<input id="mgd-display-font_size" name="font_size" type="number" min="8" max="48" step="1"',
+            'outer_margin' => '<input id="mgd-display-outer_margin" name="outer_margin" type="number" min="0" max="64" step="1"',
+            'inner_padding' => '<input id="mgd-display-inner_padding" name="inner_padding" type="number" min="0" max="32" step="1"',
+            'border_radius' => '<input id="mgd-display-border_radius-number" name="border_radius" type="number" min="0" max="32" step="1"',
+            'blur' => '<input id="mgd-display-blur-number" name="blur" type="number" min="0" max="24" step="1"',
+            'transparency' => '<input id="mgd-display-transparency-number" name="transparency" type="number" min="0" max="90" step="1"',
+        ] as $field => $expectedInput) {
+            self::assertStringContainsString($expectedInput, $template, sprintf('Das Zahlenfeld %s benötigt seine exakten Grenzen.', $field));
+        }
+        foreach ([
+            'border_radius' => ['0', '32'],
+            'blur' => ['0', '24'],
+            'transparency' => ['0', '90'],
+        ] as $field => [$minimum, $maximum]) {
+            self::assertStringContainsString(
+                sprintf('<input id="mgd-display-%s-range" type="range" min="%s" max="%s" step="1"', $field, $minimum, $maximum),
+                $template,
+                sprintf('Der Regler %s muss exakt zum Zahlenfeld passen.', $field),
+            );
+        }
+
         self::assertStringContainsString('.mgd-display-layout {', $stylesheet);
         self::assertStringContainsString('grid-template-columns: minmax(20rem, 0.9fr) minmax(22rem, 1.1fr);', $stylesheet);
+        self::assertStringContainsString('gap: 1.5rem;', $stylesheet);
+        self::assertStringContainsString('align-items: start;', $stylesheet);
         self::assertStringContainsString('@media (max-width: 62rem)', $stylesheet);
         self::assertStringContainsString('.mgd-display-layout { grid-template-columns: 1fr; }', $stylesheet);
     }
@@ -123,10 +147,12 @@ final class DisplayAdminContractTest extends TestCase
         self::assertStringContainsString('JtlDisplayConfigAdapter', $entryPoint);
         self::assertStringContainsString('DisplaySettingsAdminService', $entryPoint);
         self::assertStringContainsString('DisplayConfigCommittedException', $entryPoint);
+        self::assertStringContainsString("cDateiname !== 'display.php'", $entryPoint);
         self::assertStringContainsString("'kPlugin'", $entryPoint);
         self::assertStringContainsString("'kPluginAdminMenu'", $entryPoint);
         self::assertStringContainsString('array_diff_key($request->post', $entryPoint);
         self::assertStringContainsString("'display_request_failed'", $entryPoint);
+        self::assertStringNotContainsString("'count' => 0", $entryPoint);
         self::assertStringNotContainsString('$_COOKIE', $entryPoint);
         self::assertStringNotContainsString('var_dump', $entryPoint);
     }

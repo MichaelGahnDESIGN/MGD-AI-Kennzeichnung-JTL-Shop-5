@@ -105,4 +105,4 @@
         </aside>
     </div>
 </section>
-<script type="module" src="{$adminUrl|escape:'html':'UTF-8'}display-controls.mjs"></script>
+<script type="module" src="{$adminUrl|escape:'html':'UTF-8'}js/display-controls.mjs"></script>

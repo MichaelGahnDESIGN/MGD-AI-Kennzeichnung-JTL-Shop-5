@@ -29,9 +29,12 @@ try {
     $sessionId = session_id();
     $adminMenuId = is_object($menu ?? null) ? ($menu->kPluginAdminMenu ?? null) : null;
     $sessionToken = $session['jtl_token'] ?? null;
+    $adminMenuItem = is_int($adminMenuId) ? $oPlugin->getAdminMenu()->getItemByID($adminMenuId) : null;
     if (!is_string($sessionId) || $sessionId === ''
         || !is_int($adminMenuId) || $adminMenuId < 1
-        || $oPlugin->getAdminMenu()->getItemByID($adminMenuId) === null
+        || !is_object($adminMenuItem)
+        || !isset($adminMenuItem->cDateiname) || !is_string($adminMenuItem->cDateiname)
+        || $adminMenuItem->cDateiname !== 'display.php'
         || !is_string($sessionToken) || $sessionToken === '' || strlen($sessionToken) > 256
     ) {
         /* Fehlender Laufzeitkontext ist kein Formularfehler, sondern ein gesperrter Direktzugriff. */
@@ -116,7 +119,6 @@ try {
     http_response_code(500);
     $container->getLogService()->warning('mgd_ai_admin_event', [
         'event_code' => 'display_request_failed',
-        'count' => 0,
     ]);
     echo 'Die Darstellung konnte die Anfrage nicht abschließen.';
 }

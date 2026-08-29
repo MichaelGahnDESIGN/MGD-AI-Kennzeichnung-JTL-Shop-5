@@ -102,6 +102,22 @@ final class DisplayEntryPointTest extends TestCase
     }
 
     #[Test]
+    public function anderer_bestehender_plugin_tab_wird_nicht_als_darstellungstab_akzeptiert(): void
+    {
+        $db = new DisplayEntryDatabase();
+        $this->bereiteKontextVor(new AdminAccount(['PLUGIN_DETAIL_VIEW_17']), $db, new DisplayEntryLogger());
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_GET = [];
+        $_POST = [];
+
+        $output = $this->fuehreEinstiegAus(10);
+
+        self::assertSame(403, http_response_code());
+        self::assertStringContainsString('gültigen JTL-Administrationskontext', $output);
+        self::assertSame([], $db->updates);
+    }
+
+    #[Test]
     public function fehlendes_sessiontoken_wird_vor_jedem_schreibversuch_mit_403_abgewiesen(): void
     {
         $db = new DisplayEntryDatabase();
@@ -155,7 +171,7 @@ final class DisplayEntryPointTest extends TestCase
 
         self::assertSame(500, http_response_code());
         self::assertStringContainsString('nicht abschließen', $output);
-        self::assertSame([['mgd_ai_admin_event', ['event_code' => 'display_request_failed', 'count' => 0]]], $logger->records);
+        self::assertSame([['mgd_ai_admin_event', ['event_code' => 'display_request_failed']]], $logger->records);
         self::assertStringNotContainsString('geheimer-token', serialize($logger->records));
     }
 
@@ -288,7 +304,7 @@ final class DisplayEntryPlugin implements PluginInterface
 
     public function getAdminMenu(): AdminMenu
     {
-        return new AdminMenu([9]);
+        return new AdminMenu([9 => 'display.php', 10 => 'assets.php']);
     }
 
     public function getConfig(): Config
