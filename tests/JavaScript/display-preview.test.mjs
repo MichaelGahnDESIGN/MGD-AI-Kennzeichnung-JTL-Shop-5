@@ -30,7 +30,7 @@ test('createPreviewModel verwendet für manipulierte Werte ausschließlich feste
         borderRadius: '33', blur: '25', transparency: '91',
     }), {
         text: 'KI-GENERIERT',
-        positionClass: 'mgd-display-preview--top-right',
+        positionClass: 'mgd-display-preview--bottom-right',
         themeClass: 'mgd-display-preview--theme-auto',
         styles: {
             '--mgd-preview-font-size': '12px',
@@ -57,6 +57,19 @@ test('createPreviewModel bleibt auch ohne Werteobjekt bei den sicheren Standardw
     const model = createPreviewModel(null);
 
     assert.equal(model.text, 'KI-GENERIERT');
-    assert.equal(model.positionClass, 'mgd-display-preview--top-right');
+    assert.equal(model.positionClass, 'mgd-display-preview--bottom-right');
+    assert.equal(model.themeClass, 'mgd-display-preview--theme-auto');
+});
+
+test('createPreviewModel akzeptiert Objekte ohne Prototyp und verwirft manipulierte Schlüssel sicher', () => {
+    const values = Object.create(null);
+    values.language = 'en';
+    values.position = '__proto__';
+    values.theme = 'constructor';
+
+    const model = createPreviewModel(values);
+
+    assert.equal(model.text, 'AI-GENERATED');
+    assert.equal(model.positionClass, 'mgd-display-preview--bottom-right');
     assert.equal(model.themeClass, 'mgd-display-preview--theme-auto');
 });

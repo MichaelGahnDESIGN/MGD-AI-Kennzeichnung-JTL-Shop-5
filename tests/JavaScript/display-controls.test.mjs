@@ -39,11 +39,27 @@ class TestStyle {
 class TestElement {
     constructor(value = '') {
         this.value = value;
-        this.textContent = '';
+        this._textContent = '';
+        this.textContentWrites = 0;
+        this.innerHTMLWrites = 0;
         this.listeners = new Map();
         this.children = new Map();
         this.classList = new TestClassList();
         this.style = new TestStyle();
+    }
+
+    get textContent() {
+        return this._textContent;
+    }
+
+    set textContent(value) {
+        this._textContent = value;
+        this.textContentWrites += 1;
+    }
+
+    set innerHTML(value) {
+        this.innerHTMLWrites += 1;
+        throw new Error(`innerHTML darf nicht gesetzt werden: ${value}`);
     }
 
     addEventListener(type, listener) {
@@ -114,6 +130,8 @@ function createDisplayRoot() {
         root,
         form,
         preview,
+        label,
+        theme,
         borderRadiusNumber,
         borderRadiusRange,
     };
@@ -147,11 +165,66 @@ test('Range und Zahlenfeld synchronisieren bei input und change jeweils genau ei
     assert.equal(form.submitCalls, 0);
 });
 
-test('fehlende Strukturen bleiben ohne Crash, Submit oder globale Nebenwirkungen', () => {
-    const originalFetch = globalThis.fetch;
-    const hadStorage = Object.hasOwn(globalThis, 'localStorage');
-    const originalStorage = globalThis.localStorage;
+/** Ersetzt eine globale API mit einem Spy und stellt ihren ursprünglichen Deskriptor wieder her. */
+function replaceGlobalProperty(name, value) {
+    const originalDescriptor = Object.getOwnPropertyDescriptor(globalThis, name);
+    Object.defineProperty(globalThis, name, { configurable: true, value, writable: true });
 
+    return () => {
+        if (originalDescriptor) {
+            Object.defineProperty(globalThis, name, originalDescriptor);
+        } else {
+            delete globalThis[name];
+        }
+    };
+}
+
+test('Designänderungen kündigen keinen unveränderten Text an und verwenden keine globalen APIs', () => {
+    const fetchCalls = { count: 0 };
+    const storageCalls = { get: 0, set: 0, setItem: 0 };
+    const storageSpy = new Proxy({}, {
+        get(target, property, receiver) {
+            storageCalls.get += 1;
+            if (property === 'setItem') {
+                return () => {
+                    storageCalls.setItem += 1;
+                };
+            }
+
+            return Reflect.get(target, property, receiver);
+        },
+        set(target, property, value, receiver) {
+            storageCalls.set += 1;
+
+            return Reflect.set(target, property, value, receiver);
+        },
+    });
+    const restoreFetch = replaceGlobalProperty('fetch', () => {
+        fetchCalls.count += 1;
+        throw new Error('fetch darf nicht aufgerufen werden.');
+    });
+    const restoreStorage = replaceGlobalProperty('localStorage', storageSpy);
+    const { root, label, theme } = createDisplayRoot();
+
+    try {
+        initializeDisplayControls(root);
+        const textWritesAfterInitialization = label.textContentWrites;
+
+        theme.value = 'dark';
+        theme.dispatch('input');
+
+        assert.equal(label.textContent, 'KI-GENERIERT');
+        assert.equal(label.textContentWrites, textWritesAfterInitialization);
+        assert.equal(label.innerHTMLWrites, 0);
+        assert.equal(fetchCalls.count, 0);
+        assert.deepEqual(storageCalls, { get: 0, set: 0, setItem: 0 });
+    } finally {
+        restoreStorage();
+        restoreFetch();
+    }
+});
+
+test('fehlende Strukturen bleiben ohne Crash, Submit oder globale Nebenwirkungen', () => {
     assert.doesNotThrow(() => initializeDisplayControls(null));
     assert.doesNotThrow(() => initializeDisplayControls({}));
     assert.doesNotThrow(() => initializeDisplayControls(new TestElement()));
@@ -166,7 +239,47 @@ test('fehlende Strukturen bleiben ohne Crash, Submit oder globale Nebenwirkungen
     rootWithoutPairs.children.set('[data-mgd-display-label]', new TestElement());
     assert.doesNotThrow(() => initializeDisplayControls(rootWithoutPairs));
 
-    assert.equal(globalThis.fetch, originalFetch);
-    assert.equal(Object.hasOwn(globalThis, 'localStorage'), hadStorage);
-    assert.equal(globalThis.localStorage, originalStorage);
+});
+
+test('Cleanup entfernt alle lokalen Listener der Paar- und Vorschau-Steuerung', () => {
+    const { root, preview, borderRadiusNumber, borderRadiusRange, theme } = createDisplayRoot();
+    const removeListeners = initializeDisplayControls(root);
+    const writesBeforeCleanup = preview.style.writeCount;
+
+    removeListeners();
+    borderRadiusRange.value = '12';
+    borderRadiusRange.dispatch('input');
+    theme.value = 'dark';
+    theme.dispatch('change');
+
+    assert.equal(borderRadiusNumber.value, '4');
+    assert.equal(preview.style.writeCount, writesBeforeCleanup);
+});
+
+test('Modul startet lokale Wurzeln erst nach DOMContentLoaded', async () => {
+    const { root, label, preview } = createDisplayRoot();
+    const listeners = new Map();
+    const fakeDocument = {
+        readyState: 'loading',
+        addEventListener(type, listener) {
+            listeners.set(type, listener);
+        },
+        querySelectorAll(selector) {
+            return selector === '[data-mgd-display-root]' ? [root] : [];
+        },
+    };
+    const restoreDocument = replaceGlobalProperty('document', fakeDocument);
+
+    try {
+        const moduleUrl = new URL('../../plugin/MGD_AI_Kennzeichnung/adminmenu/js/display-controls.mjs', import.meta.url);
+        await import(`${moduleUrl.href}?dom-ready-test=${Date.now()}`);
+
+        assert.equal(preview.style.writeCount, 0);
+        assert.equal(typeof listeners.get('DOMContentLoaded'), 'function');
+        listeners.get('DOMContentLoaded')();
+        assert.equal(label.textContent, 'KI-GENERIERT');
+        assert.equal(preview.style.writeCount, 6);
+    } finally {
+        restoreDocument();
+    }
 });

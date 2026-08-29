@@ -82,7 +82,7 @@
             <div class="card-body">
                 <p class="mgd-display__eyebrow">Lokale Vorschau</p>
                 <h2 id="mgd-display-preview-heading" class="h4">Kennzeichnung am Beispielbild</h2>
-                <div class="mgd-display__image-wrap mgd-display-preview--top-right mgd-display-preview--theme-auto" data-mgd-display-preview>
+                <div class="mgd-display__image-wrap mgd-display-preview--bottom-right mgd-display-preview--theme-auto" data-mgd-display-preview>
                     <img src="{$adminUrl|escape:'html':'UTF-8'}images/michael-gahn-design-schuh.png" alt="Fiktiver Michael Gahn DESIGN Schuh">
                     <span class="mgd-display__label" data-mgd-display-label aria-live="polite">KI-GENERIERT</span>
                 </div>
@@ -90,7 +90,7 @@
                 <div class="mgd-display__preview-controls">
                     <label for="mgd-display-preview-position">Position <span>Nur Vorschau</span></label>
                     <select id="mgd-display-preview-position" name="preview_position" data-mgd-display-preview-position>
-                        <option value="bottom-right">Unten rechts</option>
+                        <option value="bottom-right" selected>Unten rechts</option>
                         <option value="bottom-left">Unten links</option>
                         <option value="top-right">Oben rechts</option>
                         <option value="top-left">Oben links</option>

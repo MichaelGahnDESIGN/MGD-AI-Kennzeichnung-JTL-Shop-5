@@ -32,7 +32,7 @@ const THEME_CLASSES = Object.freeze({
  * @returns {string} Ausschließlich ein erlaubter Schlüssel.
  */
 function allowValue(value, allowedValues, fallback) {
-    return typeof value === 'string' && Object.hasOwn(allowedValues, value) ? value : fallback;
+    return typeof value === 'string' && Object.prototype.hasOwnProperty.call(allowedValues, value) ? value : fallback;
 }
 
 /**
@@ -47,7 +47,7 @@ export function createPreviewModel(values = {}) {
     /* Auch ein fehlerhafter externer Aufruf darf keine Adminseite abbrechen. */
     const safeValues = values && typeof values === 'object' ? values : {};
     const language = allowValue(safeValues.language, TEXT_BY_LANGUAGE, 'auto');
-    const position = allowValue(safeValues.position, POSITION_CLASSES, 'top-right');
+    const position = allowValue(safeValues.position, POSITION_CLASSES, 'bottom-right');
     const theme = allowValue(safeValues.theme, THEME_CLASSES, 'auto');
     const fontSize = normalizeInteger(safeValues.fontSize, 8, 48, 12);
     const outerMargin = normalizeInteger(safeValues.outerMargin, 0, 64, 8);

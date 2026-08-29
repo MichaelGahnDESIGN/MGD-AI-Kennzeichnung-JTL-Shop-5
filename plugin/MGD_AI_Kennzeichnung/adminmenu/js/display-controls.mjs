@@ -79,7 +79,10 @@ export function initializeDisplayControls(root) {
             transparency: readValue(controls.transparency),
         });
 
-        label.textContent = model.text;
+        /* Designänderungen sollen die höfliche Live-Region nicht erneut vorlesen. */
+        if (label.textContent !== model.text) {
+            label.textContent = model.text;
+        }
         preview.classList.remove(...PREVIEW_POSITION_CLASSES, ...PREVIEW_THEME_CLASSES);
         preview.classList.add(model.positionClass, model.themeClass);
 

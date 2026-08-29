@@ -75,6 +75,7 @@ final class DisplayAdminContractTest extends TestCase
         $template = (string) file_get_contents($root . 'templates/display.tpl');
         $stylesheet = (string) file_get_contents($root . 'display.css');
         $controls = (string) file_get_contents($root . 'js/display-controls.mjs');
+        $previewModel = (string) file_get_contents($root . 'js/display-preview.mjs');
 
         self::assertFileExists($root . 'display.php');
         self::assertNotSame('', $template);
@@ -101,6 +102,8 @@ final class DisplayAdminContractTest extends TestCase
         self::assertFileExists($root . 'js/display-preview.mjs');
         self::assertFileExists($root . 'js/display-controls.mjs');
         self::assertStringContainsString("[data-mgd-display-form]", $controls);
+        self::assertStringContainsString('Object.prototype.hasOwnProperty.call', $previewModel);
+        self::assertStringNotContainsString('Object.hasOwn(', $previewModel);
         self::assertDoesNotMatchRegularExpression('~(?:src|href)="https?://~i', $template);
         self::assertDoesNotMatchRegularExpression('~\bon\w+\s*=~i', $template);
         self::assertStringNotContainsString('<style', strtolower($template));
@@ -115,6 +118,8 @@ final class DisplayAdminContractTest extends TestCase
         self::assertStringContainsString('%', $template);
         self::assertStringContainsString('name="preview_position"', $template);
         self::assertStringContainsString('name="preview_theme"', $template);
+        self::assertStringContainsString('<option value="bottom-right" selected>', $template);
+        self::assertStringContainsString('mgd-display-preview--bottom-right mgd-display-preview--theme-auto', $template);
 
         foreach ([
             'font_size' => '<input id="mgd-display-font_size" name="font_size" type="number" min="8" max="48" step="1"',
@@ -173,6 +178,12 @@ final class DisplayAdminContractTest extends TestCase
             '.mgd-display-preview--theme-auto',
             '.mgd-display-preview--theme-light',
             '.mgd-display-preview--theme-dark',
+            'box-sizing: border-box;',
+            'max-width: calc(100% - var(--mgd-preview-outer-margin) - var(--mgd-preview-outer-margin));',
+            'overflow-wrap: anywhere;',
+            'word-break: normal;',
+            '@media (prefers-color-scheme: light)',
+            '.mgd-display-preview--theme-auto .mgd-display__label { background: rgba(255, 255, 255, var(--mgd-preview-background-opacity)); border-color: rgba(23, 33, 27, .4); color: #17211b; }',
             'prefers-reduced-motion: reduce',
         ] as $expectedCss) {
             self::assertStringContainsString($expectedCss, $stylesheet);
