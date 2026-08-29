@@ -18,7 +18,7 @@ Es verbindet drei Aufgaben:
 2. **Bilder bewerten:** Ein berechtigter Mitarbeiter vergibt pro Bild einen eindeutigen Status, eine Position und eine Darstellungsvariante.
 3. **Kennzeichnung anzeigen:** Sichtbare Hinweise werden als barrierearmes Overlay innerhalb der Bildfläche ausgegeben.
 
-Das Plugin verändert keine Bilddatei, brennt keinen Text in ein Bild ein und veröffentlicht keine OPC-Seite automatisch. Es speichert ausschließlich technische Zuordnungen und Anzeigeeinstellungen in eigenen Plugin-Tabellen.
+Das Plugin verändert keine Bilddatei, brennt keinen Text in ein Bild ein und veröffentlicht keine OPC-Seite automatisch. Technische Bildzuordnungen speichert es in eigenen Plugin-Tabellen für Bildzuordnungen; globale Darstellungswerte liegen getrennt davon in der JTL-Plugin-Konfiguration für Darstellungswerte.
 
 ## Die wichtigsten Vorteile
 

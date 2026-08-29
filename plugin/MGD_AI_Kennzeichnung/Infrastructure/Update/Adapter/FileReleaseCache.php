@@ -344,7 +344,14 @@ final class FileReleaseCache implements ReleaseCacheInterface
             throw new RuntimeException('Der Release-Cachepfad ist nicht sicher.');
         }
         if ($cacheDirectory !== $systemTemp) {
-            if (!@chmod($directory, 0700) || ((fileperms($directory) & 0777) !== 0700)) {
+            if (!@chmod($directory, 0700)) {
+                throw new RuntimeException('Das Release-Cacheverzeichnis konnte nicht geschützt werden.');
+            }
+
+            /* PHP 8.1 kann sonst noch die vor chmod() gelesenen Rechte liefern. */
+            clearstatcache(true, $directory);
+            $permissions = @fileperms($directory);
+            if (!is_int($permissions) || (($permissions & 0777) !== 0700)) {
                 throw new RuntimeException('Das Release-Cacheverzeichnis konnte nicht geschützt werden.');
             }
         }

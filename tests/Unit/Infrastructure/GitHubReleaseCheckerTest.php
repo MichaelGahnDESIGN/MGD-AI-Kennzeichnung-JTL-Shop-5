@@ -357,6 +357,21 @@ final class GitHubReleaseCheckerTest extends TestCase
     }
 
     #[Test]
+    public function dateicache_verwirft_nach_chmod_veraltete_php_statdaten_vor_der_rechtepruefung(): void
+    {
+        $source = file_get_contents(
+            __DIR__ . '/../../../plugin/MGD_AI_Kennzeichnung/Infrastructure/Update/Adapter/FileReleaseCache.php',
+        );
+        self::assertIsString($source);
+
+        self::assertMatchesRegularExpression(
+            '~chmod\(\$directory, 0700\).*?clearstatcache\(true, \$directory\).*?fileperms\(\$directory\)~s',
+            $source,
+            'PHP 8.1 darf nach chmod() keine zwischengespeicherten Verzeichnisrechte prüfen.',
+        );
+    }
+
+    #[Test]
     public function dateicache_bewahrt_den_alten_zustand_wenn_das_atomare_schreiben_fehlsschlaegt(): void
     {
         $directory = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'mgd-release-atomic-' . bin2hex(random_bytes(8));

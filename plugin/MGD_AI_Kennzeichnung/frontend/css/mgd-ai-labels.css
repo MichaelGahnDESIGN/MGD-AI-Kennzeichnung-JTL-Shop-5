@@ -89,19 +89,32 @@
     bottom: var(--mgd-ai-outer-margin);
 }
 
-.mgd-ai-label--theme-auto,
-.mgd-ai-label--theme-dark {
+/*
+ * Die Theme-Farbe gehört ausschließlich auf den sichtbaren Badge. Der
+ * umgebende Host bleibt transparent, damit weder Bildlinks noch OPC-Flächen
+ * großflächig überdeckt werden.
+ */
+.mgd-ai-label--theme-auto.mgd-ai-label--native,
+.mgd-ai-label--theme-dark.mgd-ai-label--native,
+.mgd-ai-label--theme-auto:not([role="note"])::after,
+.mgd-ai-label--theme-dark:not([role="note"])::after,
+.mgd-ai-label--theme-auto > .mgd-ai-label__badge,
+.mgd-ai-label--theme-dark > .mgd-ai-label__badge {
     color: #fff;
     background: rgba(17, 24, 39, var(--mgd-ai-background-opacity));
 }
 
-.mgd-ai-label--theme-light {
+.mgd-ai-label--theme-light.mgd-ai-label--native,
+.mgd-ai-label--theme-light:not([role="note"])::after,
+.mgd-ai-label--theme-light > .mgd-ai-label__badge {
     color: #111827;
     background: rgba(255, 255, 255, var(--mgd-ai-background-opacity));
 }
 
 @media (prefers-color-scheme: light) {
-    .mgd-ai-label--theme-auto {
+    .mgd-ai-label--theme-auto.mgd-ai-label--native,
+    .mgd-ai-label--theme-auto:not([role="note"])::after,
+    .mgd-ai-label--theme-auto > .mgd-ai-label__badge {
         color: #111827;
         background: rgba(255, 255, 255, var(--mgd-ai-background-opacity));
     }

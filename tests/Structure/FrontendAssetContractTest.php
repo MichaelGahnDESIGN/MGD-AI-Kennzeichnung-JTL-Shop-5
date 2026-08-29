@@ -19,6 +19,10 @@ final class FrontendAssetContractTest extends TestCase
 
         self::assertStringContainsString("document.querySelectorAll('.mgd-ai-label')", $javascript);
         self::assertStringContainsString('textContent', $javascript);
+        self::assertStringContainsString("document.createElement('span')", $javascript);
+        self::assertStringContainsString("label.className = 'mgd-ai-label__badge'", $javascript);
+        self::assertStringContainsString('element.appendChild(label)', $javascript);
+        self::assertStringContainsString("element.classList.add('mgd-ai-label--enhanced')", $javascript);
         self::assertStringNotContainsString("querySelectorAll('img')", $javascript);
         self::assertStringNotContainsString('getElementsByTagName', $javascript);
         self::assertStringNotContainsString('innerHTML', $javascript);
@@ -49,12 +53,41 @@ final class FrontendAssetContractTest extends TestCase
         self::assertStringContainsString('max-width: 100%', $css);
         self::assertStringContainsString('vertical-align: top', $css);
         self::assertStringContainsString('--mgd-ai-background-opacity: 0.92', $css);
+
+        /*
+         * Der Positionsrahmen darf niemals selbst eingefärbt werden. Die
+         * Hintergrundfarbe gehört in allen drei Ausgabewegen ausschließlich
+         * auf den tatsächlich sichtbaren Badge.
+         */
         self::assertStringContainsString(
-            ".mgd-ai-label--theme-auto,\n.mgd-ai-label--theme-dark {\n    color: #fff;\n    background: rgba(17, 24, 39, var(--mgd-ai-background-opacity));",
+            ".mgd-ai-label--theme-auto.mgd-ai-label--native,\n"
+            . ".mgd-ai-label--theme-dark.mgd-ai-label--native,\n"
+            . ".mgd-ai-label--theme-auto:not([role=\"note\"])::after,\n"
+            . ".mgd-ai-label--theme-dark:not([role=\"note\"])::after,\n"
+            . ".mgd-ai-label--theme-auto > .mgd-ai-label__badge,\n"
+            . ".mgd-ai-label--theme-dark > .mgd-ai-label__badge {\n"
+            . "    color: #fff;\n"
+            . "    background: rgba(17, 24, 39, var(--mgd-ai-background-opacity));",
             $css,
         );
         self::assertStringContainsString(
-            ".mgd-ai-label--theme-light {\n    color: #111827;\n    background: rgba(255, 255, 255, var(--mgd-ai-background-opacity));",
+            ".mgd-ai-label--theme-light.mgd-ai-label--native,\n"
+            . ".mgd-ai-label--theme-light:not([role=\"note\"])::after,\n"
+            . ".mgd-ai-label--theme-light > .mgd-ai-label__badge {\n"
+            . "    color: #111827;\n"
+            . "    background: rgba(255, 255, 255, var(--mgd-ai-background-opacity));",
+            $css,
+        );
+        self::assertStringContainsString(
+            "@media (prefers-color-scheme: light) {\n"
+            . "    .mgd-ai-label--theme-auto.mgd-ai-label--native,\n"
+            . "    .mgd-ai-label--theme-auto:not([role=\"note\"])::after,\n"
+            . "    .mgd-ai-label--theme-auto > .mgd-ai-label__badge {",
+            $css,
+        );
+        self::assertStringNotContainsString(".mgd-ai-label--theme-light {\n", $css);
+        self::assertStringNotContainsString(
+            ".mgd-ai-label--theme-auto,\n.mgd-ai-label--theme-dark {\n",
             $css,
         );
     }

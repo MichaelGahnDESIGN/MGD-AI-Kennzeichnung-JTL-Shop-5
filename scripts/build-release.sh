@@ -9,7 +9,13 @@ ausgabeordner="${projekt_wurzel}/dist"
 ausgabedatei="${ausgabeordner}/MGD_AI_Kennzeichnung-1.2.1.zip"
 arbeitsordner="$(mktemp -d "${TMPDIR:-/tmp}/mgd-ai-release.XXXXXX")"
 paketordner="${arbeitsordner}/MGD_AI_Kennzeichnung"
-temporaeres_zip="${arbeitsordner}/MGD_AI_Kennzeichnung-1.2.1.zip"
+mkdir -p "${ausgabeordner}"
+# Das temporäre Archiv liegt absichtlich im Ausgabeordner. Nur dadurch bleibt
+# das abschließende Umbenennen garantiert auf demselben Dateisystem atomar.
+temporaerer_ausgabeordner="$(mktemp -d "${ausgabeordner}/.mgd-ai-release.XXXXXX")"
+temporaeres_zip="${temporaerer_ausgabeordner}/MGD_AI_Kennzeichnung-1.2.1.zip"
+paketmanifest="${temporaerer_ausgabeordner}/paketmanifest.txt"
+archivmanifest="${temporaerer_ausgabeordner}/archivmanifest.txt"
 
 # Ausschließlich diese Bestandteile dürfen überhaupt als Paketquelle dienen.
 # Neue Top-Level-Pfade müssen dadurch bewusst in einem Code-Review freigegeben
@@ -35,7 +41,7 @@ freigegebene_top_level_pfade=(
 freigegebene_endungen=("css" "js" "mjs" "php" "png" "svg" "tpl" "xml")
 
 aufraeumen() {
-    rm -rf "${arbeitsordner}"
+    rm -rf "${arbeitsordner}" "${temporaerer_ausgabeordner}"
 }
 trap aufraeumen EXIT INT TERM
 
@@ -113,7 +119,7 @@ done
 
 # Es wird nicht der gesamte Pluginordner kopiert. Jede Datei stammt aus der
 # oben aufgebauten und vollständig geprüften Positivliste.
-mkdir -p "${paketordner}" "${ausgabeordner}"
+mkdir -p "${paketordner}"
 for relativ in "${freigegebene_dateien[@]}"; do
     ziel="${paketordner}/${relativ}"
     mkdir -p "$(dirname "${ziel}")"
@@ -132,11 +138,26 @@ TZ=UTC find "${paketordner}" -exec touch -t 202608120000.00 {} +
     {
         printf '%s\n' 'MGD_AI_Kennzeichnung/'
         find MGD_AI_Kennzeichnung -type f -print | LC_ALL=C sort
-    } | zip -X -q "${temporaeres_zip}" -@
+    } > "${paketmanifest}"
+    zip -X -q "${temporaeres_zip}" -@ < "${paketmanifest}"
 )
 
-# Erst ein vollständig erzeugtes Archiv ersetzt den vorherigen geprüften Stand.
-rm -f "${ausgabedatei}"
-mv "${temporaeres_zip}" "${ausgabedatei}"
+# Das neue Archiv wird vollständig geprüft, bevor der bisherige geprüfte Stand
+# berührt wird. Neben der ZIP-Integrität muss die enthaltene Positivliste exakt
+# dem zuvor erzeugten Manifest entsprechen.
+if ! unzip -tq "${temporaeres_zip}" >/dev/null; then
+    echo "Die Integritätsprüfung des neuen Release-ZIPs ist fehlgeschlagen." >&2
+    exit 1
+fi
+if ! unzip -Z1 "${temporaeres_zip}" > "${archivmanifest}" \
+    || ! cmp -s "${paketmanifest}" "${archivmanifest}"; then
+    echo "Die Integritätsprüfung des neuen Release-Inhalts ist fehlgeschlagen." >&2
+    exit 1
+fi
+
+# mv verwendet innerhalb desselben Dateisystems rename(2): Das vollständig
+# geprüfte neue ZIP ersetzt das alte in genau einem atomaren Schritt. Schlägt
+# dieser Schritt fehl, bleibt das alte Ziel unverändert erhalten.
+mv -f "${temporaeres_zip}" "${ausgabedatei}"
 
 echo "Release erstellt: ${ausgabedatei}"

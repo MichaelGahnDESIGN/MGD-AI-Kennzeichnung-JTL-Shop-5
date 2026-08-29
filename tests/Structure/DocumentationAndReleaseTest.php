@@ -25,9 +25,55 @@ final class DocumentationAndReleaseTest extends TestCase
         self::assertStringContainsString('MGD_AI_Kennzeichnung-1.2.1.zip', $script);
         self::assertStringNotContainsString('MGD_AI_Kennzeichnung-1.2.0.zip', $script);
         self::assertStringNotContainsString('cp -R "${quellordner}/."', $script);
+        self::assertStringContainsString('mktemp -d "${ausgabeordner}/', $script);
+        self::assertStringContainsString('unzip -tq "${temporaeres_zip}"', $script);
+        self::assertStringNotContainsString('rm -f "${ausgabedatei}"', $script);
 
         foreach (['/.superpowers/', '*.sql', '*.bak', '.env*'] as $muster) {
             self::assertStringContainsString($muster, $gitignore);
+        }
+    }
+
+    #[Test]
+    public function build_bewahrt_das_alte_zip_wenn_die_integritaetspruefung_des_neuen_archivs_fehlschlaegt(): void
+    {
+        $this->buildRelease();
+        $vorherigerHash = hash_file('sha256', self::ZIP);
+        self::assertIsString($vorherigerHash);
+
+        $fakeBin = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'mgd-fake-zip-' . bin2hex(random_bytes(8));
+        self::assertTrue(mkdir($fakeBin, 0700));
+        $fakeZip = $fakeBin . DIRECTORY_SEPARATOR . 'zip';
+        $fakeZipScript = <<<'BASH'
+#!/usr/bin/env bash
+for argument in "$@"; do
+    case "${argument}" in
+        -*) ;;
+        *) printf '%s' 'kein gültiges ZIP' > "${argument}"; exit 0 ;;
+    esac
+done
+exit 1
+BASH;
+
+        try {
+            self::assertNotFalse(file_put_contents($fakeZip, $fakeZipScript));
+            self::assertTrue(chmod($fakeZip, 0700));
+
+            [$status, $ausgabe] = $this->runBuildRelease($fakeBin);
+            self::assertNotSame(0, $status, 'Ein beschädigtes temporäres ZIP muss den Build abbrechen.');
+            self::assertStringContainsString('Integritätsprüfung', $ausgabe);
+            self::assertSame(
+                $vorherigerHash,
+                hash_file('sha256', self::ZIP),
+                'Das vorherige Release-ZIP muss bei jedem Fehler unverändert erhalten bleiben.',
+            );
+        } finally {
+            if (is_file($fakeZip)) {
+                unlink($fakeZip);
+            }
+            if (is_dir($fakeBin)) {
+                rmdir($fakeBin);
+            }
         }
     }
 
@@ -135,6 +181,8 @@ final class DocumentationAndReleaseTest extends TestCase
         foreach (['Datenminimierung', 'api.github.com', 'Server-IP', 'keine Bilder'] as $begriff) {
             self::assertStringContainsStringIgnoringCase($begriff, $datenschutz);
         }
+        self::assertStringContainsStringIgnoringCase('Plugin-Tabellen für Bildzuordnungen', $readme);
+        self::assertStringContainsStringIgnoringCase('JTL-Plugin-Konfiguration für Darstellungswerte', $readme);
     }
 
     #[Test]
@@ -355,11 +403,19 @@ final class DocumentationAndReleaseTest extends TestCase
     }
 
     /** @return array{0: int, 1: string} */
-    private function runBuildRelease(): array
+    private function runBuildRelease(?string $pathPrefix = null): array
     {
         $ausgabe = [];
         $status = 1;
-        exec('bash ' . escapeshellarg(self::ROOT . '/scripts/build-release.sh') . ' 2>&1', $ausgabe, $status);
+        $path = (string) getenv('PATH');
+        $pathAssignment = $pathPrefix === null
+            ? ''
+            : 'PATH=' . escapeshellarg($pathPrefix . PATH_SEPARATOR . $path) . ' ';
+        exec(
+            $pathAssignment . 'bash ' . escapeshellarg(self::ROOT . '/scripts/build-release.sh') . ' 2>&1',
+            $ausgabe,
+            $status,
+        );
 
         return [$status, implode("\n", $ausgabe)];
     }
