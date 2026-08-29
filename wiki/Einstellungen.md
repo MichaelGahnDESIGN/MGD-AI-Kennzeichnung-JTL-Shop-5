@@ -8,11 +8,14 @@ Die Plugin-Einstellungen befinden sich unter:
 
 Standard: **Nein**
 
-Bei Aktivierung erscheint der feste Hinweis **Plugin von Michael Gahn DESIGN** im Footer. Die Funktion ist freiwillig und für die Kennzeichnung selbst nicht erforderlich.
+Bei Aktivierung erscheint der feste Hinweis **supported by: Michael Gahn DESIGN**
+im Footer. Nur der Herstellername ist verlinkt und öffnet die Herstellerseite
+sicher in einem neuen Tab. Die Funktion ist freiwillig und für die
+Kennzeichnung selbst nicht erforderlich.
 
 ## Updatehinweise über GitHub
 
-Standard: **Nein**
+Standard bei Neuinstallation: **Ja**
 
 Bei Aktivierung fragt das Plugin höchstens alle zwölf Stunden öffentliche Metadaten des neuesten GitHub-Releases ab.
 
@@ -28,7 +31,18 @@ Dabei gilt:
 - begrenzte Antwortgröße;
 - lokaler Cache zur Vermeidung unnötiger Anfragen.
 
-Wenn Ihre Organisation ausgehende Verbindungen streng beschränkt, lassen Sie die Funktion deaktiviert und prüfen Sie Releases manuell.
+Die Verbindung entsteht nur beim Öffnen des adressierten Darstellungstabs.
+GitHub kann dabei technisch die **Server-IP**, den Zeitpunkt und den festen
+**User-Agent** `MGD-AI-Kennzeichnung-JTL-Shop-5/1.2.1` erhalten. Bilder,
+Tokens, Shop-, Kunden- und Formulardaten werden nicht übertragen. Auch ein
+Fehler oder eine nicht gefundene Release-Information wird zwölf Stunden lokal
+gespeichert.
+
+Das Repository ist ein **privates Repository**. Eine anonyme Prüfung kann daher
+ohne Hinweis bleiben. Das Plugin installiert keine Updates automatisch;
+verwenden Sie den manuellen ZIP-Upload. Wenn Ihre Organisation ausgehende
+Verbindungen streng beschränkt, deaktivieren Sie die Funktion und prüfen Sie
+Releases manuell.
 
 ## Sprache der Kennzeichnung
 
@@ -38,11 +52,16 @@ Wenn Ihre Organisation ausgehende Verbindungen streng beschränkt, lassen Sie di
 
 Die sichtbaren Kurztexte werden durch ausführliche Beschreibungen für assistive Technologien ergänzt.
 
-## Position und Farbschema
+## Darstellung und Live-Vorschau
 
-Die Einstellungsseite enthält sichere Basiswerte. Für verwaltete Bilder sind jedoch die Werte maßgeblich, die im Kennzeichnungsdialog oder in der Stapelbearbeitung **pro Bild** gespeichert werden.
+Der eigene Darstellungstab zeigt links die globalen Einstellungen und rechts
+ein lokales Beispielbild. Zahlenfeld und Schieberegler für Eckenradius,
+Hintergrundunschärfe und Transparenz bleiben synchron. Die Live-Vorschau läuft
+nur im Browser; erst **Speichern** ändert die globalen Shopwerte.
 
-Wenn Sie eine sichtbare Position ändern möchten, bearbeiten Sie daher das betreffende Bild in der Galerie.
+Position und Farbschema tragen dort den Hinweis **Nur Vorschau**. Für
+verwaltete Bilder sind ausschließlich die Werte maßgeblich, die im
+Kennzeichnungsdialog oder in der Stapelbearbeitung pro Bild gespeichert werden.
 
 ## Schriftgröße
 
@@ -78,6 +97,15 @@ Passt die Rundung des Labelrahmens an Ihr Template an.
 - sicherer Bereich: 0 bis 24 px
 
 Erhöht bei unterstützten Browsern die Unschärfe des hinter dem Label liegenden Bildbereichs. Prüfen Sie Lesbarkeit und Leistung auf mobilen Geräten.
+
+## Transparenz
+
+- Standard: 8 %
+- sicherer Bereich: 0 bis 90 %
+
+**0 %** bedeutet einen vollständig deckenden Labelhintergrund. **90 %** ist
+nahezu durchsichtig. Prüfen Sie besonders bei hohen Werten den Kontrast auf
+hellen und dunklen Bildern.
 
 ## Sichere Werteverarbeitung
 

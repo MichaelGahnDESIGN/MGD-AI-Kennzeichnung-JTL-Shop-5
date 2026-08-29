@@ -21,17 +21,21 @@ Die Installation darf nicht unmittelbar vor einer Kampagne, einem Import oder ei
 
 ## 3. Zuerst auf dev.onvis-shop.de testen
 
-Version 1.2.0 wird **vor** jeder Änderung an `onvis-shop.de` vollständig auf `dev.onvis-shop.de` geprüft. Der Dev-Shop muss im Wartungsmodus bleiben, eine eigene Datenbank verwenden und darf keine aktive Wawi-Anbindung besitzen.
+Version 1.2.1 wird **vor** jeder Änderung an `onvis-shop.de` vollständig auf `dev.onvis-shop.de` geprüft. Der Dev-Shop muss im Wartungsmodus bleiben, eine eigene Datenbank verwenden und darf keine aktive Wawi-Anbindung besitzen.
 
 Vor dem Dev-Update werden das vorhandene Pluginverzeichnis und die vier Plugin-Datenbanktabellen datiert gesichert. Anschließend wird exakt das später für Live vorgesehene ZIP verwendet. Galerie, Speichern, Stapelbearbeitung, OPC, Dateimanager-Fallback und Frontend-Ausgabe müssen fehlerfrei sein. Bei einem Fehler endet die Freigabe; Live bleibt unverändert.
 
 ## 4. Installation oder Update im Plugin-Manager
 
 1. Im JTL-Backend **Plugins → Plugin-Manager → Upload** öffnen.
-2. `MGD_AI_Kennzeichnung-1.2.0.zip` auswählen.
+2. Das Releasepaket `MGD_AI_Kennzeichnung-1.2.1.zip` als **manuellen ZIP-Upload** auswählen. Nicht den automatisch erzeugten GitHub-Quellcode verwenden.
 3. Bei einer bestehenden Version die von JTL angebotene Updatefunktion verwenden; sonst nach erfolgreicher Validierung installieren und aktivieren.
 4. Keine Dateien in JTL-Core, NOVA oder OnvisTheme manuell ersetzen.
-5. Updatehinweise und Footer-Nennung zunächst deaktiviert lassen.
+5. Die bei Neuinstallationen standardmäßig aktivierten Updatehinweise bewusst anhand der eigenen Datenschutz- und Netzwerkvorgaben prüfen; die Footer-Nennung bleibt freiwillig.
+
+Version 1.2.1 besitzt keinen Auto-Updater. Das private Repository kann über die
+anonyme GitHub-Abfrage keine Release-Information liefern. Eine Aktualisierung
+erfolgt deshalb immer kontrolliert über das geprüfte ZIP im Plugin-Manager.
 
 ## 5. Kontrollierter Livetest auf https://onvis-shop.de
 
@@ -40,9 +44,10 @@ Vor dem Dev-Update werden das vorhandene Pluginverzeichnis und die vier Plugin-D
 3. Startseite, Kategorie, Produktdetail, Herstellerseite und eine OPC-Seite als Gast öffnen.
 4. Browser-Konsole und Server-Fehlerprotokoll auf neue Fehler prüfen; keine personenbezogenen Daten in Tickets kopieren.
 5. Im Backend die Bildgalerie lesend öffnen und Filter sowie Vorschauen prüfen.
-6. Ein unkritisches Testbild kennzeichnen, die Frontend-Ausgabe prüfen und anschließend auf den dokumentierten Ausgangswert zurücksetzen.
-7. OPC- und Dateimanager-Schaltflächen nur auf Vorhandensein und Öffnen prüfen; keine produktive Seite veröffentlichen.
-8. Warenkorb, Suche, Login und Checkout höchstens bis vor den verbindlichen Bestellbutton prüfen.
+6. Den Darstellungstab öffnen, Live-Vorschau, Transparenz und **Nur Vorschau** für Position und Farbschema prüfen.
+7. Ein unkritisches Testbild kennzeichnen, die Frontend-Ausgabe prüfen und anschließend auf den dokumentierten Ausgangswert zurücksetzen.
+8. OPC- und Dateimanager-Schaltflächen nur auf Vorhandensein und Öffnen prüfen; keine produktive Seite veröffentlichen.
+9. Warenkorb, Suche, Login und Checkout höchstens bis vor den verbindlichen Bestellbutton prüfen.
 
 ## 6. Deaktivierung und Rollback
 

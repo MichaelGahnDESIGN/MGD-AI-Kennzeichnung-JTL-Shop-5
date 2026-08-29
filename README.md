@@ -2,7 +2,7 @@
 
 Transparente Kennzeichnungen für KI-generierte und KI-bearbeitete Bilder – direkt in JTL-Shop 5, ohne die Originalbilder zu verändern und ohne Bilddaten an externe KI-Dienste zu senden.
 
-> **Aktuelle Version:** 1.2.0
+> **Aktuelle Version:** 1.2.1
 > **Getestet mit:** JTL-Shop 5.7.2, PHP 8.1 oder neuer, NOVA und NOVA-basierten Templates
 > **Wichtig:** Das Plugin erkennt KI-Inhalte nicht automatisch. Die fachliche Prüfung und Einstufung erfolgt bewusst durch einen berechtigten Menschen.
 
@@ -26,6 +26,7 @@ Das Plugin verändert keine Bilddatei, brennt keinen Text in ein Bild ein und ve
 - visuelle Prüfung mit lokalen Vorschaubildern;
 - sechs klar getrennte Prüf- und Kennzeichnungsstatus;
 - direkte Einzelbearbeitung mit Live-Vorschau und eindeutigem Speichern-Button;
+- eigener zweispaltiger Darstellungstab mit lokaler Live-Vorschau, Zahlenfeldern und Schiebereglern;
 - abgesicherte Stapelbearbeitung für bis zu 500 ausgewählte Einträge;
 - Ausgabe an normalen Bildern, verlinkten Bildern, responsiven `picture`-Elementen und lokalen OPC-Hintergrundbildern;
 - Unterstützung für Produkt-, Kategorie-, Hersteller-, Banner-, Slider- und OPC-Bilder;
@@ -36,7 +37,8 @@ Das Plugin verändert keine Bilddatei, brennt keinen Text in ein Bild ein und ve
 - keine automatische Übertragung von Bildern oder Kundendaten an externe Dienste;
 - sichere JTL-Admin-Integration mit Berechtigungs- und CSRF-Prüfung;
 - kontrollierter Scan, Vorschau vor Stapeländerungen und sicherer Umgang mit veralteten Fundstellen;
-- optionale Herstellernennung und optionale GitHub-Updatehinweise – standardmäßig deaktiviert.
+- optionale Herstellernennung **supported by: Michael Gahn DESIGN**;
+- abschaltbare GitHub-Updatehinweise mit positivem und negativem Zwölf-Stunden-Cache.
 
 ## Kennzeichnungsstatus
 
@@ -80,7 +82,7 @@ Außerdem stehen drei Darstellungen bereit:
 - **Hell:** heller Hintergrund mit dunkler Schrift;
 - **Dunkel:** dunkler Hintergrund mit heller Schrift.
 
-Schriftgröße, Außenabstand, Innenabstand, Eckenradius und Hintergrundunschärfe können innerhalb sicherer Grenzen angepasst werden. Das Label bleibt innerhalb des erkannten Bildrahmens. Bei verlinkten Bildern bleibt das Linkziel unverändert.
+Schriftgröße, Außenabstand, Innenabstand, Eckenradius, Hintergrundunschärfe und Transparenz können innerhalb sicherer Grenzen angepasst werden. **0 % Transparenz** bedeutet einen deckenden Hintergrund, **90 %** einen nahezu durchsichtigen Hintergrund. Das Label bleibt innerhalb des erkannten Bildrahmens. Bei verlinkten Bildern bleibt das Linkziel unverändert.
 
 Die sichtbaren Texte werden je nach Shop- oder Plugin-Sprache auf Deutsch oder Englisch ausgegeben. Zusätzlich erhält das Label eine ausführliche Beschreibung für assistive Technologien.
 
@@ -88,7 +90,11 @@ Die sichtbaren Texte werden je nach Shop- oder Plugin-Sprache auf Deutsch oder E
 
 ### 1. Paket herunterladen
 
-Laden Sie das ZIP aus dem Bereich [GitHub Releases](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases) herunter. Verwenden Sie nicht den automatisch von GitHub erzeugten Quellcode-Download, sondern das installierbare Paket `MGD_AI_Kennzeichnung-1.2.0.zip`.
+Laden Sie das ZIP aus dem Bereich [GitHub Releases](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases) herunter. Verwenden Sie nicht den automatisch von GitHub erzeugten Quellcode-Download, sondern das installierbare Paket `MGD_AI_Kennzeichnung-1.2.1.zip`.
+
+Das Repository ist ein **privates Repository**. Version 1.2.1 besitzt keinen
+Auto-Updater. Die Aktualisierung erfolgt als **manueller ZIP-Upload** im
+JTL-Plugin-Manager; das Plugin installiert keine Updates automatisch.
 
 ### 2. Vorher sichern
 
@@ -103,7 +109,7 @@ Erstellen Sie vor Installation oder Update mindestens:
 
 1. JTL-Backend öffnen.
 2. **Plugins → Plugin-Manager → Upload** wählen.
-3. `MGD_AI_Kennzeichnung-1.2.0.zip` hochladen.
+3. `MGD_AI_Kennzeichnung-1.2.1.zip` hochladen.
 4. Das Plugin installieren beziehungsweise aktualisieren.
 5. Plugin aktivieren.
 6. Shop- und Template-Cache leeren, falls JTL dies nach dem Update nicht automatisch erledigt.
@@ -189,18 +195,28 @@ anklickbar.
 
 | Einstellung | Standard | Zweck |
 |---|---:|---|
-| Herstellernennung im Footer | Aus | Zeigt optional „Plugin von Michael Gahn DESIGN“. |
-| Updatehinweise über GitHub | Aus | Prüft höchstens alle zwölf Stunden öffentliche Release-Metadaten. |
+| Herstellernennung im Footer | Aus | Zeigt optional „supported by: Michael Gahn DESIGN“. |
+| Updatehinweise über GitHub | An | Prüft beim adressierten Darstellungstab höchstens alle zwölf Stunden öffentliche Release-Metadaten. |
 | Sprache der Kennzeichnung | Automatisch | Verwendet Shopsprache, Deutsch oder Englisch. |
-| Position | Unten rechts | Sicherer Basiswert; die Bildverwaltung speichert die gewählte Position pro Bild. |
-| Farbschema | Automatisch | Sicherer Basiswert; die Bildverwaltung speichert die gewählte Darstellung pro Bild. |
 | Schriftgröße | 12 px | Zulässig: 8 bis 48 px. |
 | Außenabstand | 8 px | Zulässig: 0 bis 64 px. |
 | Innenabstand | 6 px | Zulässig: 0 bis 32 px. |
 | Eckenradius | 4 px | Zulässig: 0 bis 32 px. |
 | Hintergrundunschärfe | 0 px | Zulässig: 0 bis 24 px. |
+| Transparenz | 8 % | Zulässig: 0 bis 90 %. |
 
-**Wichtig:** Position und Darstellung werden bei verwalteten Bildern pro Bild gespeichert. Ändern Sie diese Werte daher im Kennzeichnungsdialog des jeweiligen Bildes oder über die Stapelbearbeitung.
+### Darstellung mit Live-Vorschau
+
+Unter **Plugins → MGD AI Kennzeichnung → Darstellung** stehen links die
+globalen Werte und rechts ein lokales Beispielbild. Eckenradius,
+Hintergrundunschärfe und Transparenz besitzen ein Zahlenfeld und einen
+Schieberegler. Jede Änderung wird sofort in der **Live-Vorschau** gezeigt.
+
+Position und Farbschema am Beispielbild sind ausdrücklich **Nur Vorschau**. Sie
+werden in diesem Tab nicht gespeichert. Position, Darstellung und Status werden
+weiterhin pro Bild im Kennzeichnungsdialog oder in der Stapelbearbeitung
+festgelegt. Die Vorschau bleibt vollständig lokal; erst **Speichern** ändert
+globale Shopwerte.
 
 ## Datenschutz und Sicherheit
 
@@ -216,8 +232,15 @@ Das Plugin wurde nach dem Prinzip der Datenminimierung entwickelt:
 - ausschließlich lokale Vorschaupfade aus erlaubten Rasterbildbereichen;
 - begrenzte Scan-, Listen- und Stapelgrößen;
 - HTML-Bereinigung für die AI-Philosophie;
-- Updateabfrage nur nach ausdrücklicher Aktivierung und mit lokalem Zwölf-Stunden-Cache;
+- Updateabfrage nur im adressierten Darstellungstab und mit lokalem positiven wie negativen Zwölf-Stunden-Cache;
 - keine Secrets, Tokens oder Bildinhalte in der Updateabfrage.
+
+Bei aktivierter Updateprüfung erhält GitHub technisch die Server-IP, den
+Zeitpunkt und den festen User-Agent
+`MGD-AI-Kennzeichnung-JTL-Shop-5/1.2.1`. Bilder, Kunden-, Shop- und
+Formulardaten werden nicht übertragen. Weil das Repository privat ist, kann die
+anonyme Prüfung ohne Hinweis enden; auch dieses Ergebnis wird zwölf Stunden
+zwischengespeichert.
 
 Weitere Details stehen in [Datenschutz und Sicherheit](Dokumentation/Datenschutz-und-Sicherheit.md) und im [vollständigen GitHub-Handbuch](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/blob/main/wiki/Home.md).
 
@@ -230,7 +253,7 @@ Weitere Details stehen in [Datenschutz und Sicherheit](Dokumentation/Datenschutz
 - ein berechtigtes JTL-Admin-Konto;
 - empfohlen: Standardtemplate NOVA oder ein sauber abgeleitetes NOVA-Child-Theme.
 
-Die Bildausgabe wurde mit Version 1.1.1 unter NOVA sowie OnvisTheme auf Basis NOVA 1.7.1 geprüft. Version 1.2.0 ergänzt ausschließlich den geschützten Impressum-Tab. Andere Templates können funktionieren, sollten aber zuerst in einer getrennten Testumgebung geprüft werden.
+Die Bildausgabe wurde mit Version 1.1.1 unter NOVA sowie OnvisTheme auf Basis NOVA 1.7.1 geprüft. Version 1.2.0 ergänzte den geschützten Impressum-Tab; Version 1.2.1 ergänzt die globale Darstellung und Transparenz. Andere Templates können funktionieren, sollten aber zuerst in einer getrennten Testumgebung geprüft werden.
 
 ## Bewusste Grenzen
 
@@ -245,6 +268,12 @@ Die Bildausgabe wurde mit Version 1.1.1 unter NOVA sowie OnvisTheme auf Basis NO
 ## Update und Rollback
 
 Neue Versionen sollten immer zuerst auf einer getrennten Testinstallation geprüft werden. Verwenden Sie für Dev und Live exakt dasselbe, per SHA-256 geprüfte ZIP.
+
+Der sichere Ablauf lautet: Pflichtbackup, manueller ZIP-Upload auf Dev,
+Funktions- und Sichtprüfung, neues Live-Backup und erst danach dasselbe Paket auf
+Live. Halten Sie das bisherige Pluginverzeichnis für einen schnellen Rollback
+bereit und leeren Sie nach Update oder Rückfall Shop-, Plugin- und
+Template-Cache.
 
 Bei einem Fehler:
 
@@ -263,6 +292,8 @@ Eine Deinstallation mit Datenlöschung ist kein normaler Rollback. Ohne ausdrüc
 - [OPC-Kennzeichnung](Dokumentation/OPC-Kennzeichnung.md)
 - [Installation, Test und Rollback](Dokumentation/Installation-und-Livetest.md)
 - [Datenschutz und Sicherheit](Dokumentation/Datenschutz-und-Sicherheit.md)
+- [Darstellung und Live-Vorschau](Dokumentation/Darstellung.md)
+- [Release 1.2.1](Dokumentation/Release-1.2.1.md)
 - [Plugin-Impressum](Dokumentation/Impressum.md)
 - [Technische Dokumentationsübersicht](Dokumentation/README.md)
 - [Änderungsprotokoll](CHANGELOG.md)
@@ -278,8 +309,8 @@ composer test:js
 composer analyse
 composer style
 bash scripts/build-release.sh
-unzip -t dist/MGD_AI_Kennzeichnung-1.2.0.zip
-shasum -a 256 dist/MGD_AI_Kennzeichnung-1.2.0.zip
+unzip -t dist/MGD_AI_Kennzeichnung-1.2.1.zip
+shasum -a 256 dist/MGD_AI_Kennzeichnung-1.2.1.zip
 ```
 
 Die Testumgebung umfasst PHP-Unit- und Integrationstests, JavaScript-Tests, statische PHP-Analyse, Formatprüfung, Strukturverträge und die Prüfung des installierbaren ZIP-Pakets.

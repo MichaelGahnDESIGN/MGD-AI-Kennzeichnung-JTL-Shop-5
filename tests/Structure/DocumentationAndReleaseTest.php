@@ -11,7 +11,8 @@ use ZipArchive;
 final class DocumentationAndReleaseTest extends TestCase
 {
     private const ROOT = __DIR__ . '/../..';
-    private const ZIP = self::ROOT . '/dist/MGD_AI_Kennzeichnung-1.2.0.zip';
+    private const VERSION = '1.2.1';
+    private const ZIP = self::ROOT . '/dist/MGD_AI_Kennzeichnung-1.2.1.zip';
 
     #[Test]
     public function releaseziel_und_lokale_artefakte_sind_eindeutig_abgegrenzt(): void
@@ -21,8 +22,8 @@ final class DocumentationAndReleaseTest extends TestCase
         self::assertIsString($script);
         self::assertIsString($gitignore);
 
-        self::assertStringContainsString('MGD_AI_Kennzeichnung-1.2.0.zip', $script);
-        self::assertStringNotContainsString('MGD_AI_Kennzeichnung-1.0.0.zip', $script);
+        self::assertStringContainsString('MGD_AI_Kennzeichnung-1.2.1.zip', $script);
+        self::assertStringNotContainsString('MGD_AI_Kennzeichnung-1.2.0.zip', $script);
 
         foreach (['/.superpowers/', '*.sql', '*.bak', '.env*'] as $muster) {
             self::assertStringContainsString($muster, $gitignore);
@@ -51,6 +52,23 @@ final class DocumentationAndReleaseTest extends TestCase
         self::assertContains('MGD_AI_Kennzeichnung/Portlets/AIPhilosophie/AIPhilosophie.php', $eintraege);
         self::assertContains('MGD_AI_Kennzeichnung/adminmenu/impressum.php', $eintraege);
         self::assertContains('MGD_AI_Kennzeichnung/adminmenu/templates/impressum.tpl', $eintraege);
+        self::assertContains('MGD_AI_Kennzeichnung/adminmenu/display.php', $eintraege);
+        self::assertContains('MGD_AI_Kennzeichnung/adminmenu/templates/display.tpl', $eintraege);
+        self::assertContains('MGD_AI_Kennzeichnung/adminmenu/display.css', $eintraege);
+        self::assertContains('MGD_AI_Kennzeichnung/adminmenu/js/display-range-sync.mjs', $eintraege);
+        self::assertContains('MGD_AI_Kennzeichnung/adminmenu/js/display-preview.mjs', $eintraege);
+        self::assertContains('MGD_AI_Kennzeichnung/adminmenu/js/display-controls.mjs', $eintraege);
+        self::assertContains(
+            'MGD_AI_Kennzeichnung/adminmenu/images/michael-gahn-design-schuh.png',
+            $eintraege,
+        );
+
+        $zip = new ZipArchive();
+        self::assertTrue($zip->open(self::ZIP));
+        $infoXml = $zip->getFromName('MGD_AI_Kennzeichnung/info.xml');
+        $zip->close();
+        self::assertIsString($infoXml);
+        self::assertStringContainsString('<Version>' . self::VERSION . '</Version>', $infoXml);
 
         foreach ($eintraege as $eintrag) {
             self::assertStringStartsWith('MGD_AI_Kennzeichnung/', $eintrag);
@@ -78,9 +96,75 @@ final class DocumentationAndReleaseTest extends TestCase
         foreach (['Pflichtbackup', 'Wartungsfenster', 'Plugin-Manager', 'Rollback', 'https://onvis-shop.de'] as $begriff) {
             self::assertStringContainsStringIgnoringCase($begriff, $installation);
         }
-        foreach (['Datenminimierung', 'api.github.com', 'standardmäßig deaktiviert', 'keine Bilder'] as $begriff) {
+        foreach (['Datenminimierung', 'api.github.com', 'Server-IP', 'keine Bilder'] as $begriff) {
             self::assertStringContainsStringIgnoringCase($begriff, $datenschutz);
         }
+    }
+
+    #[Test]
+    public function version_1_2_1_ist_in_paket_ci_und_benutzerdokumentation_konsistent(): void
+    {
+        $dateien = [
+            'README' => self::ROOT . '/README.md',
+            'CHANGELOG' => self::ROOT . '/CHANGELOG.md',
+            'Sicherheit' => self::ROOT . '/SECURITY.md',
+            'Darstellung' => self::ROOT . '/Dokumentation/Darstellung.md',
+            'Release' => self::ROOT . '/Dokumentation/Release-1.2.1.md',
+            'Datenschutz' => self::ROOT . '/Dokumentation/Datenschutz-und-Sicherheit.md',
+            'Installation' => self::ROOT . '/Dokumentation/Installation-und-Livetest.md',
+            'Wiki' => self::ROOT . '/wiki/Home.md',
+            'Wiki-Einstellungen' => self::ROOT . '/wiki/Einstellungen.md',
+            'Wiki-Darstellung' => self::ROOT . '/wiki/Status-und-Darstellung.md',
+            'Wiki-Update' => self::ROOT . '/wiki/Installation-und-Update.md',
+            'Wiki-Datenschutz' => self::ROOT . '/wiki/Datenschutz-und-Sicherheit.md',
+            'Wiki-Rollback' => self::ROOT . '/wiki/Release-und-Rollback.md',
+            'Wiki-Fehlerhilfe' => self::ROOT . '/wiki/Fehlerbehebung.md',
+            'Wiki-FAQ' => self::ROOT . '/wiki/FAQ.md',
+        ];
+        $gesamt = '';
+        foreach ($dateien as $name => $datei) {
+            self::assertFileExists($datei, $name . ' fehlt.');
+            $inhalt = file_get_contents($datei);
+            self::assertIsString($inhalt);
+            self::assertNotSame('', trim($inhalt), $name . ' ist leer.');
+            $gesamt .= "\n" . $inhalt;
+        }
+
+        foreach ([
+            'Version 1.2.1',
+            'Live-Vorschau',
+            'Transparenz',
+            'Nur Vorschau',
+            'privates Repository',
+            'manueller ZIP-Upload',
+            'Server-IP',
+            'User-Agent',
+            'zwölf Stunden',
+            'supported by: Michael Gahn DESIGN',
+            'Dev-Test',
+            'Rollback',
+        ] as $begriff) {
+            self::assertStringContainsStringIgnoringCase($begriff, $gesamt);
+        }
+        self::assertStringContainsString('0 %', $gesamt);
+        self::assertStringContainsString('90 %', $gesamt);
+        self::assertStringContainsStringIgnoringCase('installiert keine Updates automatisch', $gesamt);
+        self::assertStringNotContainsStringIgnoringCase(
+            'Updatehinweise sind bei Neuinstallationen standardmäßig deaktiviert',
+            $gesamt,
+        );
+
+        $build = file_get_contents(self::ROOT . '/scripts/build-release.sh');
+        $workflow = file_get_contents(self::ROOT . '/.github/workflows/quality.yml');
+        $infoXml = file_get_contents(self::ROOT . '/plugin/MGD_AI_Kennzeichnung/info.xml');
+        self::assertIsString($build);
+        self::assertIsString($workflow);
+        self::assertIsString($infoXml);
+        $dateiname = 'MGD_AI_Kennzeichnung-' . self::VERSION . '.zip';
+        self::assertStringContainsString($dateiname, $build);
+        self::assertStringContainsString($dateiname, $workflow);
+        self::assertStringContainsString('<Version>' . self::VERSION . '</Version>', $infoXml);
+        self::assertStringNotContainsString('MGD_AI_Kennzeichnung-1.2.0.zip', $build . $workflow);
     }
 
     #[Test]

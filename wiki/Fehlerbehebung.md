@@ -54,6 +54,18 @@ Mögliche Ursachen:
 - prüfen, ob andere Admin-Erweiterungen JavaScript überschreiben;
 - keine Tokens oder Formulardaten in ein öffentliches Issue kopieren.
 
+## Live-Vorschau ändert sich nicht
+
+- Seite vollständig neu laden;
+- prüfen, ob JavaScript im Browser blockiert wird;
+- Zahlenfeld innerhalb des angezeigten Bereichs verwenden;
+- Browserkonsole auf Fehler anderer Admin-Erweiterungen prüfen;
+- Shop- und Plugin-Cache leeren.
+
+Position und Farbschema sind im Darstellungstab **Nur Vorschau**. Sie werden
+nicht gespeichert. Echte Positionen und Farbschemata ändern Sie pro Bild im
+Kennzeichnungsdialog.
+
 ## „Füllen Sie alle Felder aus“ oder Validierungsfehler
 
 Prüfen Sie, ob Status, Position und Darstellung vollständig ausgewählt sind. Wenn die Meldung trotz sichtbarer Auswahl erscheint:
@@ -79,7 +91,7 @@ Prüfen Sie, ob Status, Position und Darstellung vollständig ausgewählt sind. 
 
 Version 1.1.1 und neuer korrigiert normale, verlinkte und responsive Bilder sowie lokale OPC-Hintergründe. Prüfen Sie zuerst:
 
-- wirklich die aktuelle Version 1.2.0 aktiv?
+- wirklich die aktuelle Version 1.2.1 aktiv?
 - Plugin-CSS mit HTTP 200 erreichbar?
 - alter Browser- oder Template-Cache?
 - stark abweichendes eigenes HTML/CSS?
@@ -115,3 +127,18 @@ Der Menüpunkt erscheint nur bei genau einer lokalen Rasterbilddatei und eindeut
 6. Live nicht weiter verändern, bis der Fehler auf Dev verstanden ist.
 
 Siehe auch [Release und Rollback](Release-und-Rollback.md).
+
+## Kein GitHub-Updatehinweis sichtbar
+
+Das kann bei Version 1.2.1 korrekt sein:
+
+- das Repository ist privat und die anonyme Abfrage findet kein Release;
+- ein negatives Ergebnis wird zwölf Stunden zwischengespeichert;
+- die Prüfung läuft nur im adressierten Darstellungstab;
+- die Einstellung kann deaktiviert sein.
+
+Das Plugin installiert keine Updates automatisch. Laden Sie das geprüfte
+Release-ZIP manuell herunter und verwenden Sie den manuellen ZIP-Upload im
+Plugin-Manager. GitHub kann bei einer aktiven Prüfung Server-IP, Zeitpunkt und
+User-Agent sehen; senden Sie niemals Tokens oder Zugangsdaten in einen
+Fehlerbericht.

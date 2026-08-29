@@ -20,6 +20,28 @@ werden weder analysiert noch zu einem Drittanbieter hochgeladen. Öffentliche
 GitHub-Release-Metadaten werden nur bei ausdrücklich aktivierten
 Updatehinweisen und höchstens alle zwölf Stunden abgefragt.
 
+## Eigener Darstellungstab mit lokaler Live-Vorschau
+
+Globale Werte werden nicht mehr zwischen allgemeinen JTL-Einstellungen
+versteckt, sondern in einem geschützten, zweispaltigen Formular gepflegt. Das
+Beispielbild ist Bestandteil des Plugins und die Live-Vorschau läuft nur im
+Browser. Position und Farbschema sind **Nur Vorschau**, weil diese beiden Werte
+fachlich zum einzelnen Bild gehören. Erst **Speichern** ändert die globalen
+Shopwerte.
+
+## Transparenz als globaler, begrenzter Wert
+
+Transparenz wird als ganze Zahl von 0 bis 90 Prozent gespeichert. 0 % bedeutet
+deckend, 90 % nahezu durchsichtig. Der daraus berechnete CSS-Wert entsteht aus
+geprüften Zahlen und nicht aus freier Benutzereingabe.
+
+## Hinweis statt Auto-Updater
+
+Version 1.2.1 installiert keine Updates automatisch. Die optionale Prüfung
+fragt nur den festen GitHub-Endpunkt ab und speichert auch erfolglose Versuche
+zwölf Stunden. Da das Repository privat ist, bleibt der zuverlässige Weg ein
+geprüfter manueller ZIP-Upload nach Backup und Dev-Test.
+
 ## Geschlossene Auswahlwerte
 
 Status, Position, Darstellung, Sprache und Quelle stammen aus festen

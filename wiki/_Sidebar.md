@@ -5,6 +5,7 @@
 - [Installation und Update](Installation-und-Update.md)
 - [Bildverwaltung](Bildverwaltung.md)
 - [Status und Darstellung](Status-und-Darstellung.md)
+- [Darstellung und Live-Vorschau](Status-und-Darstellung.md#eigener-darstellungstab)
 - [OnPage Composer und Dateimanager](OnPage-Composer-und-Dateimanager.md)
 - [AI-Philosophie](AI-Philosophie.md)
 - [Impressum](Impressum.md)

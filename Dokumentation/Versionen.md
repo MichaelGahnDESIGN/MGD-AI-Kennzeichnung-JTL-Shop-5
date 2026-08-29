@@ -1,14 +1,22 @@
 # Versionsübersicht
 
+## 1.2.1 – 29. August 2026
+
+Aktueller freigegebener Stand. Ergänzt den geschützten Darstellungstab mit
+lokaler Live-Vorschau, Transparenz, gekoppelten Reglern und der neuen
+Herstellernennung **supported by: Michael Gahn DESIGN**. Updateprüfungen besitzen
+einen positiven und negativen Zwölf-Stunden-Cache; das Update selbst erfolgt
+weiterhin per manuellem ZIP-Upload.
+
 ## 1.2.0 – 27. August 2026
 
-Aktueller freigegebener Stand. Ergänzt einen geschützten, rein lesenden
+Ergänzt einen geschützten, rein lesenden
 Impressum-Tab für transparente Herstellerangaben. Der öffentliche Shop, die
 Bildkennzeichnung und vorhandene Plugin-Daten bleiben unverändert.
 
 ## 1.1.1 – 27. August 2026
 
-Aktueller freigegebener Stand. Stabile Kennzeichnung normaler, verlinkter und
+Stabile Kennzeichnung normaler, verlinkter und
 responsiver Bilder sowie lokaler OPC-Hintergrundbilder. Umfangreiche
 Nutzerdokumentation und GitHub-Wiki ergänzt. Dev-Abnahme erfolgreich.
 

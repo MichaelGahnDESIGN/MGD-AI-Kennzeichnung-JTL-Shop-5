@@ -6,7 +6,7 @@ set -euo pipefail
 projekt_wurzel="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 quellordner="${projekt_wurzel}/plugin/MGD_AI_Kennzeichnung"
 ausgabeordner="${projekt_wurzel}/dist"
-ausgabedatei="${ausgabeordner}/MGD_AI_Kennzeichnung-1.2.0.zip"
+ausgabedatei="${ausgabeordner}/MGD_AI_Kennzeichnung-1.2.1.zip"
 arbeitsordner="$(mktemp -d "${TMPDIR:-/tmp}/mgd-ai-release.XXXXXX")"
 
 aufräumen() {

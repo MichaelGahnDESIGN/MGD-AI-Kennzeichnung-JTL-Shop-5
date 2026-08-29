@@ -1,5 +1,21 @@
 # Änderungsprotokoll
 
+## 1.2.1 – 2026-08-29
+
+- geschützten, zweispaltigen Darstellungstab mit lokaler Live-Vorschau ergänzt;
+- globale Transparenz von 0 bis 90 Prozent durch Frontend, PHP-Renderer,
+  Smarty-Ausgabe und CSS geführt;
+- Eckenradius, Hintergrundunschärfe und Transparenz mit gekoppeltem Zahlenfeld
+  und Schieberegler bedienbar gemacht;
+- Position und Farbschema im Darstellungstab ausdrücklich als **Nur Vorschau**
+  gekennzeichnet; die gespeicherten Werte bleiben weiterhin bildbezogen;
+- optionalen Footertext auf **supported by: Michael Gahn DESIGN** mit sicherem
+  Herstellerlink aktualisiert;
+- Updatehinweise bei Neuinstallationen standardmäßig aktiviert und erfolgreiche
+  wie erfolglose Prüfungen zwölf Stunden lokal zwischengespeichert;
+- reproduzierbares Installationspaket, CI, Sicherheitsdokumentation und Wiki auf
+  Version 1.2.1 vereinheitlicht.
+
 ## 1.2.0 – 2026-08-27
 
 - geschützten, rein lesenden **Impressum**-Tab im Plugin-Backend ergänzt;

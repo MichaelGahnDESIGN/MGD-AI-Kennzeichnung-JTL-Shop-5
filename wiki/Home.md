@@ -9,6 +9,7 @@ Das Plugin hilft Ihnen, lokale Shopbilder strukturiert zu prüfen und transparen
 - Sie erhalten eine zentrale Galerie für Bilder aus mehreren JTL-Bereichen.
 - Sie entscheiden selbst, welche Kennzeichnung fachlich richtig ist.
 - Sie positionieren den Hinweis passend innerhalb der Bildfläche.
+- Sie gestalten globale Werte in einem übersichtlichen Bereich mit lokaler Live-Vorschau.
 - Sie können einzelne Bilder oder eine kontrollierte Auswahl gemeinsam ändern.
 - Sie kennzeichnen Bilder direkt im OnPage Composer.
 - Sie veröffentlichen Ihre eigene AI-Philosophie als OPC-Portlet.
@@ -35,9 +36,13 @@ Das Plugin hilft Ihnen, lokale Shopbilder strukturiert zu prüfen und transparen
 
 ## Aktuelle Version
 
-Die aktuelle Version ist **1.2.0**. Sie ergänzt einen geschützten, rein lesenden Impressum-Tab und enthält weiterhin die mit 1.1.1 stabilisierte Ausgabe für normale, verlinkte und responsive Bilder sowie lokale OPC-Hintergrundbilder.
+Die aktuelle **Version 1.2.1** ergänzt einen geschützten Darstellungstab mit
+lokaler Live-Vorschau, Transparenz sowie gekoppelten Eingabefeldern und
+Schiebereglern. Position und Farbschema sind dort **Nur Vorschau**, weil beide
+Werte weiterhin pro Bild gespeichert werden. Die optionale Herstellernennung
+lautet **supported by: Michael Gahn DESIGN**.
 
-Das installierbare Paket finden Sie unter [Releases](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases). Verwenden Sie stets das dort angehängte ZIP und prüfen Sie den veröffentlichten SHA-256-Wert.
+Das installierbare Paket finden Sie unter [Releases](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases). Verwenden Sie stets das dort angehängte ZIP und prüfen Sie den veröffentlichten SHA-256-Wert. Das private Repository besitzt keinen Auto-Updater; das Update erfolgt als manueller ZIP-Upload im JTL-Plugin-Manager.
 
 ## Hilfe und Sicherheit
 

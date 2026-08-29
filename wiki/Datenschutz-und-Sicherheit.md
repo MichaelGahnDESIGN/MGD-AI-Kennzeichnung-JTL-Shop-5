@@ -37,6 +37,11 @@ Die OPC- und Dateimanager-Funktionen verwenden JTLs bestehende Admin-IO-Pipeline
 
 Die Galerie zeigt nur erlaubte lokale Rasterbilder. Externe URLs, SVG und mehrdeutige Pfade werden nicht als Vorschau geladen.
 
+Die Live-Vorschau im Darstellungstab verwendet ein lokales Plugin-Bild und
+arbeitet ausschließlich im Browser. Reglerwerte werden erst nach **Speichern**
+an JTL übergeben. Position und Farbschema sind dort **Nur Vorschau** und werden
+nicht gespeichert.
+
 ## Sichere Frontend-Ausgabe
 
 - feste Status- und Klassenlisten;
@@ -53,7 +58,19 @@ Redaktioneller HTML-Inhalt wird auf eine kleine Positivliste reduziert. Unsicher
 
 ## Updatehinweise
 
-Die Updateprüfung ist ein Opt-in. Sie verwendet ausschließlich den festen HTTPS-Endpunkt der öffentlichen GitHub-Release-API, prüft TLS, folgt keinen Weiterleitungen und begrenzt die Antwortgröße. Das Plugin installiert keine Updates automatisch.
+Bei Neuinstallationen ist die Updateprüfung standardmäßig aktiviert und kann
+jederzeit ausgeschaltet werden. Sie läuft nur beim adressierten Darstellungstab,
+verwendet ausschließlich den festen HTTPS-Endpunkt der öffentlichen
+GitHub-Release-API, prüft TLS, folgt keinen Weiterleitungen und begrenzt die
+Antwortgröße.
+
+GitHub kann technisch die **Server-IP**, den Zeitpunkt und den festen
+**User-Agent** `MGD-AI-Kennzeichnung-JTL-Shop-5/1.2.1` erhalten. Bilder,
+Tokens, Shop-, Kunden- und Formulardaten werden nicht übertragen. Ein Erfolg
+oder Fehler wird zwölf Stunden lokal zwischengespeichert. Das private
+Repository liefert anonym üblicherweise keine Release-Information. Das Plugin
+installiert keine Updates automatisch; erforderlich bleibt der manuelle
+ZIP-Upload.
 
 ## Protokollierung
 

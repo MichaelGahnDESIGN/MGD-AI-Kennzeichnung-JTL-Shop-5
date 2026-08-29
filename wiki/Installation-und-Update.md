@@ -9,13 +9,13 @@
 - reguläre Schreibrechte für Plugin- und Cacheverzeichnisse;
 - empfohlen: NOVA oder ein sauber abgeleitetes NOVA-Child-Theme.
 
-Die Bildausgabe wurde mit Version 1.1.1 unter NOVA und einem NOVA-basierten OnvisTheme geprüft. Version 1.2.0 ergänzt ausschließlich den geschützten Impressum-Tab. Stark veränderte Templates müssen in einer eigenen Testumgebung abgenommen werden.
+Die Bildausgabe wurde mit Version 1.1.1 unter NOVA und einem NOVA-basierten OnvisTheme geprüft. Version 1.2.1 ergänzt den Darstellungstab und die globale Transparenz. Stark veränderte Templates müssen in einer eigenen Testumgebung abgenommen werden.
 
 ## Das richtige ZIP verwenden
 
 Verwenden Sie aus dem GitHub-Release ausschließlich:
 
-`MGD_AI_Kennzeichnung-1.2.0.zip`
+`MGD_AI_Kennzeichnung-1.2.1.zip`
 
 Die automatisch angebotenen GitHub-Dateien **Source code (zip)** und **Source code (tar.gz)** sind keine installierbaren JTL-Pakete.
 
@@ -42,7 +42,7 @@ Prüfen Sie nicht nur, ob eine Backupdatei existiert, sondern ob sie lesbar und 
 5. Plugin installieren.
 6. Plugin aktivieren.
 7. **Bildverwaltung** öffnen und den ersten Scan starten.
-8. Einstellungen prüfen, Updatehinweise zunächst deaktiviert lassen.
+8. Einstellungen prüfen und bei Bedarf die standardmäßig aktivierten Updatehinweise ausschalten.
 9. ein unkritisches Bild testweise kennzeichnen.
 10. Frontend und Serverprotokoll kontrollieren.
 
@@ -57,6 +57,11 @@ Prüfen Sie nicht nur, ob eine Backupdatei existiert, sondern ob sie lesbar und 
 7. Galerie, Einzelbearbeitung, OPC und mindestens eine sichtbare Kennzeichnung prüfen.
 
 Vorhandene Kennzeichnungsentscheidungen sollen bei einem normalen Update erhalten bleiben. Ein Update verändert keine Originalbilder.
+
+Das Repository ist ein **privates Repository** und Version 1.2.1 besitzt keinen
+Auto-Updater. Die anonyme GitHub-Prüfung kann deshalb keinen Hinweis liefern.
+Ein Update wird als **manueller ZIP-Upload** im Plugin-Manager durchgeführt; das
+Plugin installiert keine Updates automatisch.
 
 ## Empfohlene Testreihenfolge
 
@@ -76,6 +81,7 @@ Zwischen Dev-Abnahme und Live-Installation darf kein neues Paket gebaut werden. 
 - Bildgalerie und Vorschaubilder;
 - Anzahl gefundener Bilder und Fundstellen;
 - Speichern eines unkritischen Testbildes;
+- Live-Vorschau, Transparenz und **Nur Vorschau** im Darstellungstab;
 - sichtbare Position und Darstellung;
 - responsive Bilder und verlinkte Bilder;
 - OPC-Hintergrundbilder;

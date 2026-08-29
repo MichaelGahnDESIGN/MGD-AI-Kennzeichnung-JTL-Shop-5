@@ -62,15 +62,35 @@ Ja. Labeltexte können automatisch der Shopsprache folgen oder fest auf Deutsch 
 
 ## Muss ich die Herstellernennung anzeigen?
 
-Nein. Sie ist optional und standardmäßig deaktiviert.
+Nein. Sie ist optional und standardmäßig deaktiviert. Bei Aktivierung erscheint
+**supported by: Michael Gahn DESIGN**; nur der Herstellername ist verlinkt.
 
 ## Verbindet sich das Plugin mit GitHub?
 
-Nur wenn Sie Updatehinweise ausdrücklich aktivieren. Dann werden höchstens alle zwölf Stunden öffentliche Release-Metadaten abgerufen.
+Bei Neuinstallationen ist die Funktion standardmäßig aktiviert und kann
+ausgeschaltet werden. Sie fragt nur beim adressierten Darstellungstab höchstens
+alle zwölf Stunden öffentliche Release-Metadaten ab. GitHub kann dabei
+Server-IP, Zeitpunkt und User-Agent erhalten; Bilder, Tokens und Kundendaten
+werden nicht übertragen.
 
 ## Installiert das Plugin Updates automatisch?
 
 Nein.
+
+Das private Repository kann über die anonyme Prüfung ohne Hinweis bleiben.
+Version 1.2.1 wird per geprüftem, manuellem ZIP-Upload installiert.
+
+## Was bedeutet Transparenz?
+
+**0 %** bedeutet einen deckenden Labelhintergrund. Bei **90 %** ist der
+Hintergrund nahezu durchsichtig. Die Live-Vorschau hilft bei der Sichtprüfung;
+das Originalbild wird nicht verändert.
+
+## Warum werden Position und Farbschema aus der Vorschau nicht übernommen?
+
+Beide Felder sind **Nur Vorschau**. Position und Farbschema gehören zum
+einzelnen Bild und werden in dessen Kennzeichnungsdialog oder per
+Stapelbearbeitung gespeichert.
 
 ## Ist das Plugin eine rechtliche Komplettlösung?
 

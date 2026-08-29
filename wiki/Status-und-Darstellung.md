@@ -98,5 +98,21 @@ Globale Plugin-Einstellungen begrenzen:
 - Innenabstand: 0 bis 32 px;
 - Eckenradius: 0 bis 32 px;
 - Hintergrundunschärfe: 0 bis 24 px.
+- Transparenz: 0 bis 90 %.
 
 Unzulässige Werte werden nicht frei in CSS übernommen, sondern auf sichere Grenzen zurückgeführt.
+
+Bei der Transparenz gilt: **0 % ist deckend**, **90 % nahezu durchsichtig**.
+Der Wert verändert den Hintergrund des Labels, nicht die Originalbilddatei.
+
+## Eigener Darstellungstab
+
+Version 1.2.1 zeigt die globalen Werte links und ein fiktives, lokal gespeichertes
+Produktbild rechts. Zahlenfelder und Schieberegler liefern eine sofortige
+Live-Vorschau. Das Beispielbild und die Eingaben werden nicht an einen externen
+Dienst übertragen.
+
+Position und Farbschema am Beispielbild sind **Nur Vorschau** und werden dort
+nicht gespeichert. Für eine echte Bildkennzeichnung bearbeiten Sie das Bild in
+der Galerie, im OnPage Composer oder per Stapelbearbeitung. Erst der
+**Speichern**-Knopf im Darstellungstab ändert die globalen Werte.

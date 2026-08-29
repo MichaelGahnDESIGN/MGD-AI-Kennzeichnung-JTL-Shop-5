@@ -49,8 +49,20 @@ Fundstellen und niemals das Originalbild.
 ## Updatehinweise
 
 Bei aktivierten Updatehinweisen entsteht eine ausgehende HTTPS-Verbindung zu
-GitHub. Betreiber mit strikten Netzwerk- oder Datenschutzvorgaben können die
-Funktion deaktiviert lassen und Releases manuell prüfen.
+GitHub. Dabei sind Server-IP, Zeitpunkt und der feste User-Agent technisch für
+GitHub sichtbar. Weder Bilder noch Tokens, Kunden-, Shop- oder Formulardaten
+werden übertragen. Positive und negative Ergebnisse werden zwölf Stunden
+lokal zwischengespeichert. Das private Repository liefert anonym üblicherweise
+keinen Release-Hinweis; das Plugin installiert keine Updates automatisch.
+Betreiber mit strikten Netzwerk- oder Datenschutzvorgaben können die Funktion
+deaktivieren und Releases manuell prüfen.
+
+## Vorschau und Lesbarkeit
+
+Position und Farbschema im Darstellungstab sind **Nur Vorschau**. Wer dort eine
+Ecke auswählt, ändert keine bildbezogene Position. Hohe Transparenz bis 90 %
+kann auf unruhigen Motiven die Lesbarkeit reduzieren. Vor dem Speichern und nach
+Templateänderungen ist deshalb eine Sichtprüfung auf Desktop und Mobil nötig.
 
 ## Gegenmaßnahmen
 
@@ -59,4 +71,5 @@ Funktion deaktiviert lassen und Releases manuell prüfen.
 - klarer redaktioneller Prüfprozess;
 - Sichtkontrolle nach Template- oder JTL-Updates;
 - Updatehinweise nur nach bewusster Datenschutzentscheidung aktivieren;
+- Update als manuellen ZIP-Upload zuerst auf Dev testen und Rollback bereithalten;
 - Sicherheitsmeldungen ohne Echtdaten und nicht als öffentliches Issue senden.

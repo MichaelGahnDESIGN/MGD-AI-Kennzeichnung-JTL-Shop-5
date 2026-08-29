@@ -24,6 +24,22 @@ Für JTL verwenden Sie ausschließlich das explizit angehängte Plugin-ZIP.
 9. erst danach neues Live-Backup;
 10. exakt dasselbe Paket auf Live verwenden.
 
+Version 1.2.1 besitzt keinen Auto-Updater. Da es sich um ein **privates
+Repository** handelt, kann die anonyme Updateprüfung ohne Ergebnis bleiben. Das
+geprüfte Paket wird als **manueller ZIP-Upload** im JTL-Plugin-Manager
+eingespielt.
+
+## Release 1.2.1
+
+Version 1.2.1 ergänzt den zweispaltigen Darstellungstab mit lokaler
+Live-Vorschau, globaler Transparenz und gekoppelten Reglern. Position und
+Farbschema sind dort **Nur Vorschau** und bleiben bildbezogen. Die optionale
+Footer-Nennung lautet **supported by: Michael Gahn DESIGN**.
+
+Updateprüfungen übertragen keine Bilder oder Tokens. GitHub kann technisch
+Server-IP, Zeitpunkt und User-Agent erhalten. Positive und negative Ergebnisse
+werden zwölf Stunden lokal gespeichert.
+
 ## Release 1.2.0
 
 Version 1.2.0 ergänzt einen geschützten, rein lesenden Impressum-Tab. Er zeigt
@@ -68,6 +84,10 @@ Da das Plugin fehlertolerant ausgelegt ist, genügt die Deaktivierung häufig al
 5. Cache leeren.
 6. alte Version aktivieren.
 7. Galerie und Frontend prüfen.
+
+Nach dem Rollback zusätzlich den Darstellungstab und mindestens eine sichtbare
+Kennzeichnung prüfen. Ein Cache kann sonst noch CSS oder Einstellungen der
+neueren Version zeigen.
 
 ## Deinstallation ist kein Rollback
 
