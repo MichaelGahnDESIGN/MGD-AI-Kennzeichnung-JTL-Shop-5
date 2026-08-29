@@ -13,7 +13,7 @@ final class ImpressumAdminContractTest extends TestCase
     private const ROOT = __DIR__ . '/../../plugin/MGD_AI_Kennzeichnung';
 
     #[Test]
-    public function adminmenue_registriert_das_impressum_vor_den_einstellungen(): void
+    public function adminmenue_registriert_das_impressum_nach_dem_darstellungstab_vor_den_einstellungen(): void
     {
         $xml = simplexml_load_file(self::ROOT . '/info.xml');
         self::assertNotFalse($xml);
@@ -25,8 +25,9 @@ final class ImpressumAdminContractTest extends TestCase
             $menue[(int) $link['sort']] = trim((string) $link->Name);
         }
 
-        self::assertSame('Impressum', $menue[3] ?? null);
-        self::assertSame('Einstellungen', $menue[4] ?? null);
+        self::assertSame('Darstellung', $menue[3] ?? null);
+        self::assertSame('Impressum', $menue[4] ?? null);
+        self::assertSame('Einstellungen', $menue[5] ?? null);
         self::assertFileExists(self::ROOT . '/adminmenu/impressum.php');
         self::assertFileExists(self::ROOT . '/adminmenu/templates/impressum.tpl');
     }

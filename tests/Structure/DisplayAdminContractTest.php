@@ -68,6 +68,69 @@ final class DisplayAdminContractTest extends TestCase
         $this->pruefePngChunkStruktur($png);
     }
 
+    #[Test]
+    public function darstellungstab_bietet_ein_barrierearmes_lokales_zweispaltenformular(): void
+    {
+        $root = self::ROOT . '/plugin/MGD_AI_Kennzeichnung/adminmenu/';
+        $template = (string) file_get_contents($root . 'templates/display.tpl');
+        $stylesheet = (string) file_get_contents($root . 'display.css');
+
+        self::assertFileExists($root . 'display.php');
+        self::assertNotSame('', $template);
+        self::assertNotSame('', $stylesheet);
+        self::assertStringContainsString('<form method="post">', $template);
+        self::assertStringContainsString('name="csrf_token"', $template);
+        self::assertStringContainsString('name="kPlugin"', $template);
+        self::assertStringContainsString('name="kPluginAdminMenu"', $template);
+        self::assertStringContainsString('<fieldset', $template);
+        self::assertStringContainsString('<legend>', $template);
+        self::assertStringContainsString('aria-live="polite"', $template);
+        self::assertStringContainsString('<button type="submit">Speichern</button>', $template);
+        self::assertStringContainsString('images/michael-gahn-design-schuh.png', $template);
+        self::assertStringContainsString('alt="Fiktiver Michael Gahn DESIGN Schuh"', $template);
+        self::assertStringContainsString('KI-GENERIERT', $template);
+        self::assertStringContainsString('Nur Vorschau', $template);
+        self::assertStringContainsString('display.css', $template);
+        self::assertStringContainsString('display-controls.mjs', $template);
+        self::assertDoesNotMatchRegularExpression('~(?:src|href)="https?://~i', $template);
+        self::assertDoesNotMatchRegularExpression('~\bon\w+\s*=~i', $template);
+        self::assertStringNotContainsString('<style', strtolower($template));
+        self::assertStringNotContainsString('<script>', strtolower($template));
+
+        foreach (['language', 'font_size', 'outer_margin', 'inner_padding', 'border_radius', 'blur', 'transparency'] as $field) {
+            self::assertStringContainsString('name="' . $field . '"', $template);
+            self::assertStringContainsString('id="mgd-display-' . $field, $template);
+        }
+        self::assertStringContainsString('data-mgd-display-control', $template);
+        self::assertStringContainsString('px', $template);
+        self::assertStringContainsString('%', $template);
+        self::assertStringContainsString('name="preview_position"', $template);
+        self::assertStringContainsString('name="preview_theme"', $template);
+
+        self::assertStringContainsString('.mgd-display-layout {', $stylesheet);
+        self::assertStringContainsString('grid-template-columns: minmax(20rem, 0.9fr) minmax(22rem, 1.1fr);', $stylesheet);
+        self::assertStringContainsString('@media (max-width: 62rem)', $stylesheet);
+        self::assertStringContainsString('.mgd-display-layout { grid-template-columns: 1fr; }', $stylesheet);
+    }
+
+    #[Test]
+    public function darstellungseinstieg_schliesst_unautorisierte_und_ungesicherte_anfragen(): void
+    {
+        $entryPoint = (string) file_get_contents(self::ROOT . '/plugin/MGD_AI_Kennzeichnung/adminmenu/display.php');
+
+        self::assertStringContainsString("defined('PFAD_ROOT')", $entryPoint);
+        self::assertStringContainsString('JtlAuthorizationAdapter', $entryPoint);
+        self::assertStringContainsString('JtlDisplayConfigAdapter', $entryPoint);
+        self::assertStringContainsString('DisplaySettingsAdminService', $entryPoint);
+        self::assertStringContainsString('DisplayConfigCommittedException', $entryPoint);
+        self::assertStringContainsString("'kPlugin'", $entryPoint);
+        self::assertStringContainsString("'kPluginAdminMenu'", $entryPoint);
+        self::assertStringContainsString('array_diff_key($request->post', $entryPoint);
+        self::assertStringContainsString("'display_request_failed'", $entryPoint);
+        self::assertStringNotContainsString('$_COOKIE', $entryPoint);
+        self::assertStringNotContainsString('var_dump', $entryPoint);
+    }
+
     /**
      * Liest eine maximal 2 MB große PNG-Datei und prüft ausschließlich ihre Chunk-Kopfzeilen.
      *

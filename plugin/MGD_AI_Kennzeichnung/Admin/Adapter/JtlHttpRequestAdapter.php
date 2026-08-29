@@ -12,7 +12,12 @@ final class JtlHttpRequestAdapter
 {
     private const JTL_ROUTING_KEYS = ['kPlugin', 'kPluginAdminMenu'];
 
-    public function capture(int $pluginId, int $adminMenuId): AdminHttpRequest
+    /**
+     * Erfasst eine JTL-Anfrage und kann ausschließlich für streng geprüfte
+     * Formulargrenzen die bereits validierten POST-Routingfelder erhalten.
+     * GET-Routingdaten bleiben stets außerhalb des Fachpayloads.
+     */
+    public function capture(int $pluginId, int $adminMenuId, bool $preservePostRouting = false): AdminHttpRequest
     {
         if ($pluginId < 1 || $adminMenuId < 1) {
             throw new ValidationException('Die JTL-Administrationsroute ist ungültig.');
@@ -27,7 +32,7 @@ final class JtlHttpRequestAdapter
         return new AdminHttpRequest(
             $normalizedMethod,
             $this->stringKeyed($_GET, true),
-            $this->stringKeyed($_POST, true),
+            $this->stringKeyed($_POST, !$preservePostRouting),
         );
     }
 

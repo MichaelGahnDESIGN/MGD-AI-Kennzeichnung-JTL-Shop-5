@@ -167,15 +167,14 @@ final class DisplaySettingsTest extends TestCase
 
         $erwarteteDefaults = [
             'show_credit' => 'N',
-            'update_notices' => 'N',
+            'update_notices' => 'Y',
             'language' => 'auto',
-            'position' => 'bottom-right',
-            'theme' => 'auto',
             'font_size' => '12',
             'outer_margin' => '8',
             'inner_padding' => '6',
             'border_radius' => '4',
             'blur' => '0',
+            'transparency' => '8',
         ];
 
         foreach ($erwarteteDefaults as $name => $standard) {
@@ -192,12 +191,34 @@ final class DisplaySettingsTest extends TestCase
             self::assertSame($standard, $element->attributes->getNamedItem('initialValue')?->nodeValue);
         }
 
+        foreach (['language', 'font_size', 'outer_margin', 'inner_padding', 'border_radius', 'blur', 'transparency'] as $name) {
+            $nodes = $xpath->query(sprintf('/jtlshopplugin/Install/Adminmenu/Settingslink/Setting[ValueName="%s"]', $name));
+            if ($nodes === false) {
+                self::fail(sprintf('Die XML-Abfrage für %s konnte nicht ausgeführt werden.', $name));
+            }
+            $element = $nodes->item(0);
+            self::assertInstanceOf(DOMElement::class, $element);
+            self::assertSame('none', $element->getAttribute('type'));
+            self::assertSame('Y', $element->getAttribute('conf'));
+        }
+        foreach (['show_credit', 'update_notices'] as $name) {
+            $nodes = $xpath->query(sprintf('/jtlshopplugin/Install/Adminmenu/Settingslink/Setting[ValueName="%s"]', $name));
+            if ($nodes === false) {
+                self::fail(sprintf('Die XML-Abfrage für %s konnte nicht ausgeführt werden.', $name));
+            }
+            $element = $nodes->item(0);
+            self::assertInstanceOf(DOMElement::class, $element);
+            self::assertSame('selectbox', $element->getAttribute('type'));
+        }
+        self::assertSame('', $xpath->evaluate('string(/jtlshopplugin/Install/Adminmenu/Settingslink/Setting[ValueName="position"])'));
+        self::assertSame('', $xpath->evaluate('string(/jtlshopplugin/Install/Adminmenu/Settingslink/Setting[ValueName="theme"])'));
+
         $version = $xpath->evaluate('string(/jtlshopplugin/Version)');
-        $dateiname = $xpath->evaluate('string(/jtlshopplugin/Install/Adminmenu/Customlink/Filename)');
+        $dateiname = $xpath->evaluate('string(/jtlshopplugin/Install/Adminmenu/Customlink[Name="Darstellung"]/Filename)');
         self::assertIsString($version);
         self::assertIsString($dateiname);
-        self::assertSame('1.2.0', trim($version));
-        self::assertSame('assets.php', trim($dateiname));
+        self::assertSame('1.2.1', trim($version));
+        self::assertSame('display.php', trim($dateiname));
     }
 
     /** @return array{int, int, int, int, int, int} */
