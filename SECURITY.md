@@ -15,7 +15,7 @@ Das Plugin erkennt KI-Inhalte nicht automatisch und verarbeitet keine Zahlungs- 
 ## Sicher aktualisieren
 
 Das Repository ist privat. Daher kann die anonyme GitHub-Prüfung trotz neuer
-Version ohne Hinweis bleiben. Nutzen Sie ausschließlich das signierte oder per
-SHA-256 geprüfte Release-ZIP und aktualisieren Sie das Plugin als manueller
+Version ohne Hinweis bleiben. Nutzen Sie ausschließlich das per SHA-256
+geprüfte Release-ZIP und aktualisieren Sie das Plugin als manueller
 ZIP-Upload im JTL-Plugin-Manager. Vor jedem Update sind ein vollständiges Backup,
 ein Dev-Test und ein dokumentierter Rollback erforderlich.

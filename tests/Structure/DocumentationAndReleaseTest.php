@@ -24,6 +24,7 @@ final class DocumentationAndReleaseTest extends TestCase
 
         self::assertStringContainsString('MGD_AI_Kennzeichnung-1.2.1.zip', $script);
         self::assertStringNotContainsString('MGD_AI_Kennzeichnung-1.2.0.zip', $script);
+        self::assertStringNotContainsString('cp -R "${quellordner}/."', $script);
 
         foreach (['/.superpowers/', '*.sql', '*.bak', '.env*'] as $muster) {
             self::assertStringContainsString($muster, $gitignore);
@@ -77,6 +78,41 @@ final class DocumentationAndReleaseTest extends TestCase
             self::assertStringNotContainsString('/.git', $eintrag);
             self::assertStringNotContainsString('.env', $eintrag);
             self::assertStringNotContainsString('.DS_Store', $eintrag);
+        }
+    }
+
+    #[Test]
+    public function build_lehnt_sensible_dateitypen_in_freigegebenen_verzeichnissen_fail_closed_ab(): void
+    {
+        $this->buildRelease();
+        $vorherigerHash = hash_file('sha256', self::ZIP);
+        self::assertIsString($vorherigerHash);
+
+        $testverzeichnis = self::ROOT . '/plugin/MGD_AI_Kennzeichnung/adminmenu';
+        $dateien = [
+            $testverzeichnis . '/release-test.key',
+            $testverzeichnis . '/release-test.p12',
+            $testverzeichnis . '/release-test.pfx',
+            $testverzeichnis . '/release-test.crt',
+            $testverzeichnis . '/release-test.sql',
+            $testverzeichnis . '/release-test.php.bak',
+        ];
+
+        try {
+            foreach ($dateien as $datei) {
+                self::assertNotFalse(file_put_contents($datei, 'DARF NICHT INS RELEASE'));
+            }
+
+            [$status, $ausgabe] = $this->runBuildRelease();
+            self::assertNotSame(0, $status, 'Nicht freigegebene Dateien müssen den Build sicher abbrechen.');
+            self::assertStringContainsString('nicht freigegeben', $ausgabe);
+            self::assertSame($vorherigerHash, hash_file('sha256', self::ZIP));
+        } finally {
+            foreach ($dateien as $datei) {
+                if (is_file($datei)) {
+                    unlink($datei);
+                }
+            }
         }
     }
 
@@ -163,8 +199,20 @@ final class DocumentationAndReleaseTest extends TestCase
         $dateiname = 'MGD_AI_Kennzeichnung-' . self::VERSION . '.zip';
         self::assertStringContainsString($dateiname, $build);
         self::assertStringContainsString($dateiname, $workflow);
+        self::assertSame(1, substr_count($workflow, 'run: composer test:js'));
         self::assertStringContainsString('<Version>' . self::VERSION . '</Version>', $infoXml);
         self::assertStringNotContainsString('MGD_AI_Kennzeichnung-1.2.0.zip', $build . $workflow);
+    }
+
+    #[Test]
+    public function sicherheitsdokumentation_verspricht_nur_die_tatsaechlich_angebotene_pruefsumme(): void
+    {
+        $sicherheit = file_get_contents(self::ROOT . '/SECURITY.md');
+        self::assertIsString($sicherheit);
+
+        self::assertStringContainsString('SHA-256', $sicherheit);
+        self::assertStringNotContainsStringIgnoringCase('signiert', $sicherheit);
+        self::assertStringNotContainsStringIgnoringCase('Signatur', $sicherheit);
     }
 
     #[Test]
@@ -302,10 +350,18 @@ final class DocumentationAndReleaseTest extends TestCase
 
     private function buildRelease(): void
     {
+        [$status, $ausgabe] = $this->runBuildRelease();
+        self::assertSame(0, $status, $ausgabe);
+    }
+
+    /** @return array{0: int, 1: string} */
+    private function runBuildRelease(): array
+    {
         $ausgabe = [];
         $status = 1;
         exec('bash ' . escapeshellarg(self::ROOT . '/scripts/build-release.sh') . ' 2>&1', $ausgabe, $status);
-        self::assertSame(0, $status, implode("\n", $ausgabe));
+
+        return [$status, implode("\n", $ausgabe)];
     }
 
     /** @return list<string> */

@@ -38,6 +38,8 @@ jobs:
           php -r '$d = new DOMDocument(); exit($d->load("plugin/MGD_AI_Kennzeichnung/info.xml") ? 0 : 1);'
       - name: Tests ausführen
         run: composer test
+      - name: JavaScript-Tests ausführen
+        run: composer test:js
       - name: Statische Analyse ausführen
         run: composer analyse
       - name: Formatierung prüfen
