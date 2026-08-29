@@ -14,6 +14,7 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\CsrfException;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\DisplayConfigCommittedException;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\ValidationException;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Http\AdminTabScope;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Port\UpdateCheckerProviderInterface;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Update\Adapter\CurlHttpClient;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Update\Adapter\FileReleaseCache;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Update\Adapter\SystemClock;
@@ -108,11 +109,14 @@ try {
                     . 'mgd-ai-release-'
                     . hash('sha256', (string) PFAD_ROOT)
                     . '.json';
-                $updateNotice = (new GitHubReleaseChecker(
-                    new CurlHttpClient(),
-                    new FileReleaseCache($cachePath),
-                    new SystemClock(),
-                ))->check(true, '1.2.1');
+                $checker = $container instanceof UpdateCheckerProviderInterface
+                    ? $container->getUpdateChecker()
+                    : new GitHubReleaseChecker(
+                        new CurlHttpClient(),
+                        new FileReleaseCache($cachePath),
+                        new SystemClock(),
+                    );
+                $updateNotice = $checker->check(true, '1.2.1');
             } catch (Throwable) {
                 // Die rein optionale Prüfung darf niemals einen Adminfehler erzeugen.
                 $updateNotice = null;

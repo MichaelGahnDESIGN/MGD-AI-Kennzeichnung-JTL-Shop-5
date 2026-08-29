@@ -8,6 +8,7 @@ use JsonException;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Update\Port\ClockInterface;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Update\Port\HttpClientInterface;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Update\Port\ReleaseCacheInterface;
+use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Update\Port\UpdateCheckerInterface;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Update\Value\CachedRelease;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Update\Value\HttpRequest;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Update\Value\ReleaseCheckState;
@@ -22,7 +23,7 @@ use Throwable;
  * Ergebnis ausschließlich einen geprüften Tag sowie dessen feste Release-URL
  * zurück. Transport, Uhr und lokaler Cache sind getrennte Ports.
  */
-final class GitHubReleaseChecker
+final class GitHubReleaseChecker implements UpdateCheckerInterface
 {
     private const ENDPOINT = 'https://api.github.com/repos/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases/latest';
     private const RELEASE_URL_PREFIX = 'https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases/tag/';

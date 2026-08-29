@@ -21,6 +21,9 @@ use JTL\Services\DefaultServicesInterface;
 use JTL\Shop;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Port\UpdateCheckerProviderInterface;
+use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Update\Port\UpdateCheckerInterface;
+use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Update\Value\UpdateNotice;
 use Psr\Log\AbstractLogger;
 use Psr\Log\LoggerInterface;
 use Tests\Support\TransactionStatePdo;
@@ -62,6 +65,41 @@ final class DisplayEntryPointTest extends TestCase
         self::assertSame([], $db->updates);
         self::assertSame([], $logger->records);
         self::assertSame('N', (new DisplayEntryPlugin())->getConfig()->getValue('update_notices'));
+    }
+
+    #[Test]
+    public function updatepruefung_laueft_exakt_einmal_nur_im_adressierten_berechtigten_display_get(): void
+    {
+        $db = new DisplayEntryDatabase();
+        $logger = new DisplayEntryLogger();
+        $checker = new DisplayEntryUpdateChecker();
+        $this->bereiteKontextVor(new AdminAccount(['PLUGIN_DETAIL_VIEW_17']), $db, $logger, null, $checker);
+        DisplayEntryPlugin::$updateNotices = 'Y';
+
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_GET = $this->aktiveGetRoute(9);
+        $_POST = [];
+        $this->fuehreEinstiegAus();
+        self::assertSame(1, $checker->calls);
+
+        $checker->calls = 0;
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_GET = [];
+        $_POST = $this->gueltigerPost();
+        $this->fuehreEinstiegAus();
+        self::assertSame(0, $checker->calls);
+
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_GET = $this->aktiveGetRoute(10);
+        $_POST = [];
+        $this->fuehreEinstiegAus(10);
+        self::assertSame(0, $checker->calls);
+
+        foreach ([['assets.php', 7], ['philosophy.php', 8], ['display.php', 9], ['impressum.php', 10]] as [$file, $menuId]) {
+            $_GET = [];
+            $this->fuehreCustomlinkAus($file, $menuId);
+        }
+        self::assertSame(0, $checker->calls);
     }
 
     #[Test]
@@ -305,6 +343,7 @@ final class DisplayEntryPointTest extends TestCase
         DisplayEntryDatabase $db,
         DisplayEntryLogger $logger,
         ?JTLCacheInterface $cache = null,
+        ?UpdateCheckerInterface $updateChecker = null,
     ): void {
         if (!defined('PFAD_ROOT')) {
             define('PFAD_ROOT', dirname(__DIR__, 3) . '/');
@@ -316,7 +355,8 @@ final class DisplayEntryPointTest extends TestCase
         $_SESSION = ['jtl_token' => 'csrf'];
         Form::$validToken = 'csrf';
         http_response_code(200);
-        Shop::$container = new DisplayEntryContainer($account, $db, $logger, $cache);
+        DisplayEntryPlugin::$updateNotices = 'N';
+        Shop::$container = new DisplayEntryContainer($account, $db, $logger, $cache, $updateChecker);
     }
 
     private function fuehreEinstiegAus(int $menuId = 9): string
@@ -336,7 +376,7 @@ final class DisplayEntryPointTest extends TestCase
 }
 
 /** Kapselt die für den echten Einstieg erforderlichen JTL-Containerdienste. */
-final class DisplayEntryContainer implements DefaultServicesInterface
+final class DisplayEntryContainer implements DefaultServicesInterface, UpdateCheckerProviderInterface
 {
     private readonly JTLCacheInterface $cache;
 
@@ -345,9 +385,13 @@ final class DisplayEntryContainer implements DefaultServicesInterface
         private readonly DisplayEntryDatabase $db,
         private readonly DisplayEntryLogger $logger,
         ?JTLCacheInterface $cache = null,
+        ?UpdateCheckerInterface $updateChecker = null,
     ) {
         $this->cache = $cache ?? new JTLCache();
+        $this->updateChecker = $updateChecker ?? new DisplayEntryUpdateChecker();
     }
+
+    private readonly UpdateCheckerInterface $updateChecker;
 
     public function getDB(): DbInterface
     {
@@ -368,16 +412,21 @@ final class DisplayEntryContainer implements DefaultServicesInterface
     {
         return $this->logger;
     }
+
+    public function getUpdateChecker(): UpdateCheckerInterface
+    {
+        return $this->updateChecker;
+    }
 }
 
 /** Stellt ausschließlich den für die Anzeigeoptionen erforderlichen Plugin-Kontext bereit. */
 final class DisplayEntryPlugin implements PluginInterface
 {
+    public static string $updateNotices = 'N';
     /** @var array<string, string> */
     private const VALUES = [
         'language' => 'auto', 'font_size' => '12', 'outer_margin' => '8', 'inner_padding' => '6',
         'border_radius' => '4', 'blur' => '0', 'transparency' => '8',
-        'update_notices' => 'N',
     ];
 
     public function getID(): int
@@ -397,7 +446,20 @@ final class DisplayEntryPlugin implements PluginInterface
 
     public function getConfig(): Config
     {
-        return new Config(self::VALUES);
+        return new Config(self::VALUES + ['update_notices' => self::$updateNotices]);
+    }
+}
+
+/** Zählt nur die sichere Testgrenze; sie führt weder HTTP noch Cachezugriffe aus. */
+final class DisplayEntryUpdateChecker implements UpdateCheckerInterface
+{
+    public int $calls = 0;
+
+    public function check(bool $enabled, string $currentVersion): ?UpdateNotice
+    {
+        ++$this->calls;
+
+        return null;
     }
 }
 

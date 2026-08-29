@@ -452,6 +452,49 @@ final class GitHubReleaseCheckerTest extends TestCase
     }
 
     #[Test]
+    public function dateicache_laden_kehre_bei_konkurrierender_exklusivsperre_sofort_fail_closed_zurueck(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'mgd-release-nonblocking-');
+        self::assertIsString($path);
+        $cache = new FileReleaseCache($path);
+        $process = null;
+
+        try {
+            self::assertTrue($cache->acquire());
+            $cache->save(new ReleaseCheckState(1_700_000_000, null));
+            $cache->release();
+
+            $descriptors = [
+                0 => ['pipe', 'r'],
+                1 => ['pipe', 'w'],
+                2 => ['pipe', 'w'],
+            ];
+            $process = proc_open([
+                PHP_BINARY,
+                '-r',
+                '$handle = fopen($argv[1], "c+b"); flock($handle, LOCK_EX); fwrite(STDOUT, "ready\\n"); sleep(2);',
+                $path . '.lock',
+            ], $descriptors, $pipes);
+            self::assertIsResource($process);
+            self::assertSame("ready\n", fgets($pipes[1]));
+
+            $startedAt = microtime(true);
+            self::assertNull((new FileReleaseCache($path))->load());
+            self::assertLessThan(0.5, microtime(true) - $startedAt);
+        } finally {
+            if (is_resource($process)) {
+                proc_close($process);
+            }
+            if (is_file($path . '.lock')) {
+                unlink($path . '.lock');
+            }
+            if (is_file($path)) {
+                unlink($path);
+            }
+        }
+    }
+
+    #[Test]
     public function laufzeitadapter_verweigert_unsichere_transportparameter(): void
     {
         self::assertTrue(class_exists(CurlHttpClient::class));
