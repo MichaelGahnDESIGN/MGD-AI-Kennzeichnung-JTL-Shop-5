@@ -74,11 +74,12 @@ final class DisplayAdminContractTest extends TestCase
         $root = self::ROOT . '/plugin/MGD_AI_Kennzeichnung/adminmenu/';
         $template = (string) file_get_contents($root . 'templates/display.tpl');
         $stylesheet = (string) file_get_contents($root . 'display.css');
+        $controls = (string) file_get_contents($root . 'js/display-controls.mjs');
 
         self::assertFileExists($root . 'display.php');
         self::assertNotSame('', $template);
         self::assertNotSame('', $stylesheet);
-        self::assertStringContainsString('<form method="post">', $template);
+        self::assertStringContainsString('<form method="post" data-mgd-display-form>', $template);
         self::assertStringContainsString('name="csrf_token"', $template);
         self::assertStringContainsString('name="kPlugin"', $template);
         self::assertStringContainsString('name="kPluginAdminMenu"', $template);
@@ -91,11 +92,19 @@ final class DisplayAdminContractTest extends TestCase
         self::assertStringContainsString('KI-GENERIERT', $template);
         self::assertStringContainsString('Nur Vorschau', $template);
         self::assertStringContainsString('display.css', $template);
-        self::assertStringNotContainsString('display-controls.mjs', $template);
+        self::assertStringContainsString('data-mgd-display-root', $template);
+        self::assertStringContainsString('data-mgd-display-form', $template);
+        self::assertStringContainsString('data-mgd-display-label aria-live="polite"', $template);
+        self::assertStringContainsString('type="module"', $template);
+        self::assertStringContainsString('js/display-controls.mjs', $template);
+        self::assertFileExists($root . 'js/display-range-sync.mjs');
+        self::assertFileExists($root . 'js/display-preview.mjs');
+        self::assertFileExists($root . 'js/display-controls.mjs');
+        self::assertStringContainsString("[data-mgd-display-form]", $controls);
         self::assertDoesNotMatchRegularExpression('~(?:src|href)="https?://~i', $template);
         self::assertDoesNotMatchRegularExpression('~\bon\w+\s*=~i', $template);
         self::assertStringNotContainsString('<style', strtolower($template));
-        self::assertStringNotContainsString('<script>', strtolower($template));
+        self::assertDoesNotMatchRegularExpression('~<script(?![^>]*\bsrc=)~i', $template);
 
         foreach (['language', 'font_size', 'outer_margin', 'inner_padding', 'border_radius', 'blur', 'transparency'] as $field) {
             self::assertStringContainsString('name="' . $field . '"', $template);
@@ -128,6 +137,11 @@ final class DisplayAdminContractTest extends TestCase
                 sprintf('Der Regler %s muss exakt zum Zahlenfeld passen.', $field),
             );
         }
+        foreach (['border-radius', 'blur', 'transparency'] as $field) {
+            self::assertStringContainsString('aria-describedby="mgd-display-' . $field . '-help"', $template);
+            self::assertStringContainsString('id="mgd-display-' . $field . '-help"', $template);
+            self::assertStringContainsString('aria-labelledby="mgd-display-' . $field . '-legend"', $template);
+        }
 
         self::assertStringContainsString('.mgd-display-layout {', $stylesheet);
         self::assertStringContainsString('grid-template-columns: minmax(20rem, 0.9fr) minmax(22rem, 1.1fr);', $stylesheet);
@@ -135,6 +149,24 @@ final class DisplayAdminContractTest extends TestCase
         self::assertStringContainsString('align-items: start;', $stylesheet);
         self::assertStringContainsString('@media (max-width: 62rem)', $stylesheet);
         self::assertStringContainsString('.mgd-display-layout { grid-template-columns: 1fr; }', $stylesheet);
+        foreach ([
+            '--mgd-preview-font-size: 12px;',
+            '--mgd-preview-outer-margin: 8px;',
+            '--mgd-preview-inner-padding: 6px;',
+            '--mgd-preview-border-radius: 4px;',
+            '--mgd-preview-blur: 0px;',
+            '--mgd-preview-background-opacity: 0.92;',
+            '.mgd-display-preview--top-right',
+            '.mgd-display-preview--bottom-right',
+            '.mgd-display-preview--top-left',
+            '.mgd-display-preview--bottom-left',
+            '.mgd-display-preview--theme-auto',
+            '.mgd-display-preview--theme-light',
+            '.mgd-display-preview--theme-dark',
+            'prefers-reduced-motion: reduce',
+        ] as $expectedCss) {
+            self::assertStringContainsString($expectedCss, $stylesheet);
+        }
     }
 
     #[Test]

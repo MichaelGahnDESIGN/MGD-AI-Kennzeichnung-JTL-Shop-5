@@ -1,6 +1,7 @@
 {* Lokaler, CSRF-geschützter Darstellungstab ohne externe Ressourcen oder persistente Vorschauoptionen. *}
 <link rel="stylesheet" href="{$adminUrl|escape:'html':'UTF-8'}display.css">
-<section class="mgd-display container-fluid" aria-labelledby="mgd-display-heading">
+<script type="module" src="{$adminUrl|escape:'html':'UTF-8'}js/display-controls.mjs"></script>
+<section class="mgd-display container-fluid" aria-labelledby="mgd-display-heading" data-mgd-display-root>
     <header class="mgd-display__header">
         <p class="mgd-display__eyebrow">MGD AI Kennzeichnung</p>
         <h1 id="mgd-display-heading">Darstellung</h1>
@@ -12,7 +13,7 @@
     </div>
 
     <div class="mgd-display-layout">
-        <form method="post">
+        <form method="post" data-mgd-display-form>
             <div class="card-body">
                 <input type="hidden" name="kPlugin" value="{$pluginId|escape:'html':'UTF-8'}">
                 <input type="hidden" name="kPluginAdminMenu" value="{$adminMenuId|escape:'html':'UTF-8'}">
@@ -47,30 +48,30 @@
                         <small>0–32 px</small>
                     </div>
 
-                    <div class="mgd-display__field mgd-display__field--range">
-                        <label for="mgd-display-border_radius-number">Eckenradius <span>in px</span></label>
+                    <fieldset class="mgd-display__range-fieldset">
+                        <legend id="mgd-display-border-radius-legend">Eckenradius <span>in px</span></legend>
                         <div class="mgd-display__range-pair">
-                            <input id="mgd-display-border_radius-number" name="border_radius" type="number" min="0" max="32" step="1" value="{$borderRadius|escape:'html':'UTF-8'}" data-mgd-display-control="border_radius" data-mgd-display-number>
-                            <input id="mgd-display-border_radius-range" type="range" min="0" max="32" step="1" value="{$borderRadius|escape:'html':'UTF-8'}" data-mgd-display-control="border_radius" data-mgd-display-range aria-label="Eckenradius per Regler">
+                            <input id="mgd-display-border_radius-number" name="border_radius" type="number" min="0" max="32" step="1" value="{$borderRadius|escape:'html':'UTF-8'}" data-mgd-display-control="border_radius" data-mgd-display-number aria-labelledby="mgd-display-border-radius-legend" aria-describedby="mgd-display-border-radius-help">
+                            <input id="mgd-display-border_radius-range" type="range" min="0" max="32" step="1" value="{$borderRadius|escape:'html':'UTF-8'}" data-mgd-display-control="border_radius" data-mgd-display-range aria-labelledby="mgd-display-border-radius-legend" aria-describedby="mgd-display-border-radius-help">
                         </div>
-                        <small>0–32 px</small>
-                    </div>
-                    <div class="mgd-display__field mgd-display__field--range">
-                        <label for="mgd-display-blur-number">Hintergrundunschärfe <span>in px</span></label>
+                        <small id="mgd-display-border-radius-help">0–32 px</small>
+                    </fieldset>
+                    <fieldset class="mgd-display__range-fieldset">
+                        <legend id="mgd-display-blur-legend">Hintergrundunschärfe <span>in px</span></legend>
                         <div class="mgd-display__range-pair">
-                            <input id="mgd-display-blur-number" name="blur" type="number" min="0" max="24" step="1" value="{$blur|escape:'html':'UTF-8'}" data-mgd-display-control="blur" data-mgd-display-number>
-                            <input id="mgd-display-blur-range" type="range" min="0" max="24" step="1" value="{$blur|escape:'html':'UTF-8'}" data-mgd-display-control="blur" data-mgd-display-range aria-label="Hintergrundunschärfe per Regler">
+                            <input id="mgd-display-blur-number" name="blur" type="number" min="0" max="24" step="1" value="{$blur|escape:'html':'UTF-8'}" data-mgd-display-control="blur" data-mgd-display-number aria-labelledby="mgd-display-blur-legend" aria-describedby="mgd-display-blur-help">
+                            <input id="mgd-display-blur-range" type="range" min="0" max="24" step="1" value="{$blur|escape:'html':'UTF-8'}" data-mgd-display-control="blur" data-mgd-display-range aria-labelledby="mgd-display-blur-legend" aria-describedby="mgd-display-blur-help">
                         </div>
-                        <small>0–24 px</small>
-                    </div>
-                    <div class="mgd-display__field mgd-display__field--range">
-                        <label for="mgd-display-transparency-number">Transparenz <span>in %</span></label>
+                        <small id="mgd-display-blur-help">0–24 px</small>
+                    </fieldset>
+                    <fieldset class="mgd-display__range-fieldset">
+                        <legend id="mgd-display-transparency-legend">Transparenz <span>in %</span></legend>
                         <div class="mgd-display__range-pair">
-                            <input id="mgd-display-transparency-number" name="transparency" type="number" min="0" max="90" step="1" value="{$transparency|escape:'html':'UTF-8'}" data-mgd-display-control="transparency" data-mgd-display-number>
-                            <input id="mgd-display-transparency-range" type="range" min="0" max="90" step="1" value="{$transparency|escape:'html':'UTF-8'}" data-mgd-display-control="transparency" data-mgd-display-range aria-label="Transparenz per Regler">
+                            <input id="mgd-display-transparency-number" name="transparency" type="number" min="0" max="90" step="1" value="{$transparency|escape:'html':'UTF-8'}" data-mgd-display-control="transparency" data-mgd-display-number aria-labelledby="mgd-display-transparency-legend" aria-describedby="mgd-display-transparency-help">
+                            <input id="mgd-display-transparency-range" type="range" min="0" max="90" step="1" value="{$transparency|escape:'html':'UTF-8'}" data-mgd-display-control="transparency" data-mgd-display-range aria-labelledby="mgd-display-transparency-legend" aria-describedby="mgd-display-transparency-help">
                         </div>
-                        <small>0–90 %</small>
-                    </div>
+                        <small id="mgd-display-transparency-help">0–90 %</small>
+                    </fieldset>
                 </fieldset>
 
                 <button type="submit">Speichern</button>
@@ -81,9 +82,9 @@
             <div class="card-body">
                 <p class="mgd-display__eyebrow">Lokale Vorschau</p>
                 <h2 id="mgd-display-preview-heading" class="h4">Kennzeichnung am Beispielbild</h2>
-                <div class="mgd-display__image-wrap" data-mgd-display-preview>
+                <div class="mgd-display__image-wrap mgd-display-preview--top-right mgd-display-preview--theme-auto" data-mgd-display-preview>
                     <img src="{$adminUrl|escape:'html':'UTF-8'}images/michael-gahn-design-schuh.png" alt="Fiktiver Michael Gahn DESIGN Schuh">
-                    <span class="mgd-display__label" data-mgd-display-label>KI-GENERIERT</span>
+                    <span class="mgd-display__label" data-mgd-display-label aria-live="polite">KI-GENERIERT</span>
                 </div>
                 <p class="mgd-display__help">Die folgenden Optionen ändern nur diese Vorschau und werden nicht gespeichert.</p>
                 <div class="mgd-display__preview-controls">
