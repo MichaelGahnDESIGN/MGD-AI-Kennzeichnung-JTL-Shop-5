@@ -24,6 +24,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
 use Psr\Log\LoggerInterface;
 use Tests\Support\TransactionStatePdo;
+use Tests\Support\TransactionalDatabaseFake;
 
 /** Prüft den geschützten Darstellungstab mit einem echten Include und JTL-Testcontainer. */
 final class DisplayEntryPointTest extends TestCase
@@ -211,27 +212,48 @@ final class DisplayEntryPointTest extends TestCase
         $_GET = [];
         $_POST = $this->gueltigerPost();
 
-        foreach ([['assets.php', 7], ['philosophy.php', 8], ['display.php', 9], ['impressum.php', 10]] as [$file, $menuId]) {
-            $this->fuehreCustomlinkAus($file, $menuId);
+        \JTL\Smarty\JTLSmarty::$testFetchOutput = '<section>Neutraler Lesetab</section>';
+        try {
+            $outputs = [];
+            foreach ([['assets.php', 7], ['philosophy.php', 8], ['display.php', 9], ['impressum.php', 10]] as [$file, $menuId]) {
+                $outputs[$file] = $this->fuehreCustomlinkAus($file, $menuId);
+            }
+        } finally {
+            \JTL\Smarty\JTLSmarty::$testFetchOutput = '';
         }
 
         self::assertCount(7, $db->updates);
         self::assertSame([], $logger->records);
+        foreach ($outputs as $file => $output) {
+            self::assertNotSame('', $output, $file . ' muss nach dem Display-POST neutral lesbar bleiben.');
+        }
     }
 
     #[Test]
-    public function inaktiver_darstellungstab_initialisiert_keine_ungueltige_session(): void
+    public function vollstaendiger_customlink_get_ohne_route_rendert_alle_gueltigen_tabs_ohne_seiteneffekte(): void
     {
-        $this->bereiteKontextVor(new AdminAccount(['PLUGIN_DETAIL_VIEW_17']), new DisplayEntryDatabase(), new DisplayEntryLogger());
-        $_SESSION = 'nicht-initialisiert';
+        $db = new DisplayEntryDatabase();
+        $logger = new DisplayEntryLogger();
+        $this->bereiteKontextVor(new AdminAccount(['PLUGIN_DETAIL_VIEW_17']), $db, $logger);
         $_SERVER['REQUEST_METHOD'] = 'GET';
-        $_GET = $this->aktiveGetRoute(7);
+        $_GET = [];
         $_POST = [];
 
-        $output = $this->fuehreEinstiegAus(7);
+        \JTL\Smarty\JTLSmarty::$testFetchOutput = '<section>Neutraler Lesetab</section>';
+        try {
+            $outputs = [];
+            foreach ([['assets.php', 7], ['philosophy.php', 8], ['display.php', 9], ['impressum.php', 10]] as [$file, $menuId]) {
+                $outputs[$file] = $this->fuehreCustomlinkAus($file, $menuId);
+            }
+        } finally {
+            \JTL\Smarty\JTLSmarty::$testFetchOutput = '';
+        }
 
-        self::assertSame('', $output);
-        self::assertSame('nicht-initialisiert', $_SESSION);
+        self::assertSame([], $db->updates);
+        self::assertSame([], $logger->records);
+        foreach ($outputs as $file => $output) {
+            self::assertNotSame('', $output, $file . ' muss im normalen JTL-GET lesbar sein.');
+        }
     }
 
     /**
@@ -364,6 +386,7 @@ final class DisplayEntryPlugin implements PluginInterface
 final class DisplayEntryDatabase implements DbInterface
 {
     private readonly TransactionStatePdo $pdo;
+    private readonly TransactionalDatabaseFake $assetDatabase;
     /** @var array<string, string> */
     public array $values = [];
     /** @var list<array<string, mixed>> */
@@ -373,6 +396,10 @@ final class DisplayEntryDatabase implements DbInterface
     public function __construct()
     {
         $this->pdo = new TransactionStatePdo();
+        $this->assetDatabase = new TransactionalDatabaseFake();
+        $this->assetDatabase->setMarker('xplugin_mgd_ai_asset', \Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\SchemaOwnershipGuard::OWNERSHIP_MARKER);
+        $this->assetDatabase->setMarker('xplugin_mgd_ai_usage', \Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\SchemaOwnershipGuard::OWNERSHIP_MARKER);
+        $this->assetDatabase->setMarker('xplugin_mgd_ai_philosophy', \Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\SchemaOwnershipGuard::OWNERSHIP_MARKER);
     }
 
     public function getPDO(): \PDO
@@ -382,11 +409,19 @@ final class DisplayEntryDatabase implements DbInterface
 
     public function getSingleObject(string $stmt, array $params = []): ?\stdClass
     {
+        if (str_contains($stmt, 'INFORMATION_SCHEMA') || str_contains($stmt, 'xplugin_mgd_ai_asset')) {
+            return $this->assetDatabase->getSingleObject($stmt, $params);
+        }
+
         return null;
     }
 
     public function getObjects(string $stmt, array $params = []): array
     {
+        if (!str_contains($stmt, 'tplugineinstellungen')) {
+            return $this->assetDatabase->getObjects($stmt, $params);
+        }
+
         return [(object) ['cWert' => 'vorhanden']];
     }
     public function getAffectedRows(string $stmt, array $params = []): int

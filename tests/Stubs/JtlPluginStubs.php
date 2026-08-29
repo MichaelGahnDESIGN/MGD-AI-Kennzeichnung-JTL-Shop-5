@@ -295,6 +295,9 @@ namespace JTL\Smarty;
 
 class JTLSmarty
 {
+    /** Die Testhülle macht erfolgreiche lokale Template-Renderings sichtbar. */
+    public static string $testFetchOutput = '';
+
     public function assign(string $name, mixed $value): self
     {
         return $this;
@@ -302,7 +305,7 @@ class JTLSmarty
 
     public function fetch(string $path): string
     {
-        return '';
+        return self::$testFetchOutput;
     }
 }
 

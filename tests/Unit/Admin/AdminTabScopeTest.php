@@ -35,6 +35,7 @@ final class AdminTabScopeTest extends TestCase
         self::assertTrue($active->isAddressed);
         self::assertSame($_POST, $active->request->post);
         self::assertFalse($inactive->isAddressed);
+        self::assertTrue($inactive->shouldRender);
         self::assertSame('GET', $inactive->request->method);
         self::assertSame([], $inactive->request->query);
         self::assertSame([], $inactive->request->post);
@@ -55,6 +56,7 @@ final class AdminTabScopeTest extends TestCase
             $scope = AdminTabScope::capture($this->plugin(), 9, 'display.php', true);
 
             self::assertFalse($scope->isAddressed);
+            self::assertTrue($scope->shouldRender);
             self::assertEquals(new \Plugin\MGD_AI_Kennzeichnung\Admin\Http\AdminHttpRequest('GET', [], []), $scope->request);
         }
     }
@@ -72,7 +74,39 @@ final class AdminTabScopeTest extends TestCase
         self::assertTrue($active->isAddressed);
         self::assertSame(['view' => 'list'], $active->request->query);
         self::assertFalse($inactive->isAddressed);
+        self::assertTrue($inactive->shouldRender);
         self::assertSame([], $inactive->request->query);
+    }
+
+    #[Test]
+    public function normaler_get_ohne_route_laesst_jeden_gueltigen_tab_seinen_neutralen_lesezustand_rendern(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_GET = [];
+        $_POST = [];
+
+        $assets = AdminTabScope::capture($this->plugin(), 7, 'assets.php');
+        $display = AdminTabScope::capture($this->plugin(), 9, 'display.php', true);
+
+        foreach ([$assets, $display] as $scope) {
+            self::assertFalse($scope->isAddressed);
+            self::assertTrue($scope->shouldRender);
+            self::assertEquals(new \Plugin\MGD_AI_Kennzeichnung\Admin\Http\AdminHttpRequest('GET', [], []), $scope->request);
+        }
+    }
+
+    #[Test]
+    public function ungueltiger_dateikontext_bleibt_gesperrt_und_rendert_nicht(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_GET = [];
+        $_POST = [];
+
+        $scope = AdminTabScope::capture($this->plugin(), 7, 'display.php');
+
+        self::assertFalse($scope->isAddressed);
+        self::assertFalse($scope->shouldRender);
+        self::assertEquals(new \Plugin\MGD_AI_Kennzeichnung\Admin\Http\AdminHttpRequest('GET', [], []), $scope->request);
     }
 
     private function plugin(): PluginInterface

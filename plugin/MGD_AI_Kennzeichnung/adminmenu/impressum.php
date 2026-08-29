@@ -17,14 +17,15 @@ if (!defined('PFAD_ROOT') || !isset($oPlugin) || !$oPlugin instanceof PluginInte
     return;
 }
 
+$adminMenuId = is_object($menu ?? null) ? ($menu->kPluginAdminMenu ?? null) : null;
+$scope = AdminTabScope::capture($oPlugin, $adminMenuId, 'impressum.php');
+if (!$scope->shouldRender) {
+    return;
+}
+
 $container = Shop::Container();
 try {
     $sessionId = session_id();
-    $adminMenuId = is_object($menu ?? null) ? ($menu->kPluginAdminMenu ?? null) : null;
-    $scope = AdminTabScope::capture($oPlugin, $adminMenuId, 'impressum.php');
-    if (!$scope->isAddressed) {
-        return;
-    }
     if (!is_string($sessionId) || $sessionId === ''
     ) {
         throw new ValidationException('Der JTL-Admin-Menükontext ist ungültig.');

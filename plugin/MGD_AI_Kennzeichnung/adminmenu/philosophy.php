@@ -21,13 +21,14 @@ if (!defined('PFAD_ROOT') || !isset($oPlugin) || !$oPlugin instanceof PluginInte
     return;
 }
 
+$adminMenuId = is_object($menu ?? null) ? ($menu->kPluginAdminMenu ?? null) : null;
+$scope = AdminTabScope::capture($oPlugin, $adminMenuId, 'philosophy.php');
+if (!$scope->shouldRender) {
+    return;
+}
+
 $container = Shop::Container();
 try {
-    $adminMenuId = is_object($menu ?? null) ? ($menu->kPluginAdminMenu ?? null) : null;
-    $scope = AdminTabScope::capture($oPlugin, $adminMenuId, 'philosophy.php');
-    if (!$scope->isAddressed) {
-        return;
-    }
     $session = &JtlSessionContext::current();
     $sessionId = session_id();
     if (!is_string($sessionId) || $sessionId === ''

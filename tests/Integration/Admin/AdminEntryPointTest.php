@@ -19,8 +19,8 @@ use JTL\Shop;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\SchemaOwnershipGuard;
+use Psr\Log\AbstractLogger;
 use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 use Tests\Support\TransactionalDatabaseFake;
 
 /** Prüft den echten JTL-Einstieg bis zur sicheren, leeren Listenansicht. */
@@ -51,16 +51,15 @@ final class AdminEntryPointTest extends TestCase
         $db = new TransactionalDatabaseFake();
         $db->setMarker('xplugin_mgd_ai_asset', SchemaOwnershipGuard::OWNERSHIP_MARKER);
         $db->setMarker('xplugin_mgd_ai_usage', SchemaOwnershipGuard::OWNERSHIP_MARKER);
-        Shop::$container = new class ($db) implements DefaultServicesInterface {
+        $logger = new AdminEntryLogger();
+        Shop::$container = new class ($db, $logger) implements DefaultServicesInterface {
             private readonly AdminAccount $account;
             private readonly JTLCache $cache;
-            private readonly LoggerInterface $logger;
 
-            public function __construct(private readonly DbInterface $db)
+            public function __construct(private readonly DbInterface $db, private readonly LoggerInterface $logger)
             {
                 $this->account = new AdminAccount(['PLUGIN_DETAIL_VIEW_17'], 5);
                 $this->cache = new JTLCache();
-                $this->logger = new NullLogger();
             }
 
             public function getDB(): DbInterface
@@ -123,13 +122,35 @@ final class AdminEntryPointTest extends TestCase
         self::assertStringContainsString('sort=status&amp;direction=desc&amp;status=generated', $html);
         self::assertStringNotContainsString('evil=', $html);
 
-        $otherOutput = '';
-        foreach ([['philosophy.php', 10], ['display.php', 11], ['impressum.php', 12]] as [$file, $menuId]) {
-            $menu = (object) ['kPluginAdminMenu' => $menuId];
-            ob_start();
-            include dirname(__DIR__, 3) . '/plugin/MGD_AI_Kennzeichnung/adminmenu/' . $file;
-            $otherOutput .= (string) ob_get_clean();
+        \JTL\Smarty\JTLSmarty::$testFetchOutput = '<section>Neutraler Lesetab</section>';
+        try {
+            $otherOutputs = [];
+            foreach ([['philosophy.php', 10], ['display.php', 11], ['impressum.php', 12]] as [$file, $menuId]) {
+                $menu = (object) ['kPluginAdminMenu' => $menuId];
+                ob_start();
+                include dirname(__DIR__, 3) . '/plugin/MGD_AI_Kennzeichnung/adminmenu/' . $file;
+                $otherOutputs[$file] = (string) ob_get_clean();
+            }
+        } finally {
+            \JTL\Smarty\JTLSmarty::$testFetchOutput = '';
         }
-        self::assertSame('', $otherOutput, 'Inaktive Tabs dürfen die Assets-Query weder verarbeiten noch Fehler ausgeben.');
+        foreach ($otherOutputs as $file => $output) {
+            self::assertSame('<section>Neutraler Lesetab</section>', $output, $file . ' darf die Assets-Query nicht verarbeiten.');
+        }
+        self::assertSame([], $logger->records, 'Die fremde Assets-Query darf in keinem Nachbartab Fehler loggen.');
+    }
+}
+
+/** Zeichnet technische Warnungen auf, damit der Zyklus keine fremden Fehler verbergen kann. */
+final class AdminEntryLogger extends AbstractLogger
+{
+    /** @var list<array{string, array<mixed>}> */
+    public array $records = [];
+
+    public function log(mixed $level, string|\Stringable $message, array $context = []): void
+    {
+        if ($level === 'warning' && is_string($message)) {
+            $this->records[] = [$message, $context];
+        }
     }
 }

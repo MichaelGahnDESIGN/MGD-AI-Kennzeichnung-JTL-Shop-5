@@ -18,13 +18,14 @@ if (!defined('PFAD_ROOT') || !isset($oPlugin) || !$oPlugin instanceof PluginInte
     return;
 }
 
+$adminMenuId = is_object($menu ?? null) ? ($menu->kPluginAdminMenu ?? null) : null;
+$scope = AdminTabScope::capture($oPlugin, $adminMenuId, 'assets.php');
+if (!$scope->shouldRender || !is_int($adminMenuId)) {
+    return;
+}
+
 $container = Shop::Container();
 try {
-    $adminMenuId = is_object($menu ?? null) ? ($menu->kPluginAdminMenu ?? null) : null;
-    $scope = AdminTabScope::capture($oPlugin, $adminMenuId, 'assets.php');
-    if (!$scope->isAddressed || !is_int($adminMenuId)) {
-        return;
-    }
     $session = &JtlSessionContext::current();
     $sessionId = session_id();
     if (!is_string($sessionId) || $sessionId === '') {

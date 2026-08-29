@@ -9,18 +9,22 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlHttpRequestAdapter;
 
 /**
  * Trennt die parallele Ausführung aller JTL-Customlinks vom tatsächlich
- * adressierten Tab. Nicht adressierte Dateien lesen keine fremden Payloads.
+ * adressierten Tab. Nicht adressierte Dateien lesen keine fremden Payloads,
+ * dürfen ihren neutralen Lesestand jedoch weiterhin ausgeben.
  */
 final class AdminTabScope
 {
     private function __construct(
         public readonly bool $isAddressed,
+        public readonly bool $shouldRender,
         public readonly AdminHttpRequest $request,
     ) {}
 
     /**
      * Liefert nur dem durch die kanonische JTL-Route adressierten Dateitab den
-     * echten Request. Alle anderen Tabs erhalten einen neutralen Leserequest.
+     * echten Request. Jeder gültige Tab darf unabhängig davon seinen neutralen
+     * Leserequest rendern. So bleibt der normale JTL-GET ohne Routingparameter
+     * funktionsfähig, obwohl JTL alle Customlink-Dateien ausführt.
      */
     public static function capture(
         PluginInterface $plugin,
@@ -46,10 +50,11 @@ final class AdminTabScope
             || !self::matchesId($route['kPlugin'], $plugin->getID())
             || !self::matchesId($route['kPluginAdminMenu'], $menuId)
         ) {
-            return self::inactive();
+            return self::neutral();
         }
 
         return new self(
+            true,
             true,
             (new JtlHttpRequestAdapter())->capture($plugin->getID(), $menuId, $preservePostRouting),
         );
@@ -57,7 +62,13 @@ final class AdminTabScope
 
     private static function inactive(): self
     {
-        return new self(false, new AdminHttpRequest('GET', [], []));
+        return new self(false, false, new AdminHttpRequest('GET', [], []));
+    }
+
+    /** Ein gültiger, aber nicht adressierter Tab erhält keinen fremden Payload. */
+    private static function neutral(): self
+    {
+        return new self(false, true, new AdminHttpRequest('GET', [], []));
     }
 
     /**
