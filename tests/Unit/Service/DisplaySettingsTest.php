@@ -210,6 +210,12 @@ final class DisplaySettingsTest extends TestCase
             self::assertInstanceOf(DOMElement::class, $element);
             self::assertSame('selectbox', $element->getAttribute('type'));
         }
+        $updateDescription = $xpath->evaluate('string(/jtlshopplugin/Install/Adminmenu/Settingslink/Setting[ValueName="update_notices"]/Description)');
+        self::assertIsString($updateDescription);
+        foreach (['Standardmäßig aktiviert', 'Server-zu-GitHub', 'Server-IP', 'Zeitpunkt', 'User-Agent', 'keine Tokens', 'keine Shop-, Kunden- oder Formulardaten', 'privates Repository'] as $phrase) {
+            self::assertStringContainsString($phrase, $updateDescription);
+        }
+        self::assertStringNotContainsString('anonym', strtolower($updateDescription));
         self::assertSame('', $xpath->evaluate('string(/jtlshopplugin/Install/Adminmenu/Settingslink/Setting[ValueName="position"])'));
         self::assertSame('', $xpath->evaluate('string(/jtlshopplugin/Install/Adminmenu/Settingslink/Setting[ValueName="theme"])'));
 

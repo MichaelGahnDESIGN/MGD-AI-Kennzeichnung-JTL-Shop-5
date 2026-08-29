@@ -119,7 +119,7 @@ final class DisplayEntryPointTest extends TestCase
     }
 
     #[Test]
-    public function fehlendes_sessiontoken_wird_vor_jedem_schreibversuch_mit_403_abgewiesen(): void
+    public function fehlendes_sessiontoken_wird_im_jtl_zyklus_vor_jedem_schreibversuch_als_inline_alert_gemeldet(): void
     {
         $db = new DisplayEntryDatabase();
         $this->bereiteKontextVor(new AdminAccount(['PLUGIN_DETAIL_VIEW_17']), $db, new DisplayEntryLogger());
@@ -136,7 +136,7 @@ final class DisplayEntryPointTest extends TestCase
     }
 
     #[Test]
-    public function csrf_fehler_und_unerwartete_postfelder_erhalten_400_ohne_speichern(): void
+    public function csrf_fehler_und_unerwartete_postfelder_werden_im_jtl_zyklus_ohne_speichern_als_inline_alert_gemeldet(): void
     {
         foreach ([
             'csrf' => ['csrf_token' => 'falsch'],
@@ -158,7 +158,7 @@ final class DisplayEntryPointTest extends TestCase
     }
 
     #[Test]
-    public function unerwarteter_fehler_liefert_500_und_loggt_nur_den_technischen_eventcode(): void
+    public function unerwarteter_fehler_wird_im_jtl_zyklus_als_inline_alert_gemeldet_und_loggt_nur_den_technischen_eventcode(): void
     {
         $db = new DisplayEntryDatabase();
         $db->throwOnUpdate = true;
@@ -217,6 +217,21 @@ final class DisplayEntryPointTest extends TestCase
 
         self::assertCount(7, $db->updates);
         self::assertSame([], $logger->records);
+    }
+
+    #[Test]
+    public function inaktiver_darstellungstab_initialisiert_keine_ungueltige_session(): void
+    {
+        $this->bereiteKontextVor(new AdminAccount(['PLUGIN_DETAIL_VIEW_17']), new DisplayEntryDatabase(), new DisplayEntryLogger());
+        $_SESSION = 'nicht-initialisiert';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_GET = $this->aktiveGetRoute(7);
+        $_POST = [];
+
+        $output = $this->fuehreEinstiegAus(7);
+
+        self::assertSame('', $output);
+        self::assertSame('nicht-initialisiert', $_SESSION);
     }
 
     /**

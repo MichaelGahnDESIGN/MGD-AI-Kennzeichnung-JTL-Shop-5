@@ -25,13 +25,15 @@ if (!defined('PFAD_ROOT') || !isset($oPlugin) || !$oPlugin instanceof PluginInte
 
 $container = Shop::Container();
 try {
-    $session = &JtlSessionContext::current();
-    $sessionId = session_id();
     $adminMenuId = is_object($menu ?? null) ? ($menu->kPluginAdminMenu ?? null) : null;
     $scope = AdminTabScope::capture($oPlugin, $adminMenuId, 'display.php', true);
     if (!$scope->isAddressed) {
         return;
     }
+
+    /* Inaktive JTL-Customlinks dürfen weder eine Session erzeugen noch deren Zustand verändern. */
+    $session = &JtlSessionContext::current();
+    $sessionId = session_id();
     $sessionToken = $session['jtl_token'] ?? null;
     if (!is_string($sessionId) || $sessionId === ''
         || !is_string($sessionToken) || $sessionToken === '' || strlen($sessionToken) > 256
