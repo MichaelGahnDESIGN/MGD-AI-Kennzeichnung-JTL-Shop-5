@@ -1,4 +1,4 @@
-import { createPhilosophyLinkDialog } from './philosophy-link-dialog.mjs';
+import { createPhilosophyLinkDialog, normalizeSecureLink } from './philosophy-link-dialog.mjs';
 
 /** Diese Liste ist der vollständige, bewusst kleine Formatvertrag der Werkzeugleiste. */
 export const PHILOSOPHY_TOOLBAR_COMMAND_IDS = Object.freeze([
@@ -14,6 +14,27 @@ export const PHILOSOPHY_TOOLBAR_COMMAND_IDS = Object.freeze([
     'undo',
     'redo',
 ]);
+
+/**
+ * Der Adaptervertrag enthält nur die fachlich erlaubten Operationen und ihre
+ * fest verdrahteten HTML-Ziele. Es gibt bewusst weder freie Tag-Namen noch
+ * einen generischen Browser-Command-String.
+ */
+export const PHILOSOPHY_TOOLBAR_COMMANDS = Object.freeze([
+    Object.freeze({ id: 'paragraph', method: 'setBlockFormat', value: 'p' }),
+    Object.freeze({ id: 'heading-2', method: 'setBlockFormat', value: 'h2' }),
+    Object.freeze({ id: 'heading-3', method: 'setBlockFormat', value: 'h3' }),
+    Object.freeze({ id: 'bold', method: 'toggleInlineFormat', value: 'strong' }),
+    Object.freeze({ id: 'italic', method: 'toggleInlineFormat', value: 'em' }),
+    Object.freeze({ id: 'unordered-list', method: 'toggleList', value: 'ul' }),
+    Object.freeze({ id: 'ordered-list', method: 'toggleList', value: 'ol' }),
+    Object.freeze({ id: 'link', method: 'insertLink', value: null }),
+    Object.freeze({ id: 'remove-format', method: 'removeFormat', value: null }),
+    Object.freeze({ id: 'undo', method: 'undo', value: null }),
+    Object.freeze({ id: 'redo', method: 'redo', value: null }),
+]);
+
+const COMMANDS_BY_ID = new Map(PHILOSOPHY_TOOLBAR_COMMANDS.map((command) => [command.id, command]));
 
 /** Statische Beschriftungen verhindern freie Befehle, Tags oder Formatwerte aus der Oberfläche. */
 const COMMAND_BUTTONS = Object.freeze([
@@ -37,13 +58,22 @@ const COMMAND_BUTTONS = Object.freeze([
  *
  * @param {{
  *   document?: Document|{createElement?: Function},
- *   adapter?: {execute?: (commandId: string, value?: string) => unknown},
+ *   adapter?: {
+ *     setBlockFormat?: (tag: 'p'|'h2'|'h3') => unknown,
+ *     toggleInlineFormat?: (tag: 'strong'|'em') => unknown,
+ *     toggleList?: (tag: 'ul'|'ol') => unknown,
+ *     insertLink?: (url: string) => unknown,
+ *     removeFormat?: () => unknown,
+ *     undo?: () => unknown,
+ *     redo?: () => unknown,
+ *   },
  *   visual?: {focus?: () => void},
  *   sync?: {showVisual?: () => {ok?: boolean}, showHtml?: () => {ok?: boolean}},
  *   onChange?: () => void,
  *   onModeChange?: (mode: 'visual'|'html') => void,
  *   linkDialog?: {supported?: boolean, open?: () => boolean, destroy?: () => void},
  *   initialMode?: 'visual'|'html',
+ *   scheduleMicrotask?: (callback: () => void) => void,
  * }} [options] Kleine explizite Abhängigkeiten für Browser und Editor.
  * @returns {{
  *   element: HTMLElement|null,
@@ -68,6 +98,9 @@ export function createPhilosophyToolbar(options = {}) {
     const onChange = typeof configuration.onChange === 'function' ? configuration.onChange : () => {};
     const onModeChange = typeof configuration.onModeChange === 'function' ? configuration.onModeChange : () => {};
     const sync = isObject(configuration.sync) ? configuration.sync : null;
+    const scheduleMicrotask = typeof configuration.scheduleMicrotask === 'function'
+        ? configuration.scheduleMicrotask
+        : scheduleForCurrentTurn;
     let activeMode = configuration.initialMode === 'html' ? 'html' : 'visual';
     let commandInProgress = false;
 
@@ -77,6 +110,7 @@ export function createPhilosophyToolbar(options = {}) {
     toolbar.setAttribute('aria-label', 'Werkzeuge für den Philosophie-Text');
     const buttons = new Map();
     const commandListeners = new Map();
+    const pressedButtonIds = new Set();
     const linkDialog = configuration.linkDialog ?? createPhilosophyLinkDialog({
         document: documentAdapter,
         onInsert(url) {
@@ -89,7 +123,10 @@ export function createPhilosophyToolbar(options = {}) {
         if (definition.id === 'link' && linkDialog.supported !== true) {
             button.disabled = true;
         }
-        const listener = () => {
+        const listener = (event) => {
+            if (!claimButtonForCurrentTurn(definition.id, event)) {
+                return;
+            }
             if (definition.id === 'link') {
                 if (linkDialog.supported === true && typeof linkDialog.open === 'function') {
                     linkDialog.open();
@@ -106,8 +143,16 @@ export function createPhilosophyToolbar(options = {}) {
 
     const visualButton = createModeButton(documentAdapter, 'Visuelle Bearbeitung', 'Visuell', 'visual');
     const htmlButton = createModeButton(documentAdapter, 'HTML-Bearbeitung', 'HTML', 'html');
-    const visualListener = () => { setMode('visual'); };
-    const htmlListener = () => { setMode('html'); };
+    const visualListener = (event) => {
+        if (claimButtonForCurrentTurn('mode-visual', event)) {
+            setMode('visual');
+        }
+    };
+    const htmlListener = (event) => {
+        if (claimButtonForCurrentTurn('mode-html', event)) {
+            setMode('html');
+        }
+    };
     visualButton.addEventListener('click', visualListener);
     htmlButton.addEventListener('click', htmlListener);
     toolbar.append(visualButton, htmlButton);
@@ -115,13 +160,15 @@ export function createPhilosophyToolbar(options = {}) {
 
     /** Führt nur einen festen Befehl aus und normalisiert danach den Editorzustand erneut. */
     function executeCommand(commandId, value) {
-        if (!PHILOSOPHY_TOOLBAR_COMMAND_IDS.includes(commandId) || commandInProgress) {
+        const command = COMMANDS_BY_ID.get(commandId);
+        const payload = resolveCommandPayload(command, value);
+        if (!payload.ok || commandInProgress) {
             return false;
         }
 
         commandInProgress = true;
         try {
-            if (typeof adapter.execute !== 'function' || adapter.execute(commandId, value) === false) {
+            if (invokeAdapter(adapter, command, payload.value) === false) {
                 return false;
             }
             onChange();
@@ -174,6 +221,33 @@ export function createPhilosophyToolbar(options = {}) {
         }
     }
 
+    /**
+     * Sperrt nur denselben Button bis zur nächsten Microtask. Der zweite
+     * native Click eines Doppelklicks wird zusätzlich über `detail > 1`
+     * erkannt; spätere Einzelklicks werden nicht künstlich verzögert.
+     */
+    function claimButtonForCurrentTurn(buttonId, event) {
+        /* Ein zweiter nativer Click eines Doppelklicks trägt zuverlässig detail > 1. */
+        if (event && Number.isInteger(event.detail) && event.detail > 1) {
+            return false;
+        }
+        if (pressedButtonIds.has(buttonId)) {
+            return false;
+        }
+
+        pressedButtonIds.add(buttonId);
+        try {
+            scheduleMicrotask(() => {
+                pressedButtonIds.delete(buttonId);
+            });
+        } catch {
+            /* Fehlerhafte Test- oder Browseradapter dürfen keine Dauersperre hinterlassen. */
+            pressedButtonIds.delete(buttonId);
+        }
+
+        return true;
+    }
+
     return {
         element: toolbar,
         buttons,
@@ -196,6 +270,47 @@ export function createPhilosophyToolbar(options = {}) {
             }
         },
     };
+}
+
+/** Lässt die kurze Doppelklick-Sperre nach der laufenden Browser-Ereignisphase enden. */
+function scheduleForCurrentTurn(callback) {
+    if (typeof globalThis.queueMicrotask === 'function') {
+        globalThis.queueMicrotask(callback);
+
+        return;
+    }
+
+    Promise.resolve().then(callback);
+}
+
+/** Erlaubt für Nicht-Linkbefehle keinen fremden Wert und prüft Links nochmals unabhängig. */
+function resolveCommandPayload(command, rawValue) {
+    if (!command) {
+        return { ok: false, value: null };
+    }
+    if (command.id !== 'link') {
+        return rawValue === undefined
+            ? { ok: true, value: command.value }
+            : { ok: false, value: null };
+    }
+
+    const secureLink = normalizeSecureLink(rawValue);
+
+    return secureLink === null
+        ? { ok: false, value: null }
+        : { ok: true, value: secureLink };
+}
+
+/** Ruft ausschließlich die pro Deskriptor erlaubte Adaptermethode mit dem festen Ziel auf. */
+function invokeAdapter(adapter, command, value) {
+    const method = adapter[command.method];
+    if (typeof method !== 'function') {
+        return false;
+    }
+
+    return command.id === 'link' || command.value !== null
+        ? method.call(adapter, value)
+        : method.call(adapter);
 }
 
 /** Erstellt einen nicht bedienbaren, aber typsicheren Rückgabewert ohne DOM. */

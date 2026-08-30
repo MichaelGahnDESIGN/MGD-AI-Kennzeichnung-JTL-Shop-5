@@ -28,7 +28,7 @@ export function normalizeSecureLink(value) {
  *   element: HTMLDialogElement|null,
  *   supported: boolean,
  *   open: () => boolean,
- *   close: () => void,
+ *   close: () => boolean,
  *   destroy: () => void,
  * }} Dialog-Steuerung ohne globale Browser- oder Netzabhängigkeiten.
  */
@@ -105,17 +105,25 @@ export function createPhilosophyLinkDialog(options = {}) {
     };
 
     /** Schließt ohne Callback und bewahrt somit Auswahl sowie Editorinhalt. */
-    const closeDialog = () => {
+    const closeDialog = (releaseInsertionLock = true) => {
         if (!open && !dialog.open) {
-            return;
+            return true;
         }
         try {
             dialog.close();
         } catch {
             /* Browserfehler dürfen nie einen Einfügevorgang auslösen. */
+            return false;
+        }
+        if (dialog.open) {
+            return false;
         }
         open = false;
-        insertionInProgress = false;
+        if (releaseInsertionLock) {
+            insertionInProgress = false;
+        }
+
+        return true;
     };
 
     /** Bestätigt nur eine einmalige, unveränderte, positiv geprüfte HTTPS-Adresse. */
@@ -139,12 +147,18 @@ export function createPhilosophyLinkDialog(options = {}) {
         }
 
         insertionInProgress = true;
+        /* Ein modal geöffneter Dialog macht den übrigen Editor inert. */
+        if (!closeDialog(false)) {
+            insertionInProgress = false;
+            error.textContent = 'Der Linkdialog konnte nicht sicher geschlossen werden.';
+            return;
+        }
         try {
             onInsert(normalized);
-            closeDialog();
         } catch {
-            insertionInProgress = false;
             error.textContent = 'Der Link konnte nicht eingefügt werden. Bitte versuchen Sie es erneut.';
+        } finally {
+            insertionInProgress = false;
         }
     };
 
@@ -156,7 +170,6 @@ export function createPhilosophyLinkDialog(options = {}) {
     };
     const handleClose = () => {
         open = false;
-        insertionInProgress = false;
     };
 
     cancel.addEventListener('click', cancelLink);

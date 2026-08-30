@@ -5,10 +5,13 @@ import {
     createPhilosophyLinkDialog,
     normalizeSecureLink,
 } from '../../plugin/MGD_AI_Kennzeichnung/adminmenu/js/philosophy-link-dialog.mjs';
-import {
+import * as toolbarModule from '../../plugin/MGD_AI_Kennzeichnung/adminmenu/js/philosophy-toolbar.mjs';
+
+const {
+    PHILOSOPHY_TOOLBAR_COMMANDS,
     PHILOSOPHY_TOOLBAR_COMMAND_IDS,
     createPhilosophyToolbar,
-} from '../../plugin/MGD_AI_Kennzeichnung/adminmenu/js/philosophy-toolbar.mjs';
+} = toolbarModule;
 
 /** Minimaler DOM-Ersatz, der nur den öffentlich genutzten Browservertrag abbildet. */
 class TestElement {
@@ -44,9 +47,9 @@ class TestElement {
         this.listeners.set(type, (this.listeners.get(type) ?? []).filter((entry) => entry !== listener));
     }
 
-    dispatch(type) {
+    dispatch(type, event = {}) {
         for (const listener of this.listeners.get(type) ?? []) {
-            listener({ preventDefault() {} });
+            listener({ preventDefault() {}, ...event });
         }
     }
 
@@ -114,6 +117,22 @@ test('Befehls-IDs sind vollständig, eindeutig und auf die erlaubte Menge begren
     ]);
 });
 
+test('Befehlsdeskriptoren enthalten ausschließlich die fest erlaubten HTML-Ziele', () => {
+    assert.deepEqual(PHILOSOPHY_TOOLBAR_COMMANDS, [
+        { id: 'paragraph', method: 'setBlockFormat', value: 'p' },
+        { id: 'heading-2', method: 'setBlockFormat', value: 'h2' },
+        { id: 'heading-3', method: 'setBlockFormat', value: 'h3' },
+        { id: 'bold', method: 'toggleInlineFormat', value: 'strong' },
+        { id: 'italic', method: 'toggleInlineFormat', value: 'em' },
+        { id: 'unordered-list', method: 'toggleList', value: 'ul' },
+        { id: 'ordered-list', method: 'toggleList', value: 'ol' },
+        { id: 'link', method: 'insertLink', value: null },
+        { id: 'remove-format', method: 'removeFormat', value: null },
+        { id: 'undo', method: 'undo', value: null },
+        { id: 'redo', method: 'redo', value: null },
+    ]);
+});
+
 test('Werkzeugleiste erstellt nur echte deutsch beschriftete Buttons', () => {
     const document = createDocument();
     const toolbar = createPhilosophyToolbar({ document, adapter: { execute() {} } });
@@ -141,16 +160,60 @@ test('feste Befehle nutzen ausschließlich den Adapter, synchronisieren und foku
     const toolbar = createPhilosophyToolbar({
         document,
         visual,
-        adapter: { execute(commandId, value) { commands.push([commandId, value]); } },
+        adapter: {
+            setBlockFormat(tag) { commands.push(['setBlockFormat', tag]); },
+            toggleInlineFormat(tag) { commands.push(['toggleInlineFormat', tag]); },
+        },
         onChange() { changes += 1; },
     });
 
     toolbar.buttons.get('heading-2').dispatch('click');
     toolbar.buttons.get('bold').dispatch('click');
 
-    assert.deepEqual(commands, [['heading-2', undefined], ['bold', undefined]]);
+    assert.deepEqual(commands, [['setBlockFormat', 'h2'], ['toggleInlineFormat', 'strong']]);
     assert.equal(changes, 2);
     assert.equal(visual.focusCalls, 2);
+});
+
+test('unbekannte Befehle und freie Werte werden vor dem Adapter verworfen', () => {
+    const document = createDocument();
+    const calls = [];
+    const toolbar = createPhilosophyToolbar({
+        document,
+        adapter: {
+            setBlockFormat(value) { calls.push(value); },
+        },
+    });
+
+    assert.equal(toolbar.executeCommand('heading-2', 'script'), false);
+    assert.equal(toolbar.executeCommand('unbekannt'), false);
+    assert.deepEqual(calls, []);
+});
+
+test('schneller sequenzieller Doppelklick führt denselben Formatbefehl nur einmal aus', () => {
+    const document = createDocument();
+    const scheduled = [];
+    let commands = 0;
+    const toolbar = createPhilosophyToolbar({
+        document,
+        scheduleMicrotask(callback) { scheduled.push(callback); },
+        adapter: {
+            toggleInlineFormat(tag) {
+                assert.equal(tag, 'strong');
+                commands += 1;
+            },
+        },
+    });
+
+    const bold = toolbar.buttons.get('bold');
+    bold.dispatch('click', { detail: 1 });
+    /* Der Browser leert Microtasks zwischen zwei echten DOM-Click-Ereignissen. */
+    scheduled.shift()();
+    bold.dispatch('click', { detail: 2 });
+    assert.equal(commands, 1);
+
+    bold.dispatch('click', { detail: 1 });
+    assert.equal(commands, 2);
 });
 
 test('Modusschalter aktualisieren aria-pressed und nutzen den Sync-Adapter', () => {
@@ -232,24 +295,35 @@ test('ohne Dialogunterstützung bleibt die Werkzeugleiste nutzbar und deaktivier
     assert.equal(toolbar.buttons.get('bold').disabled, false);
 });
 
-test('Linkbutton führt nach erfolgreichem Einfügen genau einen Adapterbefehl aus und fokussiert', () => {
+test('Linkbutton schließt den Dialog vor Adapter, Synchronisierung und Visualfokus', () => {
     const document = createDocument();
-    const commands = [];
+    const events = [];
     const visual = new TestElement('div');
+    visual.focus = () => { events.push('focus'); };
     const toolbar = createPhilosophyToolbar({
         document,
         visual,
-        adapter: { execute(commandId, value) { commands.push([commandId, value]); } },
+        adapter: {
+            insertLink(url) {
+                events.push(`adapter:${url}`);
+                assert.equal(toolbar.linkDialog.element.open, false);
+            },
+        },
+        onChange() { events.push('change'); },
     });
     const input = findByRole(toolbar.linkDialog.element, 'link-url');
     const submit = findByRole(toolbar.linkDialog.element, 'link-submit');
+    const originalClose = toolbar.linkDialog.element.close.bind(toolbar.linkDialog.element);
+    toolbar.linkDialog.element.close = () => {
+        events.push('close');
+        originalClose();
+    };
 
     toolbar.buttons.get('link').dispatch('click');
     input.value = 'https://beispiel.de';
     submit.dispatch('click');
 
-    assert.deepEqual(commands, [['link', 'https://beispiel.de']]);
-    assert.equal(visual.focusCalls, 1);
+    assert.deepEqual(events, ['close', 'adapter:https://beispiel.de', 'change', 'focus']);
 });
 
 test('Toolbar verwendet weder Netz noch Browser-Speicher', () => {
