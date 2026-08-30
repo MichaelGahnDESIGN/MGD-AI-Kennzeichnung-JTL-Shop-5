@@ -20,6 +20,16 @@ werden weder analysiert noch zu einem Drittanbieter hochgeladen. Öffentliche
 GitHub-Release-Metadaten werden nur bei ausdrücklich aktivierten
 Updatehinweisen und höchstens alle zwölf Stunden abgefragt.
 
+## Lokaler Editor mit doppelter Sicherheitsgrenze
+
+Der Philosophie-Editor verwendet native Browserfunktionen und ausschließlich
+lokale Plugin-Dateien. Eine kleine Positivliste bereinigt Inhalte beim
+Moduswechsel, damit Redakteure sofort verständliches Feedback erhalten. Beim
+Speichern prüft der PHP-Sanitizer erneut und bleibt die maßgebliche
+Sicherheitsgrenze. Die Original-Textfelder bleiben als No-JavaScript-Fallback
+erhalten, damit eine Komfortfunktion nie Voraussetzung für redaktionelle Arbeit
+wird.
+
 ## Eigener Darstellungstab mit lokaler Live-Vorschau
 
 Globale Werte werden nicht mehr zwischen allgemeinen JTL-Einstellungen
@@ -37,10 +47,18 @@ geprüften Zahlen und nicht aus freier Benutzereingabe.
 
 ## Hinweis statt Auto-Updater
 
-Version 1.2.1 installiert keine Updates automatisch. Die optionale Prüfung
+Version 1.3.0 installiert keine Updates automatisch. Die optionale Prüfung
 fragt nur den festen GitHub-Endpunkt ab und speichert auch erfolglose Versuche
-zwölf Stunden. Da das Repository privat ist, bleibt der zuverlässige Weg ein
-geprüfter manueller ZIP-Upload nach Backup und Dev-Test.
+zwölf Stunden. Auch beim öffentlichen Repository bleibt der zuverlässige Weg
+ein geprüfter manueller ZIP-Upload nach Backup und Dev-Test.
+
+## Kostenloses Grund-Plugin ohne technische Sperren
+
+Version 1.3.0 enthält keine Lizenzschlüssel, Zahlung, Sperren, Telemetrie oder
+Pro-Freischaltung. Einnahmen sollen zunächst über klar getrennte Leistungen wie
+Installation, Schulung, Wartung und Beratung entstehen. Ein späteres Pro-Add-on
+oder SaaS-Angebot wird erst nach plattformspezifischer Prüfung separat
+entwickelt.
 
 ## Geschlossene Auswahlwerte
 

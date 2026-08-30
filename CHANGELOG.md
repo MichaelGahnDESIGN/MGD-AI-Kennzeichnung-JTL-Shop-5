@@ -1,5 +1,23 @@
 # Änderungsprotokoll
 
+## 1.3.0 – 2026-08-30
+
+- AI-Philosophie in zwei große, untereinander angeordnete Sprachkarten
+  überführt;
+- vollständig lokalen visuellen Editor mit optionalem HTML-Modus,
+  Werkzeugleiste und sicherem HTTPS-Linkdialog ergänzt;
+- erlaubte Formatierung auf `p`, `h2`, `h3`, `ul`, `ol`, `li`, `strong`, `em`
+  und `a` begrenzt und serverseitige Bereinigung als maßgebliche
+  Sicherheitsgrenze beibehalten;
+- beide Sprachfassungen über einen eindeutigen Speichern-Vorgang
+  synchronisiert;
+- große Original-Textfelder als vollständig bedienbaren
+  No-JavaScript-Fallback erhalten;
+- externe Editorbibliotheken, CDN-Ressourcen, Fonts, Icons, Drittinhalte und
+  Telemetrie ausgeschlossen;
+- Nutzerhandbuch, Release-Hinweise und technische Marketplace-Recherche für
+  ein nachhaltiges, kostenloses Grund-Plugin ergänzt.
+
 ## 1.2.1 – 2026-08-29
 
 - geschützten, zweispaltigen Darstellungstab mit lokaler Live-Vorschau ergänzt;

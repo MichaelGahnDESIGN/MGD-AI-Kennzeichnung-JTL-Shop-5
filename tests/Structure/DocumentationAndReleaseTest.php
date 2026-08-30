@@ -186,6 +186,57 @@ BASH;
     }
 
     #[Test]
+    public function version_1_3_0_erklaert_editor_datenschutz_und_nachhaltige_monetarisierung(): void
+    {
+        $dateien = [
+            'README' => self::ROOT . '/README.md',
+            'README Englisch' => self::ROOT . '/README.en.md',
+            'Änderungsprotokoll' => self::ROOT . '/CHANGELOG.md',
+            'Sicherheit' => self::ROOT . '/SECURITY.md',
+            'Dokumentationsübersicht' => self::ROOT . '/Dokumentation/README.md',
+            'Monetarisierung' => self::ROOT . '/Dokumentation/Monetarisierung-und-Marketplaces.md',
+            'Release' => self::ROOT . '/Dokumentation/Release-1.3.0.md',
+            'Wiki AI-Philosophie' => self::ROOT . '/wiki/AI-Philosophie.md',
+            'Wiki Datenschutz' => self::ROOT . '/wiki/Datenschutz-und-Sicherheit.md',
+            'Wiki Update' => self::ROOT . '/wiki/Installation-und-Update.md',
+        ];
+        $inhalte = [];
+        foreach ($dateien as $name => $datei) {
+            self::assertFileExists($datei, $name . ' fehlt.');
+            $inhalt = file_get_contents($datei);
+            self::assertIsString($inhalt);
+            self::assertNotSame('', trim($inhalt), $name . ' ist leer.');
+            $inhalte[$name] = $inhalt;
+        }
+
+        foreach (['Version 1.3.0', 'Visuell', 'HTML', 'Beide Sprachfassungen speichern'] as $begriff) {
+            self::assertStringContainsStringIgnoringCase($begriff, $inhalte['README']);
+        }
+        foreach (['p', 'h2', 'h3', 'ul', 'ol', 'li', 'strong', 'em', 'a'] as $element) {
+            self::assertStringContainsString('`' . $element . '`', $inhalte['Wiki AI-Philosophie']);
+        }
+        foreach (['keine externen', 'keine Drittinhalte', 'keine Telemetrie', 'No-JavaScript'] as $begriff) {
+            self::assertStringContainsStringIgnoringCase(
+                $begriff,
+                $inhalte['Sicherheit'] . "\n" . $inhalte['Wiki Datenschutz'],
+            );
+        }
+        foreach (['JTL', 'Shopware', 'WordPress', 'Shopify', 'keine Rechtsberatung', '30.08.2026'] as $begriff) {
+            self::assertStringContainsStringIgnoringCase($begriff, $inhalte['Monetarisierung']);
+        }
+        foreach (['keine Lizenzschlüssel', 'keine Zahlung', 'keine Sperren', 'keine Telemetrie'] as $begriff) {
+            self::assertStringContainsStringIgnoringCase($begriff, $inhalte['Monetarisierung']);
+        }
+        self::assertStringNotContainsStringIgnoringCase(
+            'privates Repository',
+            $inhalte['README'] . "\n"
+                . $inhalte['README Englisch'] . "\n"
+                . $inhalte['Sicherheit'] . "\n"
+                . $inhalte['Wiki Update'],
+        );
+    }
+
+    #[Test]
     public function version_1_2_1_ist_in_paket_ci_und_benutzerdokumentation_konsistent(): void
     {
         $dateien = [

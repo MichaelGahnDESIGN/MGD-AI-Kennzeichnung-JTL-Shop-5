@@ -54,7 +54,17 @@ nicht gespeichert.
 
 ## AI-Philosophie
 
-Redaktioneller HTML-Inhalt wird auf eine kleine Positivliste reduziert. Unsichere Links, aktive Elemente und freie Attribute werden entfernt.
+Redaktioneller HTML-Inhalt wird auf die Positivliste `p`, `h2`, `h3`, `ul`,
+`ol`, `li`, `strong`, `em` und `a` reduziert. Unsichere Links, aktive Elemente
+und freie Attribute werden entfernt. Der PHP-Sanitizer bleibt beim Speichern
+die maßgebliche Sicherheitsgrenze.
+
+Der visuelle und der HTML-Modus bestehen ausschließlich aus lokalen
+Plugin-Dateien. Sie laden **keine externen** Bibliotheken, **keine Drittinhalte**,
+Fonts, Icons oder CDN-Ressourcen und verwenden **keine
+Telemetrie**. Texte werden nicht in Browser-Speicher oder an Dritte geschrieben.
+Ohne JavaScript bleiben die großen Textfelder als **No-JavaScript-Fallback**
+vollständig bedienbar.
 
 ## Updatehinweise
 
@@ -65,12 +75,11 @@ GitHub-Release-API, prüft TLS, folgt keinen Weiterleitungen und begrenzt die
 Antwortgröße.
 
 GitHub kann technisch die **Server-IP**, den Zeitpunkt und den festen
-**User-Agent** `MGD-AI-Kennzeichnung-JTL-Shop-5/1.2.1` erhalten. Bilder,
+**User-Agent** `MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.0` erhalten. Bilder,
 Tokens, Shop-, Kunden- und Formulardaten werden nicht übertragen. Ein Erfolg
-oder Fehler wird zwölf Stunden lokal zwischengespeichert. Das private
-Repository liefert anonym üblicherweise keine Release-Information. Das Plugin
-installiert keine Updates automatisch; erforderlich bleibt der manuelle
-ZIP-Upload.
+oder Fehler wird zwölf Stunden lokal zwischengespeichert. Das Plugin installiert
+keine Updates automatisch; erforderlich bleibt der manuelle ZIP-Upload des
+geprüften Release-Pakets.
 
 ## Protokollierung
 

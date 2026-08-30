@@ -34,6 +34,22 @@ angeboten. Diese Begrenzung verhindert aktive Inhalte und unkontrollierte
 Netzwerkzugriffe, bedeutet aber auch, dass solche Medien außerhalb des Plugins
 organisatorisch bewertet werden müssen.
 
+## Begrenzte Philosophie-Formatierung
+
+Der lokale Editor erlaubt bewusst nur wenige semantische HTML-Elemente und
+sichere HTTPS-Links. Komplexe Layouts, Bilder, eingebettete Inhalte, freie
+Attribute und eigene Styles werden entfernt. Fällt JavaScript aus, bleibt die
+Bearbeitung über die großen Textfelder möglich; die Komfort-Werkzeugleiste steht
+dann nicht zur Verfügung.
+
+## Marketplace-Regeln können sich ändern
+
+Die dokumentierten Monetarisierungsregeln sind eine technische Recherche mit
+Stand 30.08.2026 und keine Rechtsberatung. Externe Lizenz- oder
+Zahlungsmodelle müssen vor einer Marketplace-Einreichung erneut anhand der
+aktuellen Verträge und bei unklarer Lage schriftlich mit dem Betreiber
+abgestimmt werden.
+
 ## Leistungsgrenzen
 
 Scans sind paginiert und besitzen harte Obergrenzen. Das Frontend liest
@@ -52,8 +68,8 @@ Bei aktivierten Updatehinweisen entsteht eine ausgehende HTTPS-Verbindung zu
 GitHub. Dabei sind Server-IP, Zeitpunkt und der feste User-Agent technisch für
 GitHub sichtbar. Weder Bilder noch Tokens, Kunden-, Shop- oder Formulardaten
 werden übertragen. Positive und negative Ergebnisse werden zwölf Stunden
-lokal zwischengespeichert. Das private Repository liefert anonym üblicherweise
-keinen Release-Hinweis; das Plugin installiert keine Updates automatisch.
+lokal zwischengespeichert. Das Plugin installiert keine Updates automatisch;
+der öffentliche Release-Hinweis ersetzt nicht den manuellen, geprüften Upload.
 Betreiber mit strikten Netzwerk- oder Datenschutzvorgaben können die Funktion
 deaktivieren und Releases manuell prüfen.
 

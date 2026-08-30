@@ -2,7 +2,7 @@
 
 Transparente Kennzeichnungen für KI-generierte und KI-bearbeitete Bilder – direkt in JTL-Shop 5, ohne die Originalbilder zu verändern und ohne Bilddaten an externe KI-Dienste zu senden.
 
-> **Aktuelle Version:** 1.2.1
+> **Aktuelle Version:** 1.3.0
 > **Getestet mit:** JTL-Shop 5.7.2, PHP 8.1 oder neuer, NOVA und NOVA-basierten Templates
 > **Wichtig:** Das Plugin erkennt KI-Inhalte nicht automatisch. Die fachliche Prüfung und Einstufung erfolgt bewusst durch einen berechtigten Menschen.
 
@@ -33,6 +33,8 @@ Das Plugin verändert keine Bilddatei, brennt keinen Text in ein Bild ein und ve
 - Integration in den OnPage Composer und optional in dessen JTL-Dateimanager;
 - deutsch- und englischsprachige, barrierearme Kennzeichnungstexte;
 - eigene AI-Philosophie als OPC-Portlet unter **Custom Portlets**;
+- vollständig lokaler Editor für die AI-Philosophie mit visuellem Modus,
+  optionalem HTML-Modus und großen deutschen sowie englischen Textfeldern;
 - eigener, rein lesender Impressum-Tab mit transparenten Herstellerangaben;
 - keine automatische Übertragung von Bildern oder Kundendaten an externe Dienste;
 - sichere JTL-Admin-Integration mit Berechtigungs- und CSRF-Prüfung;
@@ -90,10 +92,10 @@ Die sichtbaren Texte werden je nach Shop- oder Plugin-Sprache auf Deutsch oder E
 
 ### 1. Paket herunterladen
 
-Laden Sie das ZIP aus dem Bereich [GitHub Releases](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases) herunter. Verwenden Sie nicht den automatisch von GitHub erzeugten Quellcode-Download, sondern das installierbare Paket `MGD_AI_Kennzeichnung-1.2.1.zip`.
+Laden Sie das ZIP aus dem Bereich [GitHub Releases](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases) herunter. Verwenden Sie nicht den automatisch von GitHub erzeugten Quellcode-Download, sondern das installierbare Paket `MGD_AI_Kennzeichnung-1.3.0.zip`.
 
-Das Repository ist ein **privates Repository**. Version 1.2.1 besitzt keinen
-Auto-Updater. Die Aktualisierung erfolgt als **manueller ZIP-Upload** im
+Das öffentlich zugängliche Repository stellt Release-Hinweise bereit, aber
+keinen Auto-Updater. Die Aktualisierung erfolgt als **manueller ZIP-Upload** im
 JTL-Plugin-Manager; das Plugin installiert keine Updates automatisch.
 
 ### 2. Vorher sichern
@@ -109,7 +111,7 @@ Erstellen Sie vor Installation oder Update mindestens:
 
 1. JTL-Backend öffnen.
 2. **Plugins → Plugin-Manager → Upload** wählen.
-3. `MGD_AI_Kennzeichnung-1.2.1.zip` hochladen.
+3. `MGD_AI_Kennzeichnung-1.3.0.zip` hochladen.
 4. Das Plugin installieren beziehungsweise aktualisieren.
 5. Plugin aktivieren.
 6. Shop- und Template-Cache leeren, falls JTL dies nach dem Update nicht automatisch erledigt.
@@ -168,7 +170,26 @@ Die optionale Dateimanager-Erweiterung erscheint nur, wenn JTLs lokaler elFinder
 
 Unter **Plugins → MGD AI Kennzeichnung → AI-Philosophie** können eine deutsche und eine englische Fassung der eigenen KI-Grundsätze gepflegt werden. Das zugehörige OPC-Portlet befindet sich unter **Custom Portlets → AI-Philosophie**.
 
-Erlaubt sind Absätze, Überschriften, Listen, Hervorhebungen und sichere HTTPS-Links. Aktive Inhalte, Skripte, Formulare, eingebettete Objekte und unsichere Attribute werden entfernt.
+So funktioniert die Bearbeitung:
+
+1. Sprachkarte **Deutsch** oder **Englisch** öffnen.
+2. Im Modus **Visuell** schreiben und mit der lokalen Werkzeugleiste
+   formatieren.
+3. Optional in den Modus **HTML** wechseln, um den bereinigten Quelltext zu
+   bearbeiten.
+4. **Beide Sprachfassungen speichern** wählen. Dadurch werden Deutsch und
+   Englisch in einem geschützten Vorgang gespeichert.
+
+Erlaubt sind Absätze, Überschriften, Listen, Hervorhebungen und sichere
+HTTPS-Links. Die technische Positivliste umfasst `p`, `h2`, `h3`, `ul`, `ol`,
+`li`, `strong`, `em` und `a`. Scripts, Styles, Bilder, Iframes, Formulare,
+eingebettete Objekte und fremde Attribute werden entfernt. Links mit unsicherem
+Protokoll, Zugangsdaten oder fremdem Port werden nicht übernommen.
+
+Der Editor lädt **keine externen** Drittinhalte, Bibliotheken, Fonts, Icons,
+CDN-Ressourcen oder Telemetrie. Alle Bestandteile liegen lokal im Plugin. Ohne
+JavaScript bleiben die großen Textfelder als **No-JavaScript-Fallback**
+vollständig nutzbar.
 
 Typische Inhalte einer AI-Philosophie sind:
 
@@ -232,15 +253,16 @@ Das Plugin wurde nach dem Prinzip der Datenminimierung entwickelt:
 - ausschließlich lokale Vorschaupfade aus erlaubten Rasterbildbereichen;
 - begrenzte Scan-, Listen- und Stapelgrößen;
 - HTML-Bereinigung für die AI-Philosophie;
+- keine Drittinhalte, externen Editorbibliotheken, Webfonts, Icons oder
+  Telemetrie im Philosophie-Editor;
 - Updateabfrage nur im adressierten Darstellungstab und mit lokalem positiven wie negativen Zwölf-Stunden-Cache;
 - keine Secrets, Tokens oder Bildinhalte in der Updateabfrage.
 
 Bei aktivierter Updateprüfung erhält GitHub technisch die Server-IP, den
 Zeitpunkt und den festen User-Agent
-`MGD-AI-Kennzeichnung-JTL-Shop-5/1.2.1`. Bilder, Kunden-, Shop- und
-Formulardaten werden nicht übertragen. Weil das Repository privat ist, kann die
-anonyme Prüfung ohne Hinweis enden; auch dieses Ergebnis wird zwölf Stunden
-zwischengespeichert.
+`MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.0`. Bilder, Kunden-, Shop- und
+Formulardaten werden nicht übertragen. Auch ein Fehler oder ein Ergebnis ohne
+neue Version wird zwölf Stunden zwischengespeichert.
 
 Weitere Details stehen in [Datenschutz und Sicherheit](Dokumentation/Datenschutz-und-Sicherheit.md) und im [vollständigen GitHub-Handbuch](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/blob/main/wiki/Home.md).
 
@@ -253,7 +275,7 @@ Weitere Details stehen in [Datenschutz und Sicherheit](Dokumentation/Datenschutz
 - ein berechtigtes JTL-Admin-Konto;
 - empfohlen: Standardtemplate NOVA oder ein sauber abgeleitetes NOVA-Child-Theme.
 
-Die Bildausgabe wurde mit Version 1.1.1 unter NOVA sowie OnvisTheme auf Basis NOVA 1.7.1 geprüft. Version 1.2.0 ergänzte den geschützten Impressum-Tab; Version 1.2.1 ergänzt die globale Darstellung und Transparenz. Andere Templates können funktionieren, sollten aber zuerst in einer getrennten Testumgebung geprüft werden.
+Die Bildausgabe wurde mit Version 1.1.1 unter NOVA sowie OnvisTheme auf Basis NOVA 1.7.1 geprüft. Version 1.2.0 ergänzte den geschützten Impressum-Tab, Version 1.2.1 die globale Darstellung und Transparenz, Version 1.3.0 den vollständig lokalen Philosophie-Editor. Andere Templates können funktionieren, sollten aber zuerst in einer getrennten Testumgebung geprüft werden.
 
 ## Bewusste Grenzen
 
@@ -293,7 +315,8 @@ Eine Deinstallation mit Datenlöschung ist kein normaler Rollback. Ohne ausdrüc
 - [Installation, Test und Rollback](Dokumentation/Installation-und-Livetest.md)
 - [Datenschutz und Sicherheit](Dokumentation/Datenschutz-und-Sicherheit.md)
 - [Darstellung und Live-Vorschau](Dokumentation/Darstellung.md)
-- [Release 1.2.1](Dokumentation/Release-1.2.1.md)
+- [Release 1.3.0](Dokumentation/Release-1.3.0.md)
+- [Monetarisierung und Marketplace-Regeln](Dokumentation/Monetarisierung-und-Marketplaces.md)
 - [Plugin-Impressum](Dokumentation/Impressum.md)
 - [Technische Dokumentationsübersicht](Dokumentation/README.md)
 - [Änderungsprotokoll](CHANGELOG.md)
@@ -309,8 +332,8 @@ composer test:js
 composer analyse
 composer style
 bash scripts/build-release.sh
-unzip -t dist/MGD_AI_Kennzeichnung-1.2.1.zip
-shasum -a 256 dist/MGD_AI_Kennzeichnung-1.2.1.zip
+unzip -t dist/MGD_AI_Kennzeichnung-1.3.0.zip
+shasum -a 256 dist/MGD_AI_Kennzeichnung-1.3.0.zip
 ```
 
 Die Testumgebung umfasst PHP-Unit- und Integrationstests, JavaScript-Tests, statische PHP-Analyse, Formatprüfung, Strukturverträge und die Prüfung des installierbaren ZIP-Pakets.

@@ -1,8 +1,16 @@
 # Versionsübersicht
 
+## 1.3.0 – 30. August 2026
+
+Aktueller freigegebener Stand. Ergänzt zwei große Sprachkarten für die
+AI-Philosophie, einen vollständig lokalen visuellen Editor, den optionalen
+HTML-Modus, eine enge Positivliste und den No-JavaScript-Fallback. Das
+kostenlose Grund-Plugin enthält keine Lizenzschlüssel, Zahlung, Sperren,
+Telemetrie oder Pro-Freischaltung.
+
 ## 1.2.1 – 29. August 2026
 
-Aktueller freigegebener Stand. Ergänzt den geschützten Darstellungstab mit
+Historischer Stand. Ergänzt den geschützten Darstellungstab mit
 lokaler Live-Vorschau, Transparenz, gekoppelten Reglern und der neuen
 Herstellernennung **supported by: Michael Gahn DESIGN**. Updateprüfungen besitzen
 einen positiven und negativen Zwölf-Stunden-Cache; das Update selbst erfolgt

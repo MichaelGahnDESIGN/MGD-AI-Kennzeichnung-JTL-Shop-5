@@ -60,6 +60,20 @@ Die Statusbezeichnungen sind aus Sicherheits- und Konsistenzgründen fest defini
 
 Ja. Labeltexte können automatisch der Shopsprache folgen oder fest auf Deutsch beziehungsweise Englisch gesetzt werden. Die AI-Philosophie besitzt getrennte Sprachfassungen.
 
+## Kann ich die AI-Philosophie formatiert bearbeiten?
+
+Ja. Version 1.3.0 bietet einen lokalen visuellen Modus und eine optionale
+HTML-Ansicht. Erlaubt sind Absätze, zwei Überschriftenebenen, Listen,
+Hervorhebungen und sichere HTTPS-Links. Scripts, Styles, Bilder, Iframes und
+fremde Attribute werden entfernt. **Beide Sprachfassungen speichern** sichert
+Deutsch und Englisch gemeinsam.
+
+## Funktioniert die AI-Philosophie ohne JavaScript?
+
+Ja. Die großen deutschen und englischen Textfelder bleiben als
+No-JavaScript-Fallback vollständig bedienbar. Der Komforteditor lädt keine
+externen Bibliotheken, Fonts, Icons, Drittinhalte oder Telemetrie.
+
 ## Muss ich die Herstellernennung anzeigen?
 
 Nein. Sie ist optional und standardmäßig deaktiviert. Bei Aktivierung erscheint
@@ -77,8 +91,8 @@ werden nicht übertragen.
 
 Nein.
 
-Das private Repository kann über die anonyme Prüfung ohne Hinweis bleiben.
-Version 1.2.1 wird per geprüftem, manuellem ZIP-Upload installiert.
+Version 1.3.0 wird per geprüftem, manuellem ZIP-Upload aus dem öffentlichen
+GitHub-Release installiert.
 
 ## Was bedeutet Transparenz?
 

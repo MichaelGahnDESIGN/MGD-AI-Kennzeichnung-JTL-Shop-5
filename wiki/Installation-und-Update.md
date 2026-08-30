@@ -9,13 +9,13 @@
 - reguläre Schreibrechte für Plugin- und Cacheverzeichnisse;
 - empfohlen: NOVA oder ein sauber abgeleitetes NOVA-Child-Theme.
 
-Die Bildausgabe wurde mit Version 1.1.1 unter NOVA und einem NOVA-basierten OnvisTheme geprüft. Version 1.2.1 ergänzt den Darstellungstab und die globale Transparenz. Stark veränderte Templates müssen in einer eigenen Testumgebung abgenommen werden.
+Die Bildausgabe wurde mit Version 1.1.1 unter NOVA und einem NOVA-basierten OnvisTheme geprüft. Version 1.2.1 ergänzt den Darstellungstab und die globale Transparenz, Version 1.3.0 den lokalen Philosophie-Editor. Stark veränderte Templates müssen in einer eigenen Testumgebung abgenommen werden.
 
 ## Das richtige ZIP verwenden
 
 Verwenden Sie aus dem GitHub-Release ausschließlich:
 
-`MGD_AI_Kennzeichnung-1.2.1.zip`
+`MGD_AI_Kennzeichnung-1.3.0.zip`
 
 Die automatisch angebotenen GitHub-Dateien **Source code (zip)** und **Source code (tar.gz)** sind keine installierbaren JTL-Pakete.
 
@@ -58,10 +58,9 @@ Prüfen Sie nicht nur, ob eine Backupdatei existiert, sondern ob sie lesbar und 
 
 Vorhandene Kennzeichnungsentscheidungen sollen bei einem normalen Update erhalten bleiben. Ein Update verändert keine Originalbilder.
 
-Das Repository ist ein **privates Repository** und Version 1.2.1 besitzt keinen
-Auto-Updater. Die anonyme GitHub-Prüfung kann deshalb keinen Hinweis liefern.
-Ein Update wird als **manueller ZIP-Upload** im Plugin-Manager durchgeführt; das
-Plugin installiert keine Updates automatisch.
+Das öffentliche Repository stellt Release-Hinweise bereit, aber keinen
+Auto-Updater. Ein Update wird als **manueller ZIP-Upload** im Plugin-Manager
+durchgeführt; das Plugin installiert keine Updates automatisch.
 
 ## Empfohlene Testreihenfolge
 
@@ -82,6 +81,7 @@ Zwischen Dev-Abnahme und Live-Installation darf kein neues Paket gebaut werden. 
 - Anzahl gefundener Bilder und Fundstellen;
 - Speichern eines unkritischen Testbildes;
 - Live-Vorschau, Transparenz und **Nur Vorschau** im Darstellungstab;
+- visuellen und HTML-Modus der AI-Philosophie in beiden Sprachen;
 - sichtbare Position und Darstellung;
 - responsive Bilder und verlinkte Bilder;
 - OPC-Hintergrundbilder;

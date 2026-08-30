@@ -12,7 +12,9 @@ Die JTL-Mindestversion 5.7.2 steht im Element `MinShopVersion` der `info.xml`. J
 - [OPC-Kennzeichnung](OPC-Kennzeichnung.md): direkte Bildfelder und fehlertolerante Dateimanager-Kompatibilität.
 - [Plugin-Impressum](Impressum.md): geschützte Herstellerangaben ohne Datenbank, Formular oder öffentliche Shopänderung.
 - [Darstellung](Darstellung.md): globale Werte, lokale Live-Vorschau und Transparenz in Version 1.2.1.
-- [Release 1.2.1](Release-1.2.1.md): Änderungen, Datenschutz, manueller ZIP-Upload und Rollback der aktuellen Version.
+- [Release 1.3.0](Release-1.3.0.md): lokaler Philosophie-Editor, Update, Datenschutz und sicherer Rückfall.
+- [Monetarisierung und Marketplace-Regeln](Monetarisierung-und-Marketplaces.md): nachhaltige Geschäftsmodelle und technische Auswertung offizieller JTL-, Shopware-, WordPress- und Shopify-Vorgaben.
+- [Release 1.2.1](Release-1.2.1.md): historischer Stand zu Darstellung, Datenschutz, manuellem ZIP-Upload und Rollback.
 - [Release 1.2.0](Release-1.2.0.md): historischer Stand der Impressum-Funktion.
 - [Dev-Abnahme vom 27. August 2026](Dev-Abnahme-2026-08-27.md): verifizierter Stand 1.1.1 mit stabilen Inline-Labels und OPC-Hintergrundbildern.
 - [Release 1.1.1](Release-1.1.1.md): Funktionsumfang, Paketprüfung und historische Freigabehinweise.

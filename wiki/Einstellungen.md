@@ -33,14 +33,13 @@ Dabei gilt:
 
 Die Verbindung entsteht nur beim Öffnen des adressierten Darstellungstabs.
 GitHub kann dabei technisch die **Server-IP**, den Zeitpunkt und den festen
-**User-Agent** `MGD-AI-Kennzeichnung-JTL-Shop-5/1.2.1` erhalten. Bilder,
+**User-Agent** `MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.0` erhalten. Bilder,
 Tokens, Shop-, Kunden- und Formulardaten werden nicht übertragen. Auch ein
 Fehler oder eine nicht gefundene Release-Information wird zwölf Stunden lokal
 gespeichert.
 
-Das Repository ist ein **privates Repository**. Eine anonyme Prüfung kann daher
-ohne Hinweis bleiben. Das Plugin installiert keine Updates automatisch;
-verwenden Sie den manuellen ZIP-Upload. Wenn Ihre Organisation ausgehende
+Das Plugin installiert keine Updates automatisch; verwenden Sie den manuellen
+ZIP-Upload aus dem öffentlichen GitHub-Release. Wenn Ihre Organisation ausgehende
 Verbindungen streng beschränkt, deaktivieren Sie die Funktion und prüfen Sie
 Releases manuell.
 

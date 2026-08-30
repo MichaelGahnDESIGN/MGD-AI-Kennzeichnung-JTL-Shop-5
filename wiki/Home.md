@@ -36,13 +36,14 @@ Das Plugin hilft Ihnen, lokale Shopbilder strukturiert zu prüfen und transparen
 
 ## Aktuelle Version
 
-Die aktuelle **Version 1.2.1** ergänzt einen geschützten Darstellungstab mit
-lokaler Live-Vorschau, Transparenz sowie gekoppelten Eingabefeldern und
-Schiebereglern. Position und Farbschema sind dort **Nur Vorschau**, weil beide
-Werte weiterhin pro Bild gespeichert werden. Die optionale Herstellernennung
-lautet **supported by: Michael Gahn DESIGN**.
+Die aktuelle **Version 1.3.0** ergänzt zwei große Sprachkarten für die
+AI-Philosophie. Inhalte lassen sich **Visuell** oder optional als bereinigtes
+**HTML** bearbeiten. Der Editor arbeitet vollständig lokal, lädt keine
+Drittinhalte und behält die Textfelder als No-JavaScript-Fallback bei. Die
+Darstellungsfunktionen aus Version 1.2.1 und die optionale Herstellernennung
+**supported by: Michael Gahn DESIGN** bleiben erhalten.
 
-Das installierbare Paket finden Sie unter [Releases](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases). Verwenden Sie stets das dort angehängte ZIP und prüfen Sie den veröffentlichten SHA-256-Wert. Das private Repository besitzt keinen Auto-Updater; das Update erfolgt als manueller ZIP-Upload im JTL-Plugin-Manager.
+Das installierbare Paket finden Sie unter [Releases](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases). Verwenden Sie stets das dort angehängte ZIP und prüfen Sie den veröffentlichten SHA-256-Wert. Das öffentliche Repository stellt Hinweise bereit, aber keinen Auto-Updater; das Update erfolgt als manueller ZIP-Upload im JTL-Plugin-Manager.
 
 ## Hilfe und Sicherheit
 

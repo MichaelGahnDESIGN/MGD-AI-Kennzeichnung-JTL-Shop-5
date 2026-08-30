@@ -91,7 +91,7 @@ Prüfen Sie, ob Status, Position und Darstellung vollständig ausgewählt sind. 
 
 Version 1.1.1 und neuer korrigiert normale, verlinkte und responsive Bilder sowie lokale OPC-Hintergründe. Prüfen Sie zuerst:
 
-- wirklich die aktuelle Version 1.2.1 aktiv?
+- wirklich die aktuelle Version 1.3.0 aktiv?
 - Plugin-CSS mit HTTP 200 erreichbar?
 - alter Browser- oder Template-Cache?
 - stark abweichendes eigenes HTML/CSS?
@@ -130,9 +130,8 @@ Siehe auch [Release und Rollback](Release-und-Rollback.md).
 
 ## Kein GitHub-Updatehinweis sichtbar
 
-Das kann bei Version 1.2.1 korrekt sein:
+Das kann auch bei Version 1.3.0 korrekt sein:
 
-- das Repository ist privat und die anonyme Abfrage findet kein Release;
 - ein negatives Ergebnis wird zwölf Stunden zwischengespeichert;
 - die Prüfung läuft nur im adressierten Darstellungstab;
 - die Einstellung kann deaktiviert sein.

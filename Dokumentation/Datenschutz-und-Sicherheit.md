@@ -13,16 +13,29 @@ kann in den Plugin-Einstellungen jederzeit ausgeschaltet werden. Nur beim
 Öffnen des adressierten Darstellungstabs ruft der Server höchstens alle zwölf
 Stunden am festen Endpunkt `api.github.com` öffentliche Metadaten des neuesten
 Releases ab. Erfolgreiche und erfolglose Versuche werden für zwölf Stunden
-lokal gespeichert. Dadurch führen auch eine Störung, ein Rate-Limit oder das
-private Repository nicht bei jedem Seitenaufruf zu einer neuen Anfrage.
+lokal gespeichert. Dadurch führen auch eine Störung oder ein Rate-Limit nicht
+bei jedem Seitenaufruf zu einer neuen Anfrage.
 
 GitHub kann bei der HTTPS-Verbindung technisch **Server-IP**, Zeitpunkt und den
-festen **User-Agent** `MGD-AI-Kennzeichnung-JTL-Shop-5/1.2.1` erhalten. Das
+festen **User-Agent** `MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.0` erhalten. Das
 Plugin überträgt keine Bilder, Shop-, Kunden- oder Formulardaten, Tokens oder
 Zugangsdaten. TLS-Prüfung ist verpflichtend, Weiterleitungen sind gesperrt und
 die Antwort ist auf 65.536 Byte begrenzt. Das Plugin installiert keine Updates
-automatisch. Da es sich um ein privates Repository handelt, kann die anonyme
-Abfrage ohne Release-Hinweis enden; Updates erfolgen per manuellem ZIP-Upload.
+automatisch. Updates erfolgen weiterhin per geprüftem, manuellem ZIP-Upload.
+
+## Lokaler Editor der AI-Philosophie
+
+Der visuelle und der optionale HTML-Modus bestehen ausschließlich aus lokalen
+Plugin-Dateien. Der Editor lädt **keine externen** Bibliotheken, Drittinhalte,
+Fonts, Icons, Styles oder Scripts und verwendet **keine Telemetrie**. Inhalte
+werden weder in `localStorage` noch in `sessionStorage`, Cookies oder externe
+Dienste geschrieben.
+
+Nur `p`, `h2`, `h3`, `ul`, `ol`, `li`, `strong`, `em` und `a` werden
+übernommen. Links müssen sichere HTTPS-Ziele ohne Zugangsdaten und fremden Port
+sein. Browser und Server bereinigen den Inhalt; der serverseitige PHP-Sanitizer
+bleibt maßgeblich. Ohne JavaScript sind beide großen Textfelder über den
+**No-JavaScript-Fallback** vollständig bedienbar.
 
 ## Administration
 

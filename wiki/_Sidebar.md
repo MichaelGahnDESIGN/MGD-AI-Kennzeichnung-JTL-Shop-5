@@ -13,6 +13,7 @@
 - [Datenschutz und Sicherheit](Datenschutz-und-Sicherheit.md)
 - [Fehlerbehebung](Fehlerbehebung.md)
 - [Release und Rollback](Release-und-Rollback.md)
+- [Monetarisierung und Marketplaces](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/blob/main/Dokumentation/Monetarisierung-und-Marketplaces.md)
 - [FAQ](FAQ.md)
 - [Für Entwickler](Fuer-Entwickler.md)
 

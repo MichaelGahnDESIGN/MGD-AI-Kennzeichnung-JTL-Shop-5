@@ -24,10 +24,18 @@ Für JTL verwenden Sie ausschließlich das explizit angehängte Plugin-ZIP.
 9. erst danach neues Live-Backup;
 10. exakt dasselbe Paket auf Live verwenden.
 
-Version 1.2.1 besitzt keinen Auto-Updater. Da es sich um ein **privates
-Repository** handelt, kann die anonyme Updateprüfung ohne Ergebnis bleiben. Das
-geprüfte Paket wird als **manueller ZIP-Upload** im JTL-Plugin-Manager
-eingespielt.
+Das Plugin besitzt keinen Auto-Updater. Das geprüfte Paket wird als
+**manueller ZIP-Upload** im JTL-Plugin-Manager eingespielt. Verwenden Sie aus
+dem öffentlichen Repository das ausdrücklich angehängte Release-ZIP und nicht
+die automatischen GitHub-Quellcodearchive.
+
+## Release 1.3.0
+
+Version 1.3.0 ergänzt den vollständig lokalen Philosophie-Editor. Deutsch und
+Englisch stehen untereinander und lassen sich visuell oder optional als
+bereinigtes HTML bearbeiten. Beide Sprachfassungen werden gemeinsam
+gespeichert. Externe Editorbibliotheken, Drittinhalte und Telemetrie werden
+nicht geladen; die großen Textfelder bleiben ohne JavaScript nutzbar.
 
 ## Release 1.2.1
 
@@ -86,8 +94,8 @@ Da das Plugin fehlertolerant ausgelegt ist, genügt die Deaktivierung häufig al
 7. Galerie und Frontend prüfen.
 
 Nach dem Rollback zusätzlich den Darstellungstab und mindestens eine sichtbare
-Kennzeichnung prüfen. Ein Cache kann sonst noch CSS oder Einstellungen der
-neueren Version zeigen.
+Kennzeichnung sowie beide Sprachfassungen der AI-Philosophie prüfen. Ein Cache
+kann sonst noch CSS oder Einstellungen der neueren Version zeigen.
 
 ## Deinstallation ist kein Rollback
 
