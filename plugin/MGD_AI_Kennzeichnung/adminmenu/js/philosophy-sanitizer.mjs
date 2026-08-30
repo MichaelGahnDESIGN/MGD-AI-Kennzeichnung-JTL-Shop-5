@@ -82,7 +82,7 @@ export function isSafeHttpsUrl(value) {
     }
 
     const authority = value.slice('https://'.length).split(/[/?#]/u, 1)[0];
-    if (authority === '' || authority.includes('@')) {
+    if (authority === '' || authority.includes('@') || !hasSafeRawPortSyntax(authority)) {
         return false;
     }
 
@@ -97,6 +97,32 @@ export function isSafeHttpsUrl(value) {
     } catch {
         return false;
     }
+}
+
+/**
+ * Verhindert, dass der WHATWG-Parser abweichende Portschreibweisen vor der
+ * Prüfung normalisiert. Bei IPv6 zählen nur Doppelpunkte hinter der schließenden
+ * Klammer als Porttrenner.
+ */
+function hasSafeRawPortSyntax(authority) {
+    if (authority.startsWith('[')) {
+        const bracketEnd = authority.indexOf(']');
+        if (bracketEnd === -1) {
+            return false;
+        }
+
+        const suffix = authority.slice(bracketEnd + 1);
+
+        return suffix === '' || suffix === ':443';
+    }
+
+    const firstColon = authority.indexOf(':');
+    if (firstColon === -1) {
+        return true;
+    }
+
+    return firstColon === authority.lastIndexOf(':')
+        && authority.slice(firstColon) === ':443';
 }
 
 /**
@@ -564,12 +590,9 @@ function readHtmlTag(input, startPosition) {
 }
 
 function findSelfClosingEnd(input, slashPosition) {
-    let position = slashPosition + 1;
-    while (/\s/u.test(input[position] ?? '')) {
-        position += 1;
-    }
+    const endPosition = slashPosition + 1;
 
-    return input[position] === '>' ? position + 1 : null;
+    return input[endPosition] === '>' ? endPosition + 1 : null;
 }
 
 /** Liefert garantiert ein vom Quelldokument getrenntes Zieldokument. */

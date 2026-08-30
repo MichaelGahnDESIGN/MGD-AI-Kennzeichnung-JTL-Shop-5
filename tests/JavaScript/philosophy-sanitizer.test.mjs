@@ -346,6 +346,21 @@ test('ignoriert verschachtelte Form-Starts wie der PHP-Parser', () => {
     );
 });
 
+test('wertet Slash mit folgendem Whitespace bei aktiven Tags nicht als selbstschließend', () => {
+    for (const name of ACTIVE_TEST_ELEMENTS) {
+        assert.equal(
+            sanitize(`<${name}/ >bad</${name}><p>end</p>`),
+            '<p>end</p>',
+            name,
+        );
+    }
+
+    assert.equal(
+        sanitize('<object data="lokal" / >bad</object><p>end</p>'),
+        '<p>end</p>',
+    );
+});
+
 test('behandelt selbstschließende und ähnlich benannte Embed-Tags wie der Server', () => {
     assert.equal(
         sanitize('<embed />Text</embed><p>Sicher</p>'),
@@ -435,6 +450,10 @@ test('prüft HTTPS-URLs unabhängig von der HTML-Bereinigung', () => {
     assert.equal(isSafeHttpsUrl('/path'), false);
     assert.equal(isSafeHttpsUrl('https://user@example.org/path'), false);
     assert.equal(isSafeHttpsUrl('https://example.org:444/path'), false);
+    assert.equal(isSafeHttpsUrl('https://example.org:000443/path'), false);
+    assert.equal(isSafeHttpsUrl('https://[::1]/path'), true);
+    assert.equal(isSafeHttpsUrl('https://[::1]:443/path'), true);
+    assert.equal(isSafeHttpsUrl('https://[::1]:000443/path'), false);
 });
 
 test('lehnt von WHATWG normalisierte, serverseitig ungültige URL-Schreibweisen ab', () => {
