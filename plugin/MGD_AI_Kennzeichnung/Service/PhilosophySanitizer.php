@@ -25,6 +25,9 @@ final class PhilosophySanitizer
         'script', 'style', 'iframe', 'object', 'embed', 'svg', 'math', 'template', 'noscript', 'form',
     ];
 
+    /** @var list<string> Aktive HTML-Elemente, die nicht gleichnamig verschachteln */
+    private const NON_NESTING_ACTIVE_ELEMENTS = ['script', 'style', 'form'];
+
     /**
      * Benannte HTML5-Referenzen, deren Semikolon historisch fehlen darf.
      *
@@ -175,6 +178,7 @@ final class PhilosophySanitizer
         if ($authority === ''
             || str_contains($authority, '@')
             || str_contains($authority, '%')
+            || !$this->hasSafeRawHostSyntax($authority)
             || !$this->hasSafeRawPortSyntax($authority)
         ) {
             return false;
@@ -189,6 +193,31 @@ final class PhilosophySanitizer
             && !isset($teile['user'])
             && !isset($teile['pass'])
             && (!isset($teile['port']) || $teile['port'] === 443);
+    }
+
+    /** Erlaubt rohe DNS-Namen nur als eindeutige ASCII-Labels. */
+    private function hasSafeRawHostSyntax(string $authority): bool
+    {
+        if (str_starts_with($authority, '[')) {
+            return true;
+        }
+
+        $portTrenner = strpos($authority, ':');
+        $host = $portTrenner === false ? $authority : substr($authority, 0, $portTrenner);
+        if ($host === '' || strlen($host) > 253) {
+            return false;
+        }
+
+        foreach (explode('.', $host) as $label) {
+            if ($label === ''
+                || strlen($label) > 63
+                || preg_match('/^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$/D', $label) !== 1
+            ) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /** Prüft die Portschreibweise vor jeder Normalisierung durch parse_url(). */
@@ -282,6 +311,10 @@ final class PhilosophySanitizer
      */
     private function prepareParserInput(string $html): string
     {
+        foreach (self::ACTIVE_ELEMENTS as $aktivesElement) {
+            $html = $this->removeExplicitActiveContent($html, $aktivesElement);
+        }
+
         $ausgabe = '';
         $cursor = 0;
         $laenge = strlen($html);
@@ -295,6 +328,7 @@ final class PhilosophySanitizer
             $ausgabe .= $this->protectNativeEntities(substr($html, $cursor, $tagStart - $cursor));
             $tag = $this->readRawTagCandidate($html, $tagStart);
             if ($tag === null) {
+                /* Deklarationen und Kommentare bleiben Knoten und werden später entfernt. */
                 $ausgabe .= '<';
                 $cursor = $tagStart + 1;
 
@@ -309,6 +343,299 @@ final class PhilosophySanitizer
         }
 
         return $ausgabe;
+    }
+
+    /**
+     * Entfernt aktive Rohbereiche vor libxml anhand der HTML-ASCII-Grammatik.
+     *
+     * Nicht-ASCII-Zeichen gelten dabei niemals als Tagtrenner. Dadurch kann
+     * libxml ein im Browser ungültiges Endtag nicht vorzeitig reparieren und
+     * anschließend bereits freigestellten Inhalt aus dem Container lösen.
+     */
+    private function removeExplicitActiveContent(string $html, string $elementName): string
+    {
+        $ausgabe = '';
+        $cursor = 0;
+        $laenge = strlen($html);
+
+        while ($cursor < $laenge) {
+            $startTag = $this->findNextActiveHtmlTag($html, $cursor, $elementName, false);
+            if ($startTag === null) {
+                return $ausgabe . substr($html, $cursor);
+            }
+
+            $ausgabe .= substr($html, $cursor, $startTag['start'] - $cursor);
+            $endPosition = $startTag['selfClosing'] && $elementName === 'embed'
+                ? $startTag['end']
+                : $this->findMatchingActiveElementEnd($html, $startTag['end'], $elementName);
+
+            /* Ein offener aktiver Container besitzt sicherheitshalber den gesamten Rest. */
+            $cursor = $endPosition ?? $laenge;
+        }
+
+        return $ausgabe;
+    }
+
+    private function findMatchingActiveElementEnd(
+        string $html,
+        int $startPosition,
+        string $elementName,
+    ): ?int {
+        $tiefe = 1;
+        $cursor = $startPosition;
+        $laenge = strlen($html);
+
+        while ($cursor < $laenge) {
+            $tag = $this->findNextActiveHtmlTag($html, $cursor, $elementName);
+            if ($tag === null) {
+                return null;
+            }
+
+            $cursor = $tag['end'];
+            if ($tag['closing']) {
+                --$tiefe;
+                if ($tiefe === 0) {
+                    return $tag['end'];
+                }
+            } elseif (!in_array($elementName, self::NON_NESTING_ACTIVE_ELEMENTS, true)) {
+                ++$tiefe;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array{start: int, end: int, closing: bool, selfClosing: bool}|null
+     */
+    private function findNextActiveHtmlTag(
+        string $html,
+        int $startPosition,
+        string $elementName,
+        bool $includeClosing = true,
+    ): ?array {
+        $cursor = $startPosition;
+        $laenge = strlen($html);
+
+        while ($cursor < $laenge) {
+            $tagStart = strpos($html, '<', $cursor);
+            if ($tagStart === false) {
+                return null;
+            }
+
+            if (substr_compare($html, '<!--', $tagStart, 4) === 0) {
+                $kommentarEnde = $this->findRawCommentEnd($html, $tagStart);
+                if ($kommentarEnde === null) {
+                    return null;
+                }
+                $cursor = $kommentarEnde;
+
+                continue;
+            }
+
+            $tag = $this->readActiveHtmlTag($html, $tagStart);
+            if ($tag === null) {
+                $cursor = $tagStart + 1;
+
+                continue;
+            }
+
+            $cursor = $tag['end'];
+            if ($tag['name'] !== $elementName || (!$includeClosing && $tag['closing'])) {
+                continue;
+            }
+
+            return [
+                'start' => $tagStart,
+                'end' => $tag['end'],
+                'closing' => $tag['closing'],
+                'selfClosing' => $tag['selfClosing'],
+            ];
+        }
+
+        return null;
+    }
+
+    /** Liefert die Position direkt hinter dem ersten echten Kommentarende. */
+    private function findRawCommentEnd(string $html, int $start): ?int
+    {
+        $standard = strpos($html, '-->', $start + 4);
+        $alternativ = strpos($html, '--!>', $start + 4);
+        $positionen = array_filter(
+            [$standard, $alternativ],
+            static fn(int|false $position): bool => $position !== false,
+        );
+        if ($positionen === []) {
+            return null;
+        }
+
+        $ende = min($positionen);
+
+        return $ende + (substr_compare($html, '--!>', $ende, 4) === 0 ? 4 : 3);
+    }
+
+    /**
+     * Liest ausschließlich rohe HTML-Tags mit den fünf ASCII-Whitespacezeichen.
+     *
+     * @return array{end: int, name: string, closing: bool, selfClosing: bool}|null
+     */
+    private function readActiveHtmlTag(string $html, int $start): ?array
+    {
+        $laenge = strlen($html);
+        $position = $start + 1;
+        $closing = ($html[$position] ?? '') === '/';
+        if ($closing) {
+            ++$position;
+        }
+
+        $nameStart = $position;
+        if (preg_match('/^[A-Za-z]$/D', $html[$position] ?? '') !== 1) {
+            return null;
+        }
+        ++$position;
+        while (preg_match('/^[A-Za-z0-9_:-]$/D', $html[$position] ?? '') === 1) {
+            ++$position;
+        }
+        $nameEnd = $position;
+
+        if (!in_array($html[$position] ?? '', ["\t", "\n", "\f", "\r", ' ', '/', '>'], true)) {
+            return null;
+        }
+
+        $name = strtolower(substr($html, $nameStart, $nameEnd - $nameStart));
+        $state = 'beforeAttribute';
+        $quote = null;
+        while ($position < $laenge) {
+            $zeichen = $html[$position];
+
+            if ($state === 'quotedValue') {
+                if ($zeichen === $quote) {
+                    $quote = null;
+                    $state = 'afterQuotedValue';
+                }
+                ++$position;
+
+                continue;
+            }
+
+            if ($zeichen === '>') {
+                return [
+                    'end' => $position + 1,
+                    'name' => $name,
+                    'closing' => $closing,
+                    'selfClosing' => false,
+                ];
+            }
+
+            if ($state === 'beforeAttribute') {
+                if ($this->isHtmlWhitespace($zeichen)) {
+                    ++$position;
+                } elseif ($zeichen === '/') {
+                    if (($html[$position + 1] ?? '') === '>') {
+                        return [
+                            'end' => $position + 2,
+                            'name' => $name,
+                            'closing' => $closing,
+                            'selfClosing' => !$closing,
+                        ];
+                    }
+                    $state = 'attributeName';
+                    ++$position;
+                } else {
+                    $state = 'attributeName';
+                    ++$position;
+                }
+
+                continue;
+            }
+
+            if ($state === 'attributeName') {
+                if ($this->isHtmlWhitespace($zeichen)) {
+                    $state = 'afterAttributeName';
+                } elseif ($zeichen === '=') {
+                    $state = 'beforeAttributeValue';
+                } elseif ($zeichen === '/' && ($html[$position + 1] ?? '') === '>') {
+                    return [
+                        'end' => $position + 2,
+                        'name' => $name,
+                        'closing' => $closing,
+                        'selfClosing' => !$closing,
+                    ];
+                }
+                ++$position;
+
+                continue;
+            }
+
+            if ($state === 'afterAttributeName') {
+                if ($this->isHtmlWhitespace($zeichen)) {
+                    ++$position;
+                } elseif ($zeichen === '=') {
+                    $state = 'beforeAttributeValue';
+                    ++$position;
+                } elseif ($zeichen === '/' && ($html[$position + 1] ?? '') === '>') {
+                    return [
+                        'end' => $position + 2,
+                        'name' => $name,
+                        'closing' => $closing,
+                        'selfClosing' => !$closing,
+                    ];
+                } else {
+                    $state = 'attributeName';
+                    ++$position;
+                }
+
+                continue;
+            }
+
+            if ($state === 'beforeAttributeValue') {
+                if ($this->isHtmlWhitespace($zeichen)) {
+                    ++$position;
+                } elseif ($zeichen === '"' || $zeichen === "'") {
+                    $quote = $zeichen;
+                    $state = 'quotedValue';
+                    ++$position;
+                } else {
+                    $state = 'unquotedValue';
+                    ++$position;
+                }
+
+                continue;
+            }
+
+            if ($state === 'unquotedValue') {
+                if ($this->isHtmlWhitespace($zeichen)) {
+                    $state = 'beforeAttribute';
+                }
+                ++$position;
+
+                continue;
+            }
+
+            /* Zustand direkt hinter einem korrekt geschlossenen Quote. */
+            if ($this->isHtmlWhitespace($zeichen)) {
+                $state = 'beforeAttribute';
+                ++$position;
+            } elseif ($zeichen === '/' && ($html[$position + 1] ?? '') === '>') {
+                return [
+                    'end' => $position + 2,
+                    'name' => $name,
+                    'closing' => $closing,
+                    'selfClosing' => !$closing,
+                ];
+            } else {
+                $state = 'attributeName';
+                ++$position;
+            }
+        }
+
+        return null;
+    }
+
+    /** HTML kennt ausschließlich diese fünf ASCII-Zeichen als Whitespace. */
+    private function isHtmlWhitespace(string $zeichen): bool
+    {
+        return in_array($zeichen, ["\t", "\n", "\f", "\r", ' '], true);
     }
 
     /** Hält Entities bis zur sicheren Dekodierung im fertigen DOM-Wert inert. */

@@ -287,8 +287,11 @@ const ACTIVE_TEST_ELEMENTS = [
 const NON_VOID_ACTIVE_TEST_ELEMENTS = ACTIVE_TEST_ELEMENTS.filter((name) => name !== 'embed');
 
 /**
- * Gespeicherte Gegenproben aus Chrome-HTML-Tokenizer und PHP-DOMDocument:
- * Diese Unicode-Zeichen sind JavaScript-Whitespace, aber kein HTML-Whitespace.
+ * Gespeicherte Gegenproben aus einem echten Chrome-HTML-Tokenizer-Lauf und
+ * PHP-DOMDocument: Diese Unicode-Zeichen sind JavaScript-Whitespace, aber kein
+ * HTML-Whitespace. Die CI nutzt bewusst keine Browserdependency; deshalb hält
+ * diese kanonische Rohsyntaxmatrix die manuell geprüften Chrome-Ergebnisse im
+ * vorhandenen injizierbaren Parsermodell fest.
  */
 const NON_HTML_WHITESPACE_COUNTERPROBES = [
     ['VT', '\u000b'],
@@ -539,6 +542,16 @@ test('behandelt Unicode-Whitespace außerhalb der HTML-Positivliste nicht als Ta
     }
 });
 
+test('ignoriert die Self-Closing-Markierung bei nicht-void aktiven HTML-Elementen', () => {
+    for (const name of NON_VOID_ACTIVE_TEST_ELEMENTS) {
+        assert.equal(
+            sanitize(`<${name}\f/>BAD</${name}><p>end</p>`),
+            '<p>end</p>',
+            name,
+        );
+    }
+});
+
 test('erzeugt aus Entities weder Endtags noch selbstschließende aktive Starttags', () => {
     for (const name of NON_VOID_ACTIVE_TEST_ELEMENTS) {
         assert.equal(
@@ -763,6 +776,36 @@ test('lehnt jedes Prozentzeichen in der Authority fail-closed ab', () => {
         sanitize('<a href="https://example.org/%2f/%25">Pfad</a>'),
         '<a href="https://example.org/%2f/%25" rel="noopener noreferrer">Pfad</a>',
     );
+});
+
+test('erlaubt ausschließlich rohe ASCII-DNS-Labels oder geklammerte IPv6-Hosts', () => {
+    const ungueltigeHosts = [
+        'exa^mple.org',
+        'exa<mple.org',
+        'exa>mple.org',
+        'example].org',
+        '[example.org',
+        'exa\u00a0mple.org',
+        'bücher.example',
+        'example..org',
+        '.example.org',
+        'example.org.',
+        '-example.org',
+        'example-.org',
+        'exa_mple.org',
+    ];
+
+    for (const host of ungueltigeHosts) {
+        assert.equal(sanitize(`<a href="https://${host}/path">Text</a>`), 'Text', host);
+    }
+
+    for (const host of ['EXAMPLE.org', 'xn--bcher-kva.example', 'a-b.example', '127.0.0.1']) {
+        assert.equal(
+            sanitize(`<a href="https://${host}/path">Text</a>`),
+            `<a href="https://${host}/path" rel="noopener noreferrer">Text</a>`,
+            host,
+        );
+    }
 });
 
 test('behandelt einfach und mehrfach kodiertes Markup ausschließlich als Text', () => {

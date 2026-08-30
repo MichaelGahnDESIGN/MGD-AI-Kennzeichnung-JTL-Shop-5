@@ -140,6 +140,41 @@ final class PhilosophySanitizerTest extends TestCase
     }
 
     #[Test]
+    public function dns_authorities_bestehen_nur_aus_browserkompatiblen_ascii_labels(): void
+    {
+        $sanitizer = new PhilosophySanitizer();
+        foreach ([
+            'exa^mple.org',
+            'exa<mple.org',
+            'exa>mple.org',
+            'example].org',
+            '[example.org',
+            "exa\u{00a0}mple.org",
+            'bücher.example',
+            'example..org',
+            '.example.org',
+            'example.org.',
+            '-example.org',
+            'example-.org',
+            'exa_mple.org',
+        ] as $host) {
+            self::assertSame(
+                'Text',
+                $sanitizer->sanitize('<a href="https://' . $host . '/path">Text</a>'),
+                $host,
+            );
+        }
+
+        foreach (['EXAMPLE.org', 'xn--bcher-kva.example', 'a-b.example', '127.0.0.1'] as $host) {
+            self::assertSame(
+                '<a href="https://' . $host . '/path" rel="noopener noreferrer">Text</a>',
+                $sanitizer->sanitize('<a href="https://' . $host . '/path">Text</a>'),
+                $host,
+            );
+        }
+    }
+
+    #[Test]
     public function kombinierte_entitaeten_bleiben_sichtbar_eindeutig_serialisiert(): void
     {
         $sanitizer = new PhilosophySanitizer();
@@ -206,6 +241,80 @@ final class PhilosophySanitizerTest extends TestCase
         ] as $html) {
             self::assertSame('<p>end</p>', $sanitizer->sanitize($html), $html);
         }
+    }
+
+    #[Test]
+    public function unicode_whitespace_beendet_aktive_container_nicht_vorzeitig(): void
+    {
+        $sanitizer = new PhilosophySanitizer();
+        $aktiveContainer = ['script', 'style', 'iframe', 'object', 'svg', 'math', 'template', 'noscript', 'form'];
+        $gegenproben = [
+            'VT' => "\u{000b}",
+            'NBSP' => "\u{00a0}",
+            'OGHAM' => "\u{1680}",
+            'LS' => "\u{2028}",
+            'BOM' => "\u{feff}",
+        ];
+
+        foreach ($aktiveContainer as $name) {
+            foreach ($gegenproben as $bezeichnung => $whitespace) {
+                $html = '<' . $name . '>BAD</' . $name . $whitespace . '>'
+                    . '<a href="https://example.org/leak">LEAK</a>'
+                    . '</' . $name . '><p>end</p>';
+                self::assertSame('<p>end</p>', $sanitizer->sanitize($html), $name . ' / ' . $bezeichnung);
+            }
+        }
+    }
+
+    #[Test]
+    public function self_closing_slash_nach_formfeed_oeffnet_nicht_void_aktive_container(): void
+    {
+        $sanitizer = new PhilosophySanitizer();
+        foreach (['script', 'style', 'iframe', 'object', 'svg', 'math', 'template', 'noscript', 'form'] as $name) {
+            self::assertSame(
+                '<p>end</p>',
+                $sanitizer->sanitize('<' . $name . "\f/>BAD</" . $name . '><p>end</p>'),
+                $name,
+            );
+        }
+    }
+
+    #[Test]
+    public function roher_vorscanner_macht_kommentare_und_sonstige_knoten_nicht_sichtbar(): void
+    {
+        $sanitizer = new PhilosophySanitizer();
+
+        foreach ([
+            '<!-- geheim --><p>Sicher</p>',
+            '<!doctype html><p>Sicher</p>',
+            '<?x?><p>Sicher</p>',
+        ] as $html) {
+            self::assertSame('<p>Sicher</p>', $sanitizer->sanitize($html), $html);
+        }
+    }
+
+    #[Test]
+    public function quotes_in_attributnamen_oder_unquoted_werten_oeffnen_keinen_quotezustand(): void
+    {
+        $sanitizer = new PhilosophySanitizer();
+
+        foreach (['script', 'iframe', 'object'] as $name) {
+            foreach ([" foo' ", " data=x' "] as $attribute) {
+                $html = '<' . $name . $attribute . '>BAD</' . $name . "\u{00a0}>"
+                    . '<a href="https://example.org/leak">LEAK</a>'
+                    . '</' . $name . '><p>end</p>';
+                self::assertSame('<p>end</p>', $sanitizer->sanitize($html), $name . $attribute);
+            }
+        }
+    }
+
+    #[Test]
+    public function slash_im_unquoted_embed_attributwert_ist_nicht_self_closing(): void
+    {
+        self::assertSame(
+            '<p>Sicher</p>',
+            (new PhilosophySanitizer())->sanitize('<embed data=x/>Text</embed><p>Sicher</p>'),
+        );
     }
 
     #[Test]

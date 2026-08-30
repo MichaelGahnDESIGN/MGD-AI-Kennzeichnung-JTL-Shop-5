@@ -37,6 +37,8 @@ const NON_NESTING_ACTIVE_ELEMENTS = new Set([
     'form',
 ]);
 
+const VOID_ACTIVE_ELEMENTS = new Set(['embed']);
+
 const PARSER_STATE_ELEMENTS = new Set([
     'plaintext',
     'xmp',
@@ -83,6 +85,7 @@ export function isSafeHttpsUrl(value) {
     if (authority === ''
         || authority.includes('@')
         || authority.includes('%')
+        || !hasSafeRawHostSyntax(authority)
         || !hasSafeRawPortSyntax(authority)) {
         return false;
     }
@@ -98,6 +101,23 @@ export function isSafeHttpsUrl(value) {
     } catch {
         return false;
     }
+}
+
+/** Erlaubt rohe DNS-Namen nur als eindeutige ASCII-Labels. */
+function hasSafeRawHostSyntax(authority) {
+    if (authority.startsWith('[')) {
+        return true;
+    }
+
+    const portTrenner = authority.indexOf(':');
+    const host = portTrenner === -1 ? authority : authority.slice(0, portTrenner);
+    if (host === '' || host.length > 253) {
+        return false;
+    }
+
+    return host.split('.').every((label) => label.length >= 1
+        && label.length <= 63
+        && /^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$/u.test(label));
 }
 
 /**
@@ -340,7 +360,7 @@ function removeExplicitActiveContent(input, elementName) {
         }
 
         ausgabe += input.slice(cursor, startTag.start);
-        const endPosition = startTag.selfClosing
+        const endPosition = startTag.selfClosing && VOID_ACTIVE_ELEMENTS.has(elementName)
             ? startTag.end
             : findMatchingActiveElementEnd(input, startTag.end, elementName);
 
