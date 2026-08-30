@@ -456,12 +456,21 @@ test('asynchrone Linkadapter schließen erst nach Erfolg endgültig und blockier
     submit.dispatch('click');
 
     assert.equal(toolbar.linkDialog.element.open, false);
+    assert.equal(toolbar.buttons.get('link').disabled, true);
+    assert.equal(toolbar.buttons.get('link').getAttribute('aria-disabled'), 'true');
     assert.equal(changes, 0);
     assert.equal(insertions, 1);
+    /* Nach der Microtask darf auch ein neuer einzelner Link-Klick keinen Snapshot überschreiben. */
+    await Promise.resolve();
+    toolbar.buttons.get('link').dispatch('click', { detail: 1 });
+    assert.equal(toolbar.linkDialog.open(), false);
+    assert.equal(toolbar.linkDialog.element.showModalCalls, 1);
     resolveInsert(true);
     await Promise.resolve();
     await Promise.resolve();
     assert.equal(toolbar.linkDialog.element.open, false);
+    assert.equal(toolbar.buttons.get('link').disabled, false);
+    assert.equal(toolbar.buttons.get('link').getAttribute('aria-disabled'), 'false');
     assert.equal(changes, 1);
 });
 
@@ -502,6 +511,36 @@ test('asynchrone Linkadapter öffnen bei false oder Ablehnung mit einem Fehler e
     await Promise.resolve();
     await Promise.resolve();
     assert.equal(rejectedToolbar.linkDialog.element.open, true);
+});
+
+test('öffentliches close bleibt während eines Pending-Links wirkungslos und bewahrt die Auswahl für Fehlerpfade', async () => {
+    const runFailurePath = async (result) => {
+        const document = createDocument();
+        const events = [];
+        const dialog = createPhilosophyLinkDialog({
+            document,
+            selection: {
+                capture() { events.push('capture'); return 'range'; },
+                restore(snapshot) { events.push(`restore:${snapshot}`); },
+            },
+            onInsert() { return result; },
+        });
+        const input = findByRole(dialog.element, 'link-url');
+        const submit = findByRole(dialog.element, 'link-submit');
+
+        dialog.open();
+        input.value = 'https://beispiel.de';
+        submit.dispatch('click');
+        assert.equal(dialog.close(), false);
+        await Promise.resolve();
+        await Promise.resolve();
+        assert.equal(dialog.element.open, true);
+        assert.equal(dialog.close(), true);
+        assert.deepEqual(events, ['capture', 'restore:range', 'restore:range']);
+    };
+
+    await runFailurePath(Promise.resolve(false));
+    await runFailurePath(Promise.reject(new Error('abgelehnt')));
 });
 
 test('Thenables werden abgewartet und blockieren Reentranz bis zur Auflösung', async () => {
@@ -609,6 +648,42 @@ test('ohne vollständigen Auswahladapter bleibt der Link deaktiviert und der Dia
     assert.equal(noSelection.buttons.get('link').disabled, true);
     assert.equal(noSelection.linkDialog.open(), false);
     assert.equal(partialSelection.buttons.get('link').disabled, true);
+});
+
+test('injizierte Linkdialoge werden anhand ihrer eigenen Sicherheits- und Busy-Capabilities freigegeben', () => {
+    const document = createDocument();
+    let opens = 0;
+    let notifyBusy = () => {};
+    const protectedDialog = {
+        supported: true,
+        selectionReady: true,
+        busy: false,
+        open() { opens += 1; return true; },
+        subscribeBusy(listener) { notifyBusy = listener; return () => { notifyBusy = () => {}; }; },
+        destroy() {},
+    };
+    const protectedToolbar = createPhilosophyToolbar({
+        document,
+        linkDialog: protectedDialog,
+    });
+    const unprotectedToolbar = createPhilosophyToolbar({
+        document: createDocument(),
+        selection: createSelectionAdapter(),
+        linkDialog: { supported: true, selectionReady: false, open() { throw new Error('Darf nicht öffnen'); } },
+    });
+
+    assert.equal(protectedToolbar.buttons.get('link').disabled, false);
+    protectedToolbar.buttons.get('link').dispatch('click');
+    assert.equal(opens, 1);
+    protectedDialog.busy = true;
+    notifyBusy(true);
+    assert.equal(protectedToolbar.buttons.get('link').disabled, true);
+    assert.equal(protectedToolbar.buttons.get('link').getAttribute('aria-disabled'), 'true');
+    protectedDialog.busy = false;
+    notifyBusy(false);
+    assert.equal(protectedToolbar.buttons.get('link').disabled, false);
+    assert.equal(protectedToolbar.buttons.get('link').getAttribute('aria-disabled'), 'false');
+    assert.equal(unprotectedToolbar.buttons.get('link').disabled, true);
 });
 
 test('öffentliches close stellt die Auswahl wieder her und verwirft sie anschließend', () => {

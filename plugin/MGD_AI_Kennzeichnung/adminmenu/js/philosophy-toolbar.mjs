@@ -72,7 +72,14 @@ const COMMAND_BUTTONS = Object.freeze([
  *   sync?: {showVisual?: () => ({ok?: boolean}|Promise<{ok?: boolean}>), showHtml?: () => ({ok?: boolean}|Promise<{ok?: boolean}>)},
  *   onChange?: () => unknown,
  *   onModeChange?: (mode: 'visual'|'html') => unknown,
- *   linkDialog?: {supported?: boolean, open?: () => boolean, destroy?: () => void},
+ *   linkDialog?: {
+ *     supported?: boolean,
+ *     selectionReady?: boolean,
+ *     busy?: boolean,
+ *     subscribeBusy?: (listener: (busy: boolean) => void) => (() => void),
+ *     open?: () => boolean,
+ *     destroy?: () => void,
+ *   },
  *   initialMode?: 'visual'|'html',
  *   scheduleMicrotask?: (callback: () => void) => void,
  * }} [options] Kleine explizite Abhängigkeiten für Browser und Editor.
@@ -102,9 +109,6 @@ export function createPhilosophyToolbar(options = {}) {
     const onModeChange = typeof configuration.onModeChange === 'function' ? configuration.onModeChange : () => {};
     const sync = isObject(configuration.sync) ? configuration.sync : null;
     const selection = isObject(configuration.selection) ? configuration.selection : null;
-    const hasSelectionAdapter = selection !== null
-        && typeof selection.capture === 'function'
-        && typeof selection.restore === 'function';
     const scheduleMicrotask = typeof configuration.scheduleMicrotask === 'function'
         ? configuration.scheduleMicrotask
         : scheduleForCurrentTurn;
@@ -119,6 +123,8 @@ export function createPhilosophyToolbar(options = {}) {
     const buttons = new Map();
     const commandListeners = new Map();
     const pressedButtonIds = new Set();
+    let linkButton = null;
+    let unsubscribeLinkBusy = () => {};
     const linkDialog = configuration.linkDialog ?? createPhilosophyLinkDialog({
         document: documentAdapter,
         selection,
@@ -133,17 +139,19 @@ export function createPhilosophyToolbar(options = {}) {
 
     for (const definition of COMMAND_BUTTONS) {
         const button = createToolbarButton(documentAdapter, definition.label, definition.text, definition.id);
-        if (definition.id === 'link' && (linkDialog.supported !== true || !hasSelectionAdapter)) {
-            button.disabled = true;
+        if (definition.id === 'link') {
+            linkButton = button;
+            updateLinkButtonState();
         }
         const listener = (event) => {
             if (!claimButtonForCurrentTurn(definition.id, event)) {
                 return;
             }
             if (definition.id === 'link') {
-                if (linkDialog.supported === true && typeof linkDialog.open === 'function') {
+                if (isLinkDialogReady() && linkDialog.busy !== true) {
                     linkDialog.open();
                 }
+                updateLinkButtonState();
                 return;
             }
             executeCommand(definition.id);
@@ -153,6 +161,14 @@ export function createPhilosophyToolbar(options = {}) {
         commandListeners.set(definition.id, listener);
         toolbar.append(button);
     }
+
+    if (isLinkDialogReady() && typeof linkDialog.subscribeBusy === 'function') {
+        const unsubscribe = linkDialog.subscribeBusy(() => { updateLinkButtonState(); });
+        if (typeof unsubscribe === 'function') {
+            unsubscribeLinkBusy = unsubscribe;
+        }
+    }
+    updateLinkButtonState();
 
     const visualButton = createModeButton(documentAdapter, 'Visuelle Bearbeitung', 'Visuell', 'visual');
     const htmlButton = createModeButton(documentAdapter, 'HTML-Bearbeitung', 'HTML', 'html');
@@ -283,6 +299,24 @@ export function createPhilosophyToolbar(options = {}) {
         htmlButton.setAttribute('aria-pressed', activeMode === 'html' ? 'true' : 'false');
     }
 
+    /** Die sichere Dialoginstanz ist allein für ihre Auswahl- und Busy-Capability verantwortlich. */
+    function isLinkDialogReady() {
+        return isObject(linkDialog)
+            && linkDialog.supported === true
+            && linkDialog.selectionReady === true
+            && typeof linkDialog.open === 'function';
+    }
+
+    /** Hält native Deaktivierung und aria-disabled auch während asynchroner Links gleich. */
+    function updateLinkButtonState() {
+        if (!linkButton) {
+            return;
+        }
+        const disabled = !isLinkDialogReady() || linkDialog.busy === true;
+        linkButton.disabled = disabled;
+        linkButton.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+    }
+
     /** Rückgabe des Fokus bleibt lokal und ist absichtlich unabhängig von Browser-Selections. */
     function focusVisual() {
         if (visual && typeof visual.focus === 'function') {
@@ -326,6 +360,7 @@ export function createPhilosophyToolbar(options = {}) {
         executeCommand,
         setMode,
         destroy() {
+            unsubscribeLinkBusy();
             for (const [commandId, button] of buttons) {
                 const listener = commandListeners.get(commandId);
                 if (listener && typeof button.removeEventListener === 'function') {

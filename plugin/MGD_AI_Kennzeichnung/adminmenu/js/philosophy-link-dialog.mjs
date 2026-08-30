@@ -37,6 +37,8 @@ export function normalizeSecureLink(value) {
  *   element: HTMLDialogElement|null,
  *   supported: boolean,
  *   selectionReady?: boolean,
+ *   busy: boolean,
+ *   subscribeBusy: (listener: (busy: boolean) => void) => () => void,
  *   open: () => boolean,
  *   close: () => boolean,
  *   destroy: () => void,
@@ -98,10 +100,11 @@ export function createPhilosophyLinkDialog(options = {}) {
     let open = false;
     let hasSelectionSnapshot = false;
     let selectionSnapshot;
+    const busyListeners = new Set();
 
     /** Öffnet den Dialog nur einmal; die bestehende Editor-Auswahl bleibt dabei unangetastet. */
     const openDialog = () => {
-        if (!selectionReady || open || dialog.open) {
+        if (!selectionReady || insertionInProgress || open || dialog.open) {
             return false;
         }
 
@@ -145,6 +148,10 @@ export function createPhilosophyLinkDialog(options = {}) {
 
     /** Der öffentliche Close-Pfad verhält sich wie ein Abbruch: Auswahl wiederherstellen und verwerfen. */
     const closeDialog = () => {
+        /* Ohne Abort-Vertrag darf ein laufender Adapter nicht halb abgebrochen werden. */
+        if (insertionInProgress) {
+            return false;
+        }
         if (!closeModal()) {
             return false;
         }
@@ -174,15 +181,15 @@ export function createPhilosophyLinkDialog(options = {}) {
             return;
         }
 
-        insertionInProgress = true;
+        setInsertionInProgress(true);
         /* Ein modal geöffneter Dialog macht den übrigen Editor inert. */
         if (!closeModal()) {
-            insertionInProgress = false;
+            setInsertionInProgress(false);
             showError('Der Linkdialog konnte nicht sicher geschlossen werden.');
             return;
         }
         if (!restoreSelection()) {
-            insertionInProgress = false;
+            setInsertionInProgress(false);
             reopenAfterFailure('Der Link konnte nicht eingefügt werden. Bitte versuchen Sie es erneut.');
             return;
         }
@@ -227,6 +234,18 @@ export function createPhilosophyLinkDialog(options = {}) {
         element: dialog,
         supported: true,
         selectionReady,
+        get busy() {
+            return insertionInProgress;
+        },
+        subscribeBusy(listener) {
+            if (typeof listener !== 'function') {
+                return () => {};
+            }
+            busyListeners.add(listener);
+            safelyNotifyBusyListener(listener, insertionInProgress);
+
+            return () => { busyListeners.delete(listener); };
+        },
         open: openDialog,
         close: closeDialog,
         destroy() {
@@ -306,12 +325,23 @@ export function createPhilosophyLinkDialog(options = {}) {
 
     /** Beendet den Pending-Zustand erst nach dem asynchronen Linkadapter und öffnet bei Fehler erneut. */
     function finalizeInsertion(result) {
-        insertionInProgress = false;
+        setInsertionInProgress(false);
         if (didSucceed(result)) {
             clearSelectionSnapshot();
             return;
         }
         reopenAfterFailure('Der Link konnte nicht eingefügt werden. Bitte versuchen Sie es erneut.');
+    }
+
+    /** Veröffentlicht den Busy-Zustand lokal, damit die zugehörige Toolbar konsistent deaktivieren kann. */
+    function setInsertionInProgress(nextValue) {
+        if (insertionInProgress === nextValue) {
+            return;
+        }
+        insertionInProgress = nextValue;
+        for (const listener of busyListeners) {
+            safelyNotifyBusyListener(listener, insertionInProgress);
+        }
     }
 }
 
@@ -320,6 +350,9 @@ function createUnsupportedDialog() {
     return {
         element: null,
         supported: false,
+        selectionReady: false,
+        busy: false,
+        subscribeBusy: () => () => {},
         open: () => false,
         close: () => false,
         destroy: () => {},
@@ -372,6 +405,15 @@ function consumeBestEffortResult(result) {
         Promise.resolve(result).then(() => {}, () => {});
     } catch {
         /* Auch exotische Thenables dürfen die Dialogsteuerung nicht unterbrechen. */
+    }
+}
+
+/** Fehler eines Busy-Beobachters dürfen die sichere Dialogsteuerung niemals beeinflussen. */
+function safelyNotifyBusyListener(listener, busy) {
+    try {
+        listener(busy);
+    } catch {
+        /* Eine externe Toolbar-Benachrichtigung bleibt bewusst optional. */
     }
 }
 
