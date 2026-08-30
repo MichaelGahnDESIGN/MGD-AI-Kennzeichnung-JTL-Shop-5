@@ -212,9 +212,10 @@ final class DisplaySettingsTest extends TestCase
         }
         $updateDescription = $xpath->evaluate('string(/jtlshopplugin/Install/Adminmenu/Settingslink/Setting[ValueName="update_notices"]/Description)');
         self::assertIsString($updateDescription);
-        foreach (['Standardmäßig aktiviert', 'Server-zu-GitHub', 'Server-IP', 'Zeitpunkt', 'User-Agent', 'keine Tokens', 'keine Shop-, Kunden- oder Formulardaten', 'privates Repository'] as $phrase) {
+        foreach (['Standardmäßig aktiviert', 'Server-zu-GitHub', 'Server-IP', 'Zeitpunkt', 'User-Agent', 'keine Tokens', 'keine Shop-, Kunden- oder Formulardaten', 'öffentlichen GitHub-Repository'] as $phrase) {
             self::assertStringContainsString($phrase, $updateDescription);
         }
+        self::assertStringNotContainsString('privates Repository', $updateDescription);
         self::assertStringNotContainsString('anonym', strtolower($updateDescription));
         self::assertSame('', $xpath->evaluate('string(/jtlshopplugin/Install/Adminmenu/Settingslink/Setting[ValueName="position"])'));
         self::assertSame('', $xpath->evaluate('string(/jtlshopplugin/Install/Adminmenu/Settingslink/Setting[ValueName="theme"])'));
@@ -223,7 +224,7 @@ final class DisplaySettingsTest extends TestCase
         $dateiname = $xpath->evaluate('string(/jtlshopplugin/Install/Adminmenu/Customlink[Name="Darstellung"]/Filename)');
         self::assertIsString($version);
         self::assertIsString($dateiname);
-        self::assertSame('1.2.1', trim($version));
+        self::assertSame('1.3.0', trim($version));
         self::assertSame('display.php', trim($dateiname));
     }
 

@@ -8,7 +8,7 @@
     <MinShopVersion>5.7.2</MinShopVersion>
     <PluginID>MGD_AI_Kennzeichnung</PluginID>
     <CreateDate>2026-08-12</CreateDate>
-    <Version>1.2.1</Version>
+    <Version>1.3.0</Version>
     <Install>
         <Portlets>
             <Portlet>
@@ -48,7 +48,7 @@
             </Setting>
             <Setting type="selectbox" initialValue="Y" sort="2" conf="Y">
                 <Name>Updatehinweise über GitHub abrufen</Name>
-                <Description>Standardmäßig aktiviert: Beim Öffnen des Darstellungstabs erfolgt höchstens alle zwölf Stunden eine Server-zu-GitHub-Verbindung zur Prüfung einer öffentlichen Release-Information. GitHub erhält dabei technisch Server-IP, Zeitpunkt und User-Agent. Es werden keine Tokens übertragen und keine Shop-, Kunden- oder Formulardaten; ein privates Repository liefert über diese öffentliche Abfrage keine Release-Information.</Description>
+                <Description>Standardmäßig aktiviert: Beim Öffnen des Darstellungstabs erfolgt höchstens alle zwölf Stunden eine Server-zu-GitHub-Verbindung zur Prüfung einer Release-Information aus dem öffentlichen GitHub-Repository. GitHub erhält dabei technisch Server-IP, Zeitpunkt und User-Agent. Es werden keine Tokens und keine Shop-, Kunden- oder Formulardaten übertragen. Das Plugin zeigt ausschließlich einen Hinweis an und installiert keine Updates automatisch.</Description>
                 <ValueName>update_notices</ValueName>
                 <SelectboxOptions>
                     <Option value="N" sort="1">Nein</Option>

@@ -58,7 +58,7 @@ final class GitHubReleaseCheckerTest extends TestCase
         );
         self::assertSame([
             'Accept' => 'application/vnd.github+json',
-            'User-Agent' => 'MGD-AI-Kennzeichnung-JTL-Shop-5/1.2.1',
+            'User-Agent' => 'MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.0',
         ], $http->lastRequest->headers);
         self::assertSame(2, $http->lastRequest->connectTimeoutSeconds);
         self::assertSame(5, $http->lastRequest->totalTimeoutSeconds);
@@ -184,8 +184,8 @@ final class GitHubReleaseCheckerTest extends TestCase
         $http->response = $response;
         $http->exception = $exception;
 
-        $first = $checker->check(true, '1.2.1');
-        $second = $checker->check(true, '1.2.1');
+        $first = $checker->check(true, '1.3.0');
+        $second = $checker->check(true, '1.3.0');
 
         self::assertNull($first);
         self::assertNull($second);
@@ -202,13 +202,13 @@ final class GitHubReleaseCheckerTest extends TestCase
 
         [$vorAblauf, $httpVorAblauf, $cacheVorAblauf] = $this->checker(now: 1_700_043_199);
         $cacheVorAblauf->stored = $state;
-        self::assertNull($vorAblauf->check(true, '1.2.1'));
+        self::assertNull($vorAblauf->check(true, '1.3.0'));
         self::assertSame(0, $httpVorAblauf->calls);
 
         [$abAblauf, $httpAbAblauf, $cacheAbAblauf] = $this->checker(now: 1_700_043_200);
         $cacheAbAblauf->stored = $state;
-        $httpAbAblauf->response = $this->releaseResponse('v1.2.3');
-        self::assertNotNull($abAblauf->check(true, '1.2.1'));
+        $httpAbAblauf->response = $this->releaseResponse('v1.3.1');
+        self::assertNotNull($abAblauf->check(true, '1.3.0'));
         self::assertSame(1, $httpAbAblauf->calls);
     }
 
@@ -216,10 +216,10 @@ final class GitHubReleaseCheckerTest extends TestCase
     public function ein_cache_schreibfehler_verhindert_weder_den_hinweis_noch_den_adminabruf(): void
     {
         [$checker, $http, $cache] = $this->checker(now: 1_700_000_000);
-        $http->response = $this->releaseResponse('v1.2.2');
+        $http->response = $this->releaseResponse('v1.3.1');
         $cache->throwOnSave = true;
 
-        self::assertInstanceOf(UpdateNotice::class, $checker->check(true, '1.2.1'));
+        self::assertInstanceOf(UpdateNotice::class, $checker->check(true, '1.3.0'));
         self::assertSame(1, $http->calls);
         self::assertSame(1, $cache->saveCalls);
     }

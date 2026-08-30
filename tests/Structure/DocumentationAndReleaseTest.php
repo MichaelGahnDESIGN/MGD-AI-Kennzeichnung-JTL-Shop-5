@@ -11,19 +11,32 @@ use ZipArchive;
 final class DocumentationAndReleaseTest extends TestCase
 {
     private const ROOT = __DIR__ . '/../..';
-    private const VERSION = '1.2.1';
-    private const ZIP = self::ROOT . '/dist/MGD_AI_Kennzeichnung-1.2.1.zip';
+    private const VERSION = '1.3.0';
+    private const ZIP = self::ROOT . '/dist/MGD_AI_Kennzeichnung-1.3.0.zip';
 
     #[Test]
     public function releaseziel_und_lokale_artefakte_sind_eindeutig_abgegrenzt(): void
     {
         $script = file_get_contents(self::ROOT . '/scripts/build-release.sh');
+        $checker = file_get_contents(
+            self::ROOT . '/plugin/MGD_AI_Kennzeichnung/Infrastructure/Update/GitHubReleaseChecker.php',
+        );
+        $display = file_get_contents(self::ROOT . '/plugin/MGD_AI_Kennzeichnung/adminmenu/display.php');
+        $infoXml = file_get_contents(self::ROOT . '/plugin/MGD_AI_Kennzeichnung/info.xml');
         $gitignore = file_get_contents(self::ROOT . '/.gitignore');
         self::assertIsString($script);
+        self::assertIsString($checker);
+        self::assertIsString($display);
+        self::assertIsString($infoXml);
         self::assertIsString($gitignore);
 
-        self::assertStringContainsString('MGD_AI_Kennzeichnung-1.2.1.zip', $script);
-        self::assertStringNotContainsString('MGD_AI_Kennzeichnung-1.2.0.zip', $script);
+        self::assertStringContainsString('MGD_AI_Kennzeichnung-1.3.0.zip', $script);
+        self::assertStringNotContainsString('MGD_AI_Kennzeichnung-1.2.1.zip', $script);
+        self::assertStringContainsString('<Version>1.3.0</Version>', $infoXml);
+        self::assertStringContainsString('MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.0', $checker);
+        self::assertStringContainsString("check(true, '1.3.0')", $display);
+        self::assertStringNotContainsString('MGD-AI-Kennzeichnung-JTL-Shop-5/1.2.1', $checker);
+        self::assertStringNotContainsString("check(true, '1.2.1')", $display);
         self::assertStringNotContainsString('cp -R "${quellordner}/."', $script);
         self::assertStringContainsString('mktemp -d "${ausgabeordner}/', $script);
         self::assertStringContainsString('unzip -tq "${temporaeres_zip}"', $script);
@@ -240,14 +253,14 @@ BASH;
     }
 
     #[Test]
-    public function version_1_2_1_ist_in_paket_ci_und_benutzerdokumentation_konsistent(): void
+    public function version_1_3_0_ist_in_paket_ci_und_benutzerdokumentation_konsistent(): void
     {
         $dateien = [
             'README' => self::ROOT . '/README.md',
             'CHANGELOG' => self::ROOT . '/CHANGELOG.md',
             'Sicherheit' => self::ROOT . '/SECURITY.md',
             'Darstellung' => self::ROOT . '/Dokumentation/Darstellung.md',
-            'Release' => self::ROOT . '/Dokumentation/Release-1.2.1.md',
+            'Release' => self::ROOT . '/Dokumentation/Release-1.3.0.md',
             'Datenschutz' => self::ROOT . '/Dokumentation/Datenschutz-und-Sicherheit.md',
             'Installation' => self::ROOT . '/Dokumentation/Installation-und-Livetest.md',
             'Wiki' => self::ROOT . '/wiki/Home.md',
@@ -269,11 +282,10 @@ BASH;
         }
 
         foreach ([
-            'Version 1.2.1',
+            'Version 1.3.0',
             'Live-Vorschau',
             'Transparenz',
             'Nur Vorschau',
-            'privates Repository',
             'manueller ZIP-Upload',
             'Server-IP',
             'User-Agent',
@@ -291,6 +303,7 @@ BASH;
             'Updatehinweise sind bei Neuinstallationen standardmäßig deaktiviert',
             $gesamt,
         );
+        self::assertStringNotContainsStringIgnoringCase('privates Repository', $gesamt);
 
         $build = file_get_contents(self::ROOT . '/scripts/build-release.sh');
         $workflow = file_get_contents(self::ROOT . '/.github/workflows/quality.yml');
@@ -303,7 +316,7 @@ BASH;
         self::assertStringContainsString($dateiname, $workflow);
         self::assertSame(1, substr_count($workflow, 'run: composer test:js'));
         self::assertStringContainsString('<Version>' . self::VERSION . '</Version>', $infoXml);
-        self::assertStringNotContainsString('MGD_AI_Kennzeichnung-1.2.0.zip', $build . $workflow);
+        self::assertStringNotContainsString('MGD_AI_Kennzeichnung-1.2.1.zip', $build . $workflow);
     }
 
     #[Test]
