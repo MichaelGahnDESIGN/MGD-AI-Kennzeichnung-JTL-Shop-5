@@ -157,6 +157,21 @@ export function createPhilosophyToolbar(options = {}) {
             setMode('html');
         }
     };
+    const preserveVisualSelection = (event) => {
+        if (destroyed || !event || typeof event.preventDefault !== 'function') {
+            return;
+        }
+        if (Number.isInteger(event.button) && event.button !== 0) {
+            return;
+        }
+        /*
+         * Safari kann beim nativen Fokuswechsel auf den Button die Range des
+         * Contenteditables vor dem nachfolgenden Click verwerfen. Der primäre
+         * Pointer bleibt deshalb auf der visuellen Auswahl, Tastatur-Clicks
+         * werden durch diese Ereignisse nicht beeinflusst.
+         */
+        event.preventDefault();
+    };
 
     try {
         for (const definition of COMMAND_BUTTONS) {
@@ -181,6 +196,8 @@ export function createPhilosophyToolbar(options = {}) {
             buttons.set(definition.id, button);
             commandListeners.set(definition.id, listener);
             button.addEventListener('click', listener);
+            button.addEventListener('pointerdown', preserveVisualSelection);
+            button.addEventListener('mousedown', preserveVisualSelection);
             toolbar.append(button);
         }
 
@@ -228,7 +245,7 @@ export function createPhilosophyToolbar(options = {}) {
 
         /** Trennt die erfolgreiche Editor-Mutation strikt von der optionalen UI-Benachrichtigung. */
         function finishCommand(adapterResult) {
-            if (destroyed || adapterResult === false) {
+            if (destroyed || !didAdapterSucceed(adapterResult)) {
                 commandInProgress = false;
                 return false;
             }
@@ -286,7 +303,7 @@ export function createPhilosophyToolbar(options = {}) {
 
         /** Veröffentlicht den erfolgreichen Modus vor der rein nachgelagerten Benachrichtigung. */
         function finishModeChange(result) {
-            if (destroyed || (result && result.ok === false)) {
+            if (destroyed || !didAdapterSucceed(result)) {
                 modeChangeInProgress = false;
                 return false;
             }
@@ -391,6 +408,8 @@ export function createPhilosophyToolbar(options = {}) {
             const listener = commandListeners.get(commandId);
             if (listener && typeof button.removeEventListener === 'function') {
                 runBestEffort(() => { button.removeEventListener('click', listener); });
+                runBestEffort(() => { button.removeEventListener('pointerdown', preserveVisualSelection); });
+                runBestEffort(() => { button.removeEventListener('mousedown', preserveVisualSelection); });
             }
         }
         if (visualButton && typeof visualButton.removeEventListener === 'function') {
@@ -471,6 +490,18 @@ function isThenable(value) {
             && typeof value.then === 'function';
     } catch {
         return true;
+    }
+}
+
+/** Nur ausdrücklich bestätigte Adapterwerte dürfen lokale Änderungen als erfolgreich veröffentlichen. */
+function didAdapterSucceed(result) {
+    if (result === true) {
+        return true;
+    }
+    try {
+        return isObject(result) && result.ok === true;
+    } catch {
+        return false;
     }
 }
 

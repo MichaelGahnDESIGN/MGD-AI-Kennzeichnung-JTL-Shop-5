@@ -422,9 +422,16 @@ function callCallback(callback, ...argumentsList) {
     }
 }
 
-/** Ein explizites `false` oder ein gekapselter Callbackfehler bedeutet keinen Erfolg. */
+/** Nur ein ausdrückliches `true` oder `{ok: true}` bestätigt einen Adaptererfolg. */
 function didSucceed(result) {
-    return result !== false && result !== CALLBACK_FAILED;
+    if (result === true) {
+        return true;
+    }
+    try {
+        return isObject(result) && result.ok === true;
+    } catch {
+        return false;
+    }
 }
 
 function isThenable(value) {

@@ -124,7 +124,7 @@ function findByRole(element, role) {
 function createSelectionAdapter() {
     return {
         capture() { return { range: 'test' }; },
-        restore() {},
+        restore() { return true; },
     };
 }
 
@@ -247,8 +247,8 @@ test('feste Befehle nutzen ausschließlich den Adapter, synchronisieren und foku
         document,
         visual,
         adapter: {
-            setBlockFormat(tag) { commands.push(['setBlockFormat', tag]); },
-            toggleInlineFormat(tag) { commands.push(['toggleInlineFormat', tag]); },
+            setBlockFormat(tag) { commands.push(['setBlockFormat', tag]); return true; },
+            toggleInlineFormat(tag) { commands.push(['toggleInlineFormat', tag]); return true; },
         },
         onChange() { changes += 1; },
     });
@@ -259,6 +259,146 @@ test('feste Befehle nutzen ausschließlich den Adapter, synchronisieren und foku
     assert.deepEqual(commands, [['setBlockFormat', 'h2'], ['toggleInlineFormat', 'strong']]);
     assert.equal(changes, 2);
     assert.equal(visual.focusCalls, 2);
+});
+
+test('Pointer- und Mausfokus löschen die lokale Visualauswahl vor einem Format-Click nicht', () => {
+    for (const eventType of ['pointerdown', 'mousedown']) {
+        const document = createDocument();
+        let lokaleAuswahlVorhanden = true;
+        let formatierungen = 0;
+        const toolbar = createPhilosophyToolbar({
+            document,
+            adapter: {
+                toggleInlineFormat() {
+                    if (!lokaleAuswahlVorhanden) {
+                        return false;
+                    }
+                    formatierungen += 1;
+                    return true;
+                },
+            },
+        });
+        const button = toolbar.buttons.get('bold');
+        let standardfokusVerhindert = false;
+
+        button.dispatch(eventType, {
+            button: 0,
+            preventDefault() { standardfokusVerhindert = true; },
+        });
+        /* Bildet den nativen Button-Fokus nach, der in Safari die Contenteditable-Auswahl verlieren kann. */
+        if (!standardfokusVerhindert) {
+            lokaleAuswahlVorhanden = false;
+        }
+        button.dispatch('click', { detail: 1 });
+
+        assert.equal(standardfokusVerhindert, true, `${eventType} muss den nativen Fokuswechsel verhindern.`);
+        assert.equal(formatierungen, 1, `${eventType} muss die lokale Auswahl bis zum Click bewahren.`);
+    }
+
+    let tastaturFormatierungen = 0;
+    const tastaturToolbar = createPhilosophyToolbar({
+        document: createDocument(),
+        adapter: {
+            toggleInlineFormat() {
+                tastaturFormatierungen += 1;
+                return true;
+            },
+        },
+    });
+    /* Ein tastaturausgelöster Click besitzt keinen vorgeschalteten Pointer- oder Mauspfad. */
+    tastaturToolbar.buttons.get('bold').dispatch('click', { detail: 0 });
+    assert.equal(tastaturFormatierungen, 1);
+});
+
+test('Konstruktionsfehler und Destroy entfernen alle Fokus- und Click-Listener der Commandbuttons', () => {
+    const fehlerDokument = createDocument();
+    const createElement = fehlerDokument.createElement.bind(fehlerDokument);
+    let ersterButton = null;
+    let commandButtons = 0;
+    fehlerDokument.createElement = (tagName) => {
+        if (tagName === 'button') {
+            commandButtons += 1;
+            if (commandButtons === 2) {
+                throw new Error('Zweiter Commandbutton konnte nicht erstellt werden.');
+            }
+        }
+        const element = createElement(tagName);
+        if (tagName === 'button' && ersterButton === null) {
+            ersterButton = element;
+        }
+        return element;
+    };
+
+    assert.throws(() => createPhilosophyToolbar({
+        document: fehlerDokument,
+        selection: createSelectionAdapter(),
+    }), /Zweiter Commandbutton/u);
+    assert.equal([...ersterButton.listeners.values()].flat().length, 0);
+
+    const toolbar = createPhilosophyToolbar({ document: createDocument() });
+    const button = toolbar.buttons.get('bold');
+    assert.equal(button.listeners.get('click').length, 1);
+    assert.equal(button.listeners.get('pointerdown').length, 1);
+    assert.equal(button.listeners.get('mousedown').length, 1);
+    toolbar.destroy();
+    assert.equal([...button.listeners.values()].flat().length, 0);
+});
+
+test('Commandadapter akzeptiert nur true oder ein explizites ok-Ergebnis als Erfolg', async () => {
+    for (const adapterResult of [undefined, null, {}, { ok: false }]) {
+        let changes = 0;
+        const toolbar = createPhilosophyToolbar({
+            document: createDocument(),
+            adapter: { toggleInlineFormat() { return adapterResult; } },
+            onChange() { changes += 1; },
+        });
+
+        assert.equal(toolbar.executeCommand('bold'), false);
+        assert.equal(changes, 0);
+    }
+
+    for (const adapterResult of [true, { ok: true }]) {
+        const toolbar = createPhilosophyToolbar({
+            document: createDocument(),
+            adapter: { toggleInlineFormat() { return adapterResult; } },
+        });
+        assert.equal(toolbar.executeCommand('bold'), true);
+    }
+
+    const asyncToolbar = createPhilosophyToolbar({
+        document: createDocument(),
+        adapter: { toggleInlineFormat() { return Promise.resolve(undefined); } },
+    });
+    assert.equal(await asyncToolbar.executeCommand('bold'), false);
+});
+
+test('Modusadapter veröffentlicht ausschließlich true oder ein explizites ok-Ergebnis', async () => {
+    for (const adapterResult of [undefined, null, {}, { ok: false }]) {
+        const modeChanges = [];
+        const toolbar = createPhilosophyToolbar({
+            document: createDocument(),
+            sync: { showHtml() { return adapterResult; } },
+            onModeChange(mode) { modeChanges.push(mode); },
+        });
+
+        assert.equal(toolbar.setMode('html'), false);
+        assert.deepEqual(modeChanges, []);
+        assert.equal(toolbar.visualButton.getAttribute('aria-pressed'), 'true');
+    }
+
+    for (const adapterResult of [true, { ok: true }]) {
+        const toolbar = createPhilosophyToolbar({
+            document: createDocument(),
+            sync: { showHtml() { return adapterResult; } },
+        });
+        assert.equal(toolbar.setMode('html'), true);
+    }
+
+    const asyncToolbar = createPhilosophyToolbar({
+        document: createDocument(),
+        sync: { showHtml() { return Promise.resolve(null); } },
+    });
+    assert.equal(await asyncToolbar.setMode('html'), false);
 });
 
 test('unbekannte Befehle und freie Werte werden vor dem Adapter verworfen', () => {
@@ -287,6 +427,7 @@ test('schneller sequenzieller Doppelklick führt denselben Formatbefehl nur einm
             toggleInlineFormat(tag) {
                 assert.equal(tag, 'strong');
                 commands += 1;
+                return true;
             },
         },
     });
@@ -329,7 +470,7 @@ test('sicherer Dialog akzeptiert ausschließlich den Sanitizer-Vertrag und fügt
     const dialog = createPhilosophyLinkDialog({
         document,
         selection: createSelectionAdapter(),
-        onInsert(url) { inserted.push(url); },
+        onInsert(url) { inserted.push(url); return true; },
     });
     const input = findByRole(dialog.element, 'link-url');
     const submit = findByRole(dialog.element, 'link-submit');
@@ -342,6 +483,81 @@ test('sicherer Dialog akzeptiert ausschließlich den Sanitizer-Vertrag und fügt
     assert.deepEqual(inserted, ['https://beispiel.de/pfad?x=1']);
     assert.equal(dialog.element.showModalCalls, 1);
     assert.equal(dialog.element.closeCalls, 1);
+});
+
+test('Linkdialog akzeptiert für Auswahl und Einfügen nur explizite Adaptererfolge', () => {
+    const fehlendeWiederherstellung = createPhilosophyLinkDialog({
+        document: createDocument(),
+        selection: { capture() { return 'range'; }, restore() {} },
+        onInsert() { throw new Error('Darf ohne bestätigte Wiederherstellung nicht laufen.'); },
+    });
+    const restoreInput = findByRole(fehlendeWiederherstellung.element, 'link-url');
+    const restoreSubmit = findByRole(fehlendeWiederherstellung.element, 'link-submit');
+    fehlendeWiederherstellung.open();
+    restoreInput.value = 'https://beispiel.de';
+    restoreSubmit.dispatch('click');
+    assert.equal(fehlendeWiederherstellung.element.open, true);
+
+    const fehlendeEinfuegebestaetigung = createPhilosophyLinkDialog({
+        document: createDocument(),
+        selection: createSelectionAdapter(),
+        onInsert() {},
+    });
+    const insertInput = findByRole(fehlendeEinfuegebestaetigung.element, 'link-url');
+    const insertSubmit = findByRole(fehlendeEinfuegebestaetigung.element, 'link-submit');
+    fehlendeEinfuegebestaetigung.open();
+    insertInput.value = 'https://beispiel.de';
+    insertSubmit.dispatch('click');
+    assert.equal(fehlendeEinfuegebestaetigung.element.open, true);
+
+    const expliziterErfolg = createPhilosophyLinkDialog({
+        document: createDocument(),
+        selection: { capture() { return 'range'; }, restore() { return { ok: true }; } },
+        onInsert() { return { ok: true }; },
+    });
+    const successInput = findByRole(expliziterErfolg.element, 'link-url');
+    const successSubmit = findByRole(expliziterErfolg.element, 'link-submit');
+    expliziterErfolg.open();
+    successInput.value = 'https://beispiel.de';
+    successSubmit.dispatch('click');
+    assert.equal(expliziterErfolg.element.open, false);
+});
+
+test('Linkdialog weist implizite asynchrone Insert- und Restore-Ergebnisse fail-closed zurück', async () => {
+    for (const adapterResult of [undefined, {}]) {
+        const dialog = createPhilosophyLinkDialog({
+            document: createDocument(),
+            selection: createSelectionAdapter(),
+            onInsert() { return Promise.resolve(adapterResult); },
+        });
+        const input = findByRole(dialog.element, 'link-url');
+        const submit = findByRole(dialog.element, 'link-submit');
+        dialog.open();
+        input.value = 'https://beispiel.de';
+        submit.dispatch('click');
+        await Promise.resolve();
+        await Promise.resolve();
+        assert.equal(dialog.element.open, true);
+    }
+
+    let insertions = 0;
+    const asyncRestore = createPhilosophyLinkDialog({
+        document: createDocument(),
+        selection: {
+            capture() { return 'range'; },
+            restore() { return Promise.resolve(true); },
+        },
+        onInsert() { insertions += 1; return true; },
+    });
+    const input = findByRole(asyncRestore.element, 'link-url');
+    const submit = findByRole(asyncRestore.element, 'link-submit');
+    asyncRestore.open();
+    input.value = 'https://beispiel.de';
+    submit.dispatch('click');
+    await Promise.resolve();
+
+    assert.equal(insertions, 0);
+    assert.equal(asyncRestore.element.open, true);
 });
 
 test('unsichere Linkadressen zeigen einen Inlinefehler und führen keinen Befehl aus', () => {
@@ -379,7 +595,7 @@ test('Abbrechen stellt die gesicherte Auswahl wieder her, fokussiert visuell und
         visual,
         selection: {
             capture() { events.push('capture'); return { range: 'ursprünglich' }; },
-            restore(snapshot) { events.push(`restore:${snapshot.range}`); },
+            restore(snapshot) { events.push(`restore:${snapshot.range}`); return true; },
         },
         adapter: { insertLink() { insertions += 1; } },
     });
@@ -411,12 +627,13 @@ test('Linkbutton schließt den Dialog vor Adapter, Synchronisierung und Visualfo
         visual,
         selection: {
             capture() { events.push('capture'); return 'range'; },
-            restore(snapshot) { events.push(`restore:${snapshot}`); },
+            restore(snapshot) { events.push(`restore:${snapshot}`); return true; },
         },
         adapter: {
             insertLink(url) {
                 events.push(`adapter:${url}`);
                 assert.equal(toolbar.linkDialog.element.open, false);
+                return true;
             },
         },
         onChange() { events.push('change'); },
@@ -456,7 +673,7 @@ test('fehlgeschlagener Linkbefehl öffnet den Dialog mit Inlinefehler erneut und
         document,
         selection: {
             capture() { events.push('capture'); return 'range'; },
-            restore(value) { events.push(`restore:${value}`); },
+            restore(value) { events.push(`restore:${value}`); return true; },
         },
         adapter: {
             insertLink() { events.push('adapter'); return false; },
@@ -589,7 +806,7 @@ test('öffentliches close bleibt während eines Pending-Links wirkungslos und be
             document,
             selection: {
                 capture() { events.push('capture'); return 'range'; },
-                restore(snapshot) { events.push(`restore:${snapshot}`); },
+                restore(snapshot) { events.push(`restore:${snapshot}`); return true; },
             },
             onInsert() { return result; },
         });
@@ -632,7 +849,7 @@ test('Thenables werden abgewartet und blockieren Reentranz bis zur Auflösung', 
     assert.equal(calls, 1);
     resolvePending(true);
     assert.equal(await first, true);
-    assert.equal(toolbar.executeCommand('bold'), true);
+    assert.equal(toolbar.executeCommand('bold'), false);
     assert.equal(calls, 2);
 });
 
@@ -840,7 +1057,7 @@ test('öffentliches close stellt die Auswahl wieder her und verwirft sie anschli
         document,
         selection: {
             capture() { events.push('capture'); return 'range'; },
-            restore(value) { events.push(`restore:${value}`); },
+            restore(value) { events.push(`restore:${value}`); return true; },
         },
     });
 
