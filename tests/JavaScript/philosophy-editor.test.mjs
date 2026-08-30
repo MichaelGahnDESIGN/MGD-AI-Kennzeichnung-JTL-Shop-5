@@ -413,9 +413,11 @@ test('initialisiert genau zwei unabhängige Editoren mit zugänglicher lokaler S
     assert.equal(controller.instances.length, 2);
     assert.notEqual(controller.instances[0], controller.instances[1]);
     for (const instance of controller.instances) {
+        const sprachAdjektiv = instance.language === 'de' ? 'deutschen' : 'englischen';
         assert.equal(instance.ok, true);
         assert.match(instance.root.querySelector('[data-mgd-philosophy-role="editor"]').getAttribute('id'), new RegExp(`-${instance.language}-`, 'u'));
         assert.equal(instance.toolbar.element.getAttribute('role'), 'toolbar');
+        assert.equal(instance.toolbar.element.getAttribute('aria-label'), `Werkzeuge für ${sprachAdjektiv} Philosophie-Text`);
         assert.equal(instance.visual.getAttribute('contenteditable'), 'true');
         assert.equal(instance.visual.getAttribute('role'), 'textbox');
         assert.equal(instance.visual.getAttribute('aria-multiline'), 'true');
@@ -432,6 +434,14 @@ test('initialisiert genau zwei unabhängige Editoren mit zugänglicher lokaler S
         assert.equal(instance.html.getAttribute('aria-hidden'), 'true');
         assert.equal(instance.toolbar.visualButton.getAttribute('aria-pressed'), 'true');
         assert.equal(instance.toolbar.htmlButton.getAttribute('aria-pressed'), 'false');
+        assert.equal(
+            instance.toolbar.linkDialog.element.childNodes[0].textContent,
+            `Link für ${sprachAdjektiv} Philosophie-Text einfügen`,
+        );
+        assert.equal(
+            instance.toolbar.linkDialog.element.childNodes[1].textContent,
+            `HTTPS-Adresse für ${sprachAdjektiv} Philosophie-Text`,
+        );
     }
     assert.equal(new Set(controller.instances.flatMap((instance) => [
         instance.visual.getAttribute('id'),
@@ -457,6 +467,93 @@ test('versteckt den Originalwert erst nach Erfolg und isoliert einen Initialisie
     assert.match(fixture.roots.get('de').root.querySelector('[data-mgd-philosophy-role="fallback-status"]').textContent, /nicht gestartet/u);
     assert.equal(fixture.roots.get('en').source.hidden, true);
     assert.equal(fixture.roots.get('en').source.style.display, 'none');
+});
+
+test('bewahrt fremde Fallback-Statusknoten bei erfolgreicher Initialisierung', () => {
+    const fixture = createFixture();
+    const fremderStatus = fixture.document.createElement('p');
+    fremderStatus.setAttribute('data-mgd-philosophy-role', 'fallback-status');
+    fremderStatus.textContent = 'Status eines fremden Moduls';
+    fixture.roots.get('de').root.appendChild(fremderStatus);
+
+    initialize(fixture);
+
+    assert.equal(fixture.roots.get('de').root.contains(fremderStatus), true);
+    assert.equal(fremderStatus.textContent, 'Status eines fremden Moduls');
+});
+
+test('isoliert einen Fehler beim Abfragen alter eigener Fallback-Statusknoten', () => {
+    const fixture = createFixture();
+    const deutscheRoot = fixture.roots.get('de').root;
+    const querySelectorAll = deutscheRoot.querySelectorAll.bind(deutscheRoot);
+    deutscheRoot.querySelectorAll = (selector) => {
+        if (selector.includes('fallback-status')) {
+            throw new Error('Statusabfrage fehlgeschlagen.');
+        }
+        return querySelectorAll(selector);
+    };
+    let controller;
+
+    assert.doesNotThrow(() => { controller = initialize(fixture); });
+    assert.equal(controller.instances.length, 1);
+    assert.equal(controller.instances[0].language, 'en');
+    assert.equal(fixture.roots.get('de').source.hidden, false);
+    assert.equal(fixture.roots.get('en').source.hidden, true);
+});
+
+test('isoliert einen Fehler beim Erzeugen des lokalen Fallback-Status', () => {
+    const fixture = createFixture();
+    const createElement = fixture.document.createElement.bind(fixture.document);
+    let statusFehler = true;
+    fixture.document.createElement = (name) => {
+        if (name === 'p' && statusFehler) {
+            statusFehler = false;
+            throw new Error('Fallback-Status konnte nicht erzeugt werden.');
+        }
+        return createElement(name);
+    };
+    let controller;
+
+    assert.doesNotThrow(() => {
+        controller = initialize(fixture, {
+            sanitize(value) {
+                if (value.includes('Deutsch')) {
+                    throw new Error('Deutsche Initialisierung fehlgeschlagen.');
+                }
+                return sanitizeForTest(value);
+            },
+        });
+    });
+    assert.equal(controller.instances.length, 1);
+    assert.equal(controller.instances[0].language, 'en');
+    assert.equal(fixture.roots.get('de').source.hidden, false);
+});
+
+test('isoliert einen Fehler beim Anhängen des lokalen Fallback-Status', () => {
+    const fixture = createFixture();
+    const deutscheRoot = fixture.roots.get('de').root;
+    const appendChild = deutscheRoot.appendChild.bind(deutscheRoot);
+    deutscheRoot.appendChild = (node) => {
+        if (node.getAttribute?.('data-mgd-philosophy-role') === 'fallback-status') {
+            throw new Error('Fallback-Status konnte nicht angehängt werden.');
+        }
+        return appendChild(node);
+    };
+    let controller;
+
+    assert.doesNotThrow(() => {
+        controller = initialize(fixture, {
+            sanitize(value) {
+                if (value.includes('Deutsch')) {
+                    throw new Error('Deutsche Initialisierung fehlgeschlagen.');
+                }
+                return sanitizeForTest(value);
+            },
+        });
+    });
+    assert.equal(controller.instances.length, 1);
+    assert.equal(controller.instances[0].language, 'en');
+    assert.equal(fixture.roots.get('de').source.hidden, false);
 });
 
 test('rollt einen späten Initialisierungsfehler lokal zurück und lässt die Source sichtbar', () => {
@@ -506,6 +603,39 @@ test('rollt den Sourcewert auch bei einem Fehler direkt nach der ersten Kanonisi
     assert.equal(deutscheSource.value, urspruenglicherWert);
     assert.equal(deutscheSource.hidden, false);
     assert.equal(fixture.roots.get('de').root.querySelector('[data-mgd-philosophy-role="editor"]'), null);
+});
+
+test('räumt einen Standarddialog auf, wenn der Toolbar-Aufbau nach dessen Append scheitert', () => {
+    const fixture = createFixture();
+    const deutscheSource = fixture.roots.get('de').source;
+    const urspruenglicherWert = '<p onclick="x()">Dialogfehler</p>';
+    deutscheSource.value = urspruenglicherWert;
+    const createElement = fixture.document.createElement.bind(fixture.document);
+    const dialogs = [];
+    let einmalWerfen = true;
+    fixture.document.createElement = (name) => {
+        if (name === 'button'
+            && einmalWerfen
+            && dialogs.length > 0
+            && fixture.document.body.contains(dialogs[0])) {
+            einmalWerfen = false;
+            throw new Error('Toolbar-Aufbau fehlgeschlagen.');
+        }
+        const element = createElement(name);
+        if (name === 'dialog') {
+            dialogs.push(element);
+        }
+        return element;
+    };
+
+    const controller = initialize(fixture);
+
+    assert.equal(controller.instances.length, 1);
+    assert.equal(controller.instances[0].language, 'en');
+    assert.equal(deutscheSource.value, urspruenglicherWert);
+    assert.equal(deutscheSource.hidden, false);
+    assert.equal(fixture.document.querySelectorAll('[data-mgd-philosophy-role="link-dialog"]').length, 1);
+    assert.equal([...dialogs[0].listeners.values()].flat().length, 0);
 });
 
 test('initialisiert source, HTML und Visual vor SourceSync mit demselben kanonischen Wert', () => {

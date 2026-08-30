@@ -72,6 +72,8 @@ const COMMAND_BUTTONS = Object.freeze([
  *   sync?: {showVisual?: () => ({ok?: boolean}|Promise<{ok?: boolean}>), showHtml?: () => ({ok?: boolean}|Promise<{ok?: boolean}>)},
  *   onChange?: () => unknown,
  *   onModeChange?: (mode: 'visual'|'html') => unknown,
+ *   accessibleName?: string,
+ *   linkDialogLabels?: {title?: string, url?: string, submit?: string},
  *   linkDialog?: {
  *     supported?: boolean,
  *     selectionReady?: boolean,
@@ -120,15 +122,22 @@ export function createPhilosophyToolbar(options = {}) {
     const toolbar = documentAdapter.createElement('div');
     toolbar.setAttribute('class', 'mgd-philosophy-toolbar');
     toolbar.setAttribute('role', 'toolbar');
-    toolbar.setAttribute('aria-label', 'Werkzeuge für den Philosophie-Text');
+    toolbar.setAttribute('aria-label', resolveAccessibleText(
+        configuration.accessibleName,
+        'Werkzeuge für den Philosophie-Text',
+    ));
     const buttons = new Map();
     const commandListeners = new Map();
     const pressedButtonIds = new Set();
     let linkButton = null;
     let unsubscribeLinkBusy = () => {};
+    let visualButton = null;
+    let htmlButton = null;
+    let resourcesReleased = false;
     const linkDialog = configuration.linkDialog ?? createPhilosophyLinkDialog({
         document: documentAdapter,
         selection,
+        labels: configuration.linkDialogLabels,
         onInsert(url) {
             return executeCommand('link', url);
         },
@@ -138,41 +147,6 @@ export function createPhilosophyToolbar(options = {}) {
         },
     });
 
-    for (const definition of COMMAND_BUTTONS) {
-        const button = createToolbarButton(documentAdapter, definition.label, definition.text, definition.id);
-        if (definition.id === 'link') {
-            linkButton = button;
-            updateLinkButtonState();
-        }
-        const listener = (event) => {
-            if (!claimButtonForCurrentTurn(definition.id, event)) {
-                return;
-            }
-            if (definition.id === 'link') {
-                if (isLinkDialogReady() && linkDialog.busy !== true) {
-                    linkDialog.open();
-                }
-                updateLinkButtonState();
-                return;
-            }
-            executeCommand(definition.id);
-        };
-        button.addEventListener('click', listener);
-        buttons.set(definition.id, button);
-        commandListeners.set(definition.id, listener);
-        toolbar.append(button);
-    }
-
-    if (isLinkDialogReady() && typeof linkDialog.subscribeBusy === 'function') {
-        const unsubscribe = linkDialog.subscribeBusy(() => { updateLinkButtonState(); });
-        if (typeof unsubscribe === 'function') {
-            unsubscribeLinkBusy = unsubscribe;
-        }
-    }
-    updateLinkButtonState();
-
-    const visualButton = createModeButton(documentAdapter, 'Visuelle Bearbeitung', 'Visuell', 'visual');
-    const htmlButton = createModeButton(documentAdapter, 'HTML-Bearbeitung', 'HTML', 'html');
     const visualListener = (event) => {
         if (claimButtonForCurrentTurn('mode-visual', event)) {
             setMode('visual');
@@ -183,10 +157,51 @@ export function createPhilosophyToolbar(options = {}) {
             setMode('html');
         }
     };
-    visualButton.addEventListener('click', visualListener);
-    htmlButton.addEventListener('click', htmlListener);
-    toolbar.append(visualButton, htmlButton);
-    updateModeButtons();
+
+    try {
+        for (const definition of COMMAND_BUTTONS) {
+            const button = createToolbarButton(documentAdapter, definition.label, definition.text, definition.id);
+            if (definition.id === 'link') {
+                linkButton = button;
+                updateLinkButtonState();
+            }
+            const listener = (event) => {
+                if (!claimButtonForCurrentTurn(definition.id, event)) {
+                    return;
+                }
+                if (definition.id === 'link') {
+                    if (isLinkDialogReady() && linkDialog.busy !== true) {
+                        linkDialog.open();
+                    }
+                    updateLinkButtonState();
+                    return;
+                }
+                executeCommand(definition.id);
+            };
+            buttons.set(definition.id, button);
+            commandListeners.set(definition.id, listener);
+            button.addEventListener('click', listener);
+            toolbar.append(button);
+        }
+
+        if (isLinkDialogReady() && typeof linkDialog.subscribeBusy === 'function') {
+            const unsubscribe = linkDialog.subscribeBusy(() => { updateLinkButtonState(); });
+            if (typeof unsubscribe === 'function') {
+                unsubscribeLinkBusy = unsubscribe;
+            }
+        }
+        updateLinkButtonState();
+
+        visualButton = createModeButton(documentAdapter, 'Visuelle Bearbeitung', 'Visuell', 'visual');
+        htmlButton = createModeButton(documentAdapter, 'HTML-Bearbeitung', 'HTML', 'html');
+        visualButton.addEventListener('click', visualListener);
+        htmlButton.addEventListener('click', htmlListener);
+        toolbar.append(visualButton, htmlButton);
+        updateModeButtons();
+    } catch (error) {
+        releaseOwnedResources();
+        throw error;
+    }
 
     /** Führt nur einen festen Befehl aus und normalisiert danach den Editorzustand erneut. */
     function executeCommand(commandId, value) {
@@ -364,6 +379,31 @@ export function createPhilosophyToolbar(options = {}) {
         return true;
     }
 
+    /** Entfernt alle bis hierhin registrierten Ressourcen auch bei einem halben Konstruktorlauf. */
+    function releaseOwnedResources() {
+        if (resourcesReleased) {
+            return;
+        }
+        resourcesReleased = true;
+        pressedButtonIds.clear();
+        runBestEffort(unsubscribeLinkBusy);
+        for (const [commandId, button] of buttons) {
+            const listener = commandListeners.get(commandId);
+            if (listener && typeof button.removeEventListener === 'function') {
+                runBestEffort(() => { button.removeEventListener('click', listener); });
+            }
+        }
+        if (visualButton && typeof visualButton.removeEventListener === 'function') {
+            runBestEffort(() => { visualButton.removeEventListener('click', visualListener); });
+        }
+        if (htmlButton && typeof htmlButton.removeEventListener === 'function') {
+            runBestEffort(() => { htmlButton.removeEventListener('click', htmlListener); });
+        }
+        if (linkDialog && typeof linkDialog.destroy === 'function') {
+            runBestEffort(() => { linkDialog.destroy(); });
+        }
+    }
+
     return {
         element: toolbar,
         buttons,
@@ -377,19 +417,7 @@ export function createPhilosophyToolbar(options = {}) {
                 return;
             }
             destroyed = true;
-            pressedButtonIds.clear();
-            unsubscribeLinkBusy();
-            for (const [commandId, button] of buttons) {
-                const listener = commandListeners.get(commandId);
-                if (listener && typeof button.removeEventListener === 'function') {
-                    button.removeEventListener('click', listener);
-                }
-            }
-            visualButton.removeEventListener('click', visualListener);
-            htmlButton.removeEventListener('click', htmlListener);
-            if (linkDialog && typeof linkDialog.destroy === 'function') {
-                linkDialog.destroy();
-            }
+            releaseOwnedResources();
         },
     };
 }
@@ -478,6 +506,25 @@ function createModeButton(documentAdapter, label, text, mode) {
     button.setAttribute('aria-pressed', 'false');
 
     return button;
+}
+
+/** Begrenzt injizierte Beschriftungen auf kurze, nicht leere reine Textwerte. */
+function resolveAccessibleText(value, fallback) {
+    if (typeof value !== 'string') {
+        return fallback;
+    }
+    const normalized = value.trim();
+
+    return normalized !== '' && Array.from(normalized).length <= 200 ? normalized : fallback;
+}
+
+/** Ressourcen-Rollbacks dürfen einen ursprünglichen Konstruktionsfehler nie verdecken. */
+function runBestEffort(callback) {
+    try {
+        callback();
+    } catch {
+        /* Der sichere Rest der Bereinigung wird unabhängig fortgesetzt. */
+    }
 }
 
 function isObject(value) {

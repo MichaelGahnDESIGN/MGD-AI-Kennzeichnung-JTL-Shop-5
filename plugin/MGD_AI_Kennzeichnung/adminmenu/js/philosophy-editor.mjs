@@ -7,6 +7,9 @@ const TEXT_NODE = 3;
 const ALLOWED_ELEMENTS = new Set(['p', 'h2', 'h3', 'ul', 'ol', 'li', 'strong', 'em', 'a']);
 const BLOCK_ELEMENTS = new Set(['p', 'h2', 'h3', 'li']);
 const LANGUAGE_NAMES = Object.freeze({ de: 'Deutsch', en: 'Englisch' });
+const LANGUAGE_ADJECTIVES = Object.freeze({ de: 'deutschen', en: 'englischen' });
+const FALLBACK_STATUS_OWNER = 'mgd-philosophy-editor';
+const OWNED_FALLBACK_STATUS_SELECTOR = `[data-mgd-philosophy-role="fallback-status"][data-mgd-philosophy-status-owner="${FALLBACK_STATUS_OWNER}"]`;
 const initializedRoots = new WeakMap();
 const formStates = new WeakMap();
 let editorSequence = 0;
@@ -36,8 +39,8 @@ export function initializePhilosophyEditors(options = {}) {
             continue;
         }
 
-        removeFallbackStatus(root);
         try {
+            removeFallbackStatus(root);
             const instance = initializeLanguageEditor(root, {
                 document: documentAdapter,
                 sanitize: options.sanitize,
@@ -45,7 +48,11 @@ export function initializePhilosophyEditors(options = {}) {
             initializedRoots.set(root, instance);
             instances.push(instance);
         } catch {
-            localFailures.push(showFallbackStatus(root, documentAdapter));
+            try {
+                localFailures.push(showFallbackStatus(root, documentAdapter));
+            } catch {
+                /* Auch ein defekter Statusadapter darf die nächste Sprachkarte nicht blockieren. */
+            }
         }
     }
 
@@ -61,7 +68,7 @@ export function initializePhilosophyEditors(options = {}) {
                 instance.destroy();
             }
             for (const status of localFailures) {
-                status.remove();
+                runBestEffort(() => { status.remove(); });
             }
         },
     };
@@ -72,8 +79,9 @@ function initializeLanguageEditor(root, options) {
     const documentAdapter = options.document;
     const language = root.getAttribute('data-philosophy-language');
     const languageName = LANGUAGE_NAMES[language];
+    const languageAdjective = LANGUAGE_ADJECTIVES[language];
     const source = root.querySelector('[data-philosophy-source]');
-    if (!languageName || !source || typeof source.value !== 'string') {
+    if (!languageName || !languageAdjective || !source || typeof source.value !== 'string') {
         throw new Error('Ungültige Philosophie-Sprachkarte.');
     }
 
@@ -171,6 +179,12 @@ function initializeLanguageEditor(root, options) {
             selection,
             adapter: commandAdapter,
             sync,
+            accessibleName: `Werkzeuge für ${languageAdjective} Philosophie-Text`,
+            linkDialogLabels: {
+                title: `Link für ${languageAdjective} Philosophie-Text einfügen`,
+                url: `HTTPS-Adresse für ${languageAdjective} Philosophie-Text`,
+                submit: `Link für ${languageAdjective} Philosophie-Text einfügen`,
+            },
             initialMode: 'visual',
             onChange() { return reportSync(sync.prepareSubmit()); },
             onModeChange(mode) { updateMode(mode); },
@@ -684,13 +698,14 @@ function showFallbackStatus(root, documentAdapter) {
     status.setAttribute('role', 'status');
     status.setAttribute('aria-live', 'polite');
     status.setAttribute('data-mgd-philosophy-role', 'fallback-status');
+    status.setAttribute('data-mgd-philosophy-status-owner', FALLBACK_STATUS_OWNER);
     status.textContent = 'Der erweiterte Editor konnte nicht gestartet werden. Das Textfeld bleibt nutzbar.';
     root.appendChild(status);
     return status;
 }
 
 function removeFallbackStatus(root) {
-    for (const status of Array.from(root.querySelectorAll('[data-mgd-philosophy-role="fallback-status"]'))) {
+    for (const status of Array.from(root.querySelectorAll(OWNED_FALLBACK_STATUS_SELECTOR))) {
         status.remove();
     }
 }

@@ -32,6 +32,7 @@ export function normalizeSecureLink(value) {
  *   onInsert?: (url: string) => unknown,
  *   onCancel?: () => unknown,
  *   normalizeLink?: (value: unknown) => string|null,
+ *   labels?: {title?: string, url?: string, submit?: string},
  * }} [options] Kontrollierte Browser- und Callback-Abhängigkeiten.
  * @returns {{
  *   element: HTMLDialogElement|null,
@@ -54,6 +55,10 @@ export function createPhilosophyLinkDialog(options = {}) {
     const onCancel = typeof configuration.onCancel === 'function' ? configuration.onCancel : () => {};
     const selection = isObject(configuration.selection) ? configuration.selection : {};
     const selectionReady = typeof selection.capture === 'function' && typeof selection.restore === 'function';
+    const labels = isObject(configuration.labels) ? configuration.labels : {};
+    const titleText = resolveAccessibleText(labels.title, 'Link einfügen');
+    const urlText = resolveAccessibleText(labels.url, 'HTTPS-Adresse');
+    const submitText = resolveAccessibleText(labels.submit, 'Link einfügen');
 
     if (!documentAdapter || typeof documentAdapter.createElement !== 'function') {
         return createUnsupportedDialog();
@@ -69,9 +74,9 @@ export function createPhilosophyLinkDialog(options = {}) {
     dialog.setAttribute('class', 'mgd-philosophy-link-dialog');
     dialog.setAttribute('data-mgd-philosophy-role', 'link-dialog');
 
-    const title = createElement(documentAdapter, 'h2', 'Link einfügen');
+    const title = createElement(documentAdapter, 'h2', titleText);
     title.setAttribute('id', ids.title);
-    const label = createElement(documentAdapter, 'label', 'HTTPS-Adresse');
+    const label = createElement(documentAdapter, 'label', urlText);
     const input = createElement(documentAdapter, 'input');
     input.setAttribute('type', 'url');
     input.setAttribute('inputmode', 'url');
@@ -88,7 +93,7 @@ export function createPhilosophyLinkDialog(options = {}) {
     const actions = createElement(documentAdapter, 'div');
     actions.setAttribute('class', 'mgd-philosophy-link-dialog__actions');
     const cancel = createButton(documentAdapter, 'Abbrechen', 'link-cancel');
-    const submit = createButton(documentAdapter, 'Link einfügen', 'link-submit');
+    const submit = createButton(documentAdapter, submitText, 'link-submit');
 
     actions.append(cancel, submit);
     dialog.append(title, label, input, error, actions);
@@ -225,12 +230,24 @@ export function createPhilosophyLinkDialog(options = {}) {
     };
     const handleCancel = (event) => { cancelLink(event); };
 
-    cancel.addEventListener('click', cancelLink);
-    submit.addEventListener('click', submitLink);
-    dialog.addEventListener('close', handleClose);
-    dialog.addEventListener('cancel', handleCancel);
-    input.addEventListener('input', handleInput);
-    input.addEventListener('keydown', handleInputKeydown);
+    try {
+        cancel.addEventListener('click', cancelLink);
+        submit.addEventListener('click', submitLink);
+        dialog.addEventListener('close', handleClose);
+        dialog.addEventListener('cancel', handleCancel);
+        input.addEventListener('input', handleInput);
+        input.addEventListener('keydown', handleInputKeydown);
+    } catch (error) {
+        /* Ein nur teilweise gebauter Dialog darf weder DOM noch Listener zurücklassen. */
+        runBestEffort(() => { cancel.removeEventListener('click', cancelLink); });
+        runBestEffort(() => { submit.removeEventListener('click', submitLink); });
+        runBestEffort(() => { dialog.removeEventListener('close', handleClose); });
+        runBestEffort(() => { dialog.removeEventListener('cancel', handleCancel); });
+        runBestEffort(() => { input.removeEventListener('input', handleInput); });
+        runBestEffort(() => { input.removeEventListener('keydown', handleInputKeydown); });
+        runBestEffort(() => { dialog.remove(); });
+        throw error;
+    }
 
     return {
         element: dialog,
@@ -458,6 +475,25 @@ function createButton(documentAdapter, text, role) {
     button.setAttribute('data-mgd-philosophy-role', role);
 
     return button;
+}
+
+/** Begrenzt injizierte Beschriftungen auf kurze, nicht leere reine Textwerte. */
+function resolveAccessibleText(value, fallback) {
+    if (typeof value !== 'string') {
+        return fallback;
+    }
+    const normalized = value.trim();
+
+    return normalized !== '' && Array.from(normalized).length <= 200 ? normalized : fallback;
+}
+
+/** Konstruktions-Rollbacks bleiben vollständig, auch wenn ein DOM-Adapter beim Aufräumen wirft. */
+function runBestEffort(callback) {
+    try {
+        callback();
+    } catch {
+        /* Der ursprüngliche Konstruktionsfehler bleibt die maßgebliche Ursache. */
+    }
 }
 
 function isObject(value) {

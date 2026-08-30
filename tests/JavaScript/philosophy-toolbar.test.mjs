@@ -170,6 +170,74 @@ test('Werkzeugleiste erstellt nur echte deutsch beschriftete Buttons', () => {
     assert.equal(toolbar.htmlButton.getAttribute('aria-pressed'), 'false');
 });
 
+test('Werkzeugleiste und Standard-Linkdialog übernehmen injizierte zugängliche Kontextnamen', () => {
+    const toolbar = createPhilosophyToolbar({
+        document: createDocument(),
+        selection: createSelectionAdapter(),
+        accessibleName: 'Werkzeuge für englischen Philosophie-Text',
+        linkDialogLabels: {
+            title: 'Link für englischen Philosophie-Text einfügen',
+            url: 'HTTPS-Adresse für englischen Philosophie-Text',
+            submit: 'Link für englischen Philosophie-Text einfügen',
+        },
+    });
+
+    assert.equal(toolbar.element.getAttribute('aria-label'), 'Werkzeuge für englischen Philosophie-Text');
+    assert.equal(toolbar.linkDialog.element.children[0].textContent, 'Link für englischen Philosophie-Text einfügen');
+    assert.equal(toolbar.linkDialog.element.children[1].textContent, 'HTTPS-Adresse für englischen Philosophie-Text');
+    assert.equal(findByRole(toolbar.linkDialog.element, 'link-submit').textContent, 'Link für englischen Philosophie-Text einfügen');
+});
+
+test('Werkzeugleisten-Konstruktor entfernt den Standarddialog bei einem Fehler nach dessen Append', () => {
+    const document = createDocument();
+    const createElement = document.createElement.bind(document);
+    let dialog = null;
+    document.createElement = (tagName) => {
+        if (tagName === 'button' && dialog && document.body.children.includes(dialog)) {
+            throw new Error('Toolbar-Button konnte nicht erstellt werden.');
+        }
+        const element = createElement(tagName);
+        if (tagName === 'dialog') {
+            dialog = element;
+        }
+        return element;
+    };
+
+    assert.throws(() => createPhilosophyToolbar({
+        document,
+        selection: createSelectionAdapter(),
+    }), /Toolbar-Button/u);
+    assert.equal(document.body.children.includes(dialog), false);
+    assert.equal([...dialog.listeners.values()].flat().length, 0);
+});
+
+test('Linkdialog-Konstruktor entfernt DOM und Teillistener bei einem Fehler nach Append', () => {
+    const document = createDocument();
+    const baseCreateElement = document.createElement.bind(document);
+    let dialog = null;
+    document.createElement = (tagName) => {
+        const element = baseCreateElement(tagName);
+        if (tagName === 'dialog') {
+            dialog = element;
+            const addEventListener = element.addEventListener.bind(element);
+            element.addEventListener = (type, listener) => {
+                addEventListener(type, listener);
+                if (type === 'cancel') {
+                    throw new Error('Dialog-Listener konnte nicht registriert werden.');
+                }
+            };
+        }
+        return element;
+    };
+
+    assert.throws(() => createPhilosophyLinkDialog({
+        document,
+        selection: createSelectionAdapter(),
+    }), /Dialog-Listener/u);
+    assert.equal(document.body.children.includes(dialog), false);
+    assert.equal([...dialog.listeners.values()].flat().length, 0);
+});
+
 test('feste Befehle nutzen ausschließlich den Adapter, synchronisieren und fokussieren', () => {
     const document = createDocument();
     const commands = [];
