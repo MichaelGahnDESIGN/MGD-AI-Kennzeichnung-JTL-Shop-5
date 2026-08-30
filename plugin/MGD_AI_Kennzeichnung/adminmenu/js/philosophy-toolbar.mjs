@@ -52,9 +52,9 @@ const COMMAND_BUTTONS = Object.freeze([
 ]);
 
 /**
- * Erstellt eine lokale Werkzeugleiste. Der Adapter erhält nur IDs aus der
- * festen Positivliste; er kann daher keine beliebigen Browser-Commands oder
- * HTML-Tags ausführen.
+ * Erstellt eine lokale Werkzeugleiste. Sie löst interne IDs ausschließlich
+ * auf feste Adaptermethoden und Positivlistenwerte auf; freie Browser-Commands
+ * oder HTML-Tags gelangen nicht zum Adapter.
  *
  * @param {{
  *   document?: Document|{createElement?: Function},
@@ -68,6 +68,7 @@ const COMMAND_BUTTONS = Object.freeze([
  *     redo?: () => unknown,
  *   },
  *   visual?: {focus?: () => void},
+ *   selection?: {capture?: () => unknown, restore?: (snapshot: unknown) => unknown},
  *   sync?: {showVisual?: () => {ok?: boolean}, showHtml?: () => {ok?: boolean}},
  *   onChange?: () => void,
  *   onModeChange?: (mode: 'visual'|'html') => void,
@@ -98,11 +99,13 @@ export function createPhilosophyToolbar(options = {}) {
     const onChange = typeof configuration.onChange === 'function' ? configuration.onChange : () => {};
     const onModeChange = typeof configuration.onModeChange === 'function' ? configuration.onModeChange : () => {};
     const sync = isObject(configuration.sync) ? configuration.sync : null;
+    const selection = isObject(configuration.selection) ? configuration.selection : null;
     const scheduleMicrotask = typeof configuration.scheduleMicrotask === 'function'
         ? configuration.scheduleMicrotask
         : scheduleForCurrentTurn;
     let activeMode = configuration.initialMode === 'html' ? 'html' : 'visual';
     let commandInProgress = false;
+    let modeChangeInProgress = false;
 
     const toolbar = documentAdapter.createElement('div');
     toolbar.setAttribute('class', 'mgd-philosophy-toolbar');
@@ -113,8 +116,13 @@ export function createPhilosophyToolbar(options = {}) {
     const pressedButtonIds = new Set();
     const linkDialog = configuration.linkDialog ?? createPhilosophyLinkDialog({
         document: documentAdapter,
+        selection,
         onInsert(url) {
-            executeCommand('link', url);
+            return executeCommand('link', url);
+        },
+        onCancel() {
+            focusVisual();
+            return true;
         },
     });
 
@@ -167,37 +175,69 @@ export function createPhilosophyToolbar(options = {}) {
         }
 
         commandInProgress = true;
+        let releaseAfterThenable = false;
         try {
-            if (invokeAdapter(adapter, command, payload.value) === false) {
+            const adapterResult = invokeAdapter(adapter, command, payload.value);
+            if (isThenable(adapterResult)) {
+                releaseAfterThenable = true;
+                consumeThenableAndRelease(adapterResult, () => { commandInProgress = false; });
                 return false;
             }
-            onChange();
+            if (adapterResult === false) {
+                return false;
+            }
+            const changeResult = onChange();
+            if (isThenable(changeResult)) {
+                releaseAfterThenable = true;
+                consumeThenableAndRelease(changeResult, () => { commandInProgress = false; });
+                return false;
+            }
+            if (changeResult === false) {
+                return false;
+            }
             focusVisual();
 
             return true;
         } catch {
             return false;
         } finally {
-            commandInProgress = false;
+            if (!releaseAfterThenable) {
+                commandInProgress = false;
+            }
         }
     }
 
     /** Wechselt ausschließlich zwischen den beiden festen Ansichten und veröffentlicht erst Erfolg. */
     function setMode(mode) {
-        if (mode !== 'visual' && mode !== 'html') {
+        if ((mode !== 'visual' && mode !== 'html') || modeChangeInProgress) {
             return false;
         }
 
+        modeChangeInProgress = true;
+        let releaseAfterThenable = false;
         try {
             const result = sync && typeof (mode === 'visual' ? sync.showVisual : sync.showHtml) === 'function'
                 ? (mode === 'visual' ? sync.showVisual() : sync.showHtml())
                 : { ok: true };
+            if (isThenable(result)) {
+                releaseAfterThenable = true;
+                consumeThenableAndRelease(result, () => { modeChangeInProgress = false; });
+                return false;
+            }
             if (result && result.ok === false) {
+                return false;
+            }
+            const callbackResult = onModeChange(mode);
+            if (isThenable(callbackResult)) {
+                releaseAfterThenable = true;
+                consumeThenableAndRelease(callbackResult, () => { modeChangeInProgress = false; });
+                return false;
+            }
+            if (callbackResult === false) {
                 return false;
             }
             activeMode = mode;
             updateModeButtons();
-            onModeChange(mode);
             if (mode === 'visual') {
                 focusVisual();
             }
@@ -205,6 +245,10 @@ export function createPhilosophyToolbar(options = {}) {
             return true;
         } catch {
             return false;
+        } finally {
+            if (!releaseAfterThenable) {
+                modeChangeInProgress = false;
+            }
         }
     }
 
@@ -311,6 +355,26 @@ function invokeAdapter(adapter, command, value) {
     return command.id === 'link' || command.value !== null
         ? method.call(adapter, value)
         : method.call(adapter);
+}
+
+/** Erkennt Promises und exotische Thenables ohne sie als erfolgreichen Adapterwert zu behandeln. */
+function isThenable(value) {
+    try {
+        return value !== null
+            && (typeof value === 'object' || typeof value === 'function')
+            && typeof value.then === 'function';
+    } catch {
+        return true;
+    }
+}
+
+/** Konsumiert beide Thenable-Ausgänge und hebt die Sperre erst nach ihrer Abwicklung auf. */
+function consumeThenableAndRelease(thenable, release) {
+    try {
+        Promise.resolve(thenable).then(release, release);
+    } catch {
+        release();
+    }
 }
 
 /** Erstellt einen nicht bedienbaren, aber typsicheren Rückgabewert ohne DOM. */

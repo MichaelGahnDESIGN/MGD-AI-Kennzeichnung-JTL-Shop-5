@@ -36,7 +36,10 @@ class TestElement {
     }
 
     append(...nodes) {
-        this.children.push(...nodes);
+        for (const node of nodes) {
+            node.parentNode = this;
+            this.children.push(node);
+        }
     }
 
     addEventListener(type, listener) {
@@ -55,6 +58,13 @@ class TestElement {
 
     focus() {
         this.focusCalls += 1;
+    }
+
+    remove() {
+        if (this.parentNode) {
+            this.parentNode.children = this.parentNode.children.filter((child) => child !== this);
+            this.parentNode = null;
+        }
     }
 }
 
@@ -274,17 +284,29 @@ test('unsichere Linkadressen zeigen einen Inlinefehler und führen keinen Befehl
     assert.equal(normalizeSecureLink('https://beispiel.de:444'), null);
 });
 
-test('Abbrechen bewahrt die Auswahl und führt keinen Linkbefehl aus', () => {
+test('Abbrechen stellt die gesicherte Auswahl wieder her, fokussiert visuell und führt keinen Linkbefehl aus', () => {
     const document = createDocument();
+    const events = [];
     let insertions = 0;
-    const dialog = createPhilosophyLinkDialog({ document, onInsert() { insertions += 1; } });
-    const cancel = findByRole(dialog.element, 'link-cancel');
+    const visual = new TestElement('div');
+    visual.focus = () => { events.push('focus'); };
+    const toolbar = createPhilosophyToolbar({
+        document,
+        visual,
+        selection: {
+            capture() { events.push('capture'); return { range: 'ursprünglich' }; },
+            restore(snapshot) { events.push(`restore:${snapshot.range}`); },
+        },
+        adapter: { insertLink() { insertions += 1; } },
+    });
+    const cancel = findByRole(toolbar.linkDialog.element, 'link-cancel');
 
-    dialog.open();
+    toolbar.buttons.get('link').dispatch('click');
     cancel.dispatch('click');
 
     assert.equal(insertions, 0);
-    assert.equal(dialog.element.closeCalls, 1);
+    assert.equal(toolbar.linkDialog.element.closeCalls, 1);
+    assert.deepEqual(events, ['capture', 'restore:ursprünglich', 'focus']);
 });
 
 test('ohne Dialogunterstützung bleibt die Werkzeugleiste nutzbar und deaktiviert nur Links', () => {
@@ -303,6 +325,10 @@ test('Linkbutton schließt den Dialog vor Adapter, Synchronisierung und Visualfo
     const toolbar = createPhilosophyToolbar({
         document,
         visual,
+        selection: {
+            capture() { events.push('capture'); return 'range'; },
+            restore(snapshot) { events.push(`restore:${snapshot}`); },
+        },
         adapter: {
             insertLink(url) {
                 events.push(`adapter:${url}`);
@@ -323,18 +349,184 @@ test('Linkbutton schließt den Dialog vor Adapter, Synchronisierung und Visualfo
     input.value = 'https://beispiel.de';
     submit.dispatch('click');
 
-    assert.deepEqual(events, ['close', 'adapter:https://beispiel.de', 'change', 'focus']);
+    assert.deepEqual(events, ['capture', 'close', 'restore:range', 'adapter:https://beispiel.de', 'change', 'focus']);
 });
 
-test('Toolbar verwendet weder Netz noch Browser-Speicher', () => {
+test('zwei Linkdialoge verwenden verschiedene IDs und passende Beschriftungsreferenzen', () => {
     const document = createDocument();
-    let fetchCalls = 0;
-    const originalFetch = globalThis.fetch;
-    globalThis.fetch = () => { fetchCalls += 1; throw new Error('Nicht erlaubt'); };
+    const first = createPhilosophyLinkDialog({ document, instanceId: 'editor' });
+    const second = createPhilosophyLinkDialog({ document, instanceId: 'editor' });
+    const firstInput = findByRole(first.element, 'link-url');
+    const secondInput = findByRole(second.element, 'link-url');
+
+    assert.notEqual(first.element.getAttribute('aria-labelledby'), second.element.getAttribute('aria-labelledby'));
+    assert.notEqual(firstInput.getAttribute('id'), secondInput.getAttribute('id'));
+    assert.equal(firstInput.getAttribute('aria-describedby').endsWith('-error'), true);
+    assert.equal(secondInput.getAttribute('aria-describedby').endsWith('-error'), true);
+});
+
+test('fehlgeschlagener Linkbefehl öffnet den Dialog mit Inlinefehler erneut und behält die Auswahl handhabbar', () => {
+    const document = createDocument();
+    const events = [];
+    const toolbar = createPhilosophyToolbar({
+        document,
+        selection: {
+            capture() { events.push('capture'); return 'range'; },
+            restore(value) { events.push(`restore:${value}`); },
+        },
+        adapter: {
+            insertLink() { events.push('adapter'); return false; },
+        },
+    });
+    const input = findByRole(toolbar.linkDialog.element, 'link-url');
+    const submit = findByRole(toolbar.linkDialog.element, 'link-submit');
+    const error = findByRole(toolbar.linkDialog.element, 'link-error');
+
+    toolbar.buttons.get('link').dispatch('click');
+    input.value = 'https://beispiel.de';
+    submit.dispatch('click');
+
+    assert.deepEqual(events, ['capture', 'restore:range', 'adapter']);
+    assert.equal(toolbar.linkDialog.element.open, true);
+    assert.match(error.textContent, /nicht eingefügt/u);
+    assert.equal(input.getAttribute('aria-invalid'), 'true');
+    assert.equal(input.focusCalls, 2);
+});
+
+test('geworfene Linkadapterfehler öffnen den Dialog ohne Erfolgsmeldung erneut', () => {
+    const document = createDocument();
+    const toolbar = createPhilosophyToolbar({
+        document,
+        adapter: {
+            insertLink() { throw new Error('Editorfehler'); },
+        },
+    });
+    const input = findByRole(toolbar.linkDialog.element, 'link-url');
+    const submit = findByRole(toolbar.linkDialog.element, 'link-submit');
+    const error = findByRole(toolbar.linkDialog.element, 'link-error');
+
+    toolbar.buttons.get('link').dispatch('click');
+    input.value = 'https://beispiel.de';
+    submit.dispatch('click');
+
+    assert.equal(toolbar.linkDialog.element.open, true);
+    assert.match(error.textContent, /nicht eingefügt/u);
+});
+
+test('asynchrone Linkadapter werden nicht als Erfolg gewertet und öffnen den Dialog erneut', () => {
+    const document = createDocument();
+    let changes = 0;
+    const toolbar = createPhilosophyToolbar({
+        document,
+        adapter: { insertLink() { return Promise.resolve(true); } },
+        onChange() { changes += 1; },
+    });
+    const input = findByRole(toolbar.linkDialog.element, 'link-url');
+    const submit = findByRole(toolbar.linkDialog.element, 'link-submit');
+
+    toolbar.buttons.get('link').dispatch('click');
+    input.value = 'https://beispiel.de';
+    submit.dispatch('click');
+
+    assert.equal(toolbar.linkDialog.element.open, true);
+    assert.equal(changes, 0);
+});
+
+test('Thenables werden als nicht unterstützte Adapterergebnisse verworfen und blockieren Reentranz', async () => {
+    const document = createDocument();
+    let resolvePending;
+    let calls = 0;
+    const pending = new Promise((resolve) => { resolvePending = resolve; });
+    const toolbar = createPhilosophyToolbar({
+        document,
+        adapter: {
+            toggleInlineFormat() {
+                calls += 1;
+                return calls === 1 ? pending : undefined;
+            },
+        },
+    });
+
+    assert.equal(toolbar.executeCommand('bold'), false);
+    assert.equal(toolbar.executeCommand('bold'), false);
+    assert.equal(calls, 1);
+    resolvePending(false);
+    await Promise.resolve();
+    await Promise.resolve();
+    assert.equal(toolbar.executeCommand('bold'), true);
+    assert.equal(calls, 2);
+});
+
+test('abgewiesene Thenables und asynchrone Modusadapter erzeugen keinen Erfolg oder Moduswechsel', async () => {
+    const document = createDocument();
+    const rejectedPromise = Promise.reject(new Error('asynchroner Adapterfehler'));
+    const modeChanges = [];
+    const toolbar = createPhilosophyToolbar({
+        document,
+        adapter: { toggleInlineFormat() { return rejectedPromise; } },
+        sync: { showHtml() { return Promise.resolve({ ok: true }); } },
+        onModeChange(mode) { modeChanges.push(mode); },
+    });
+
+    assert.equal(toolbar.executeCommand('bold'), false);
+    assert.equal(toolbar.setMode('html'), false);
+    await Promise.resolve();
+    await Promise.resolve();
+    assert.deepEqual(modeChanges, []);
+    assert.equal(toolbar.visualButton.getAttribute('aria-pressed'), 'true');
+    assert.equal(toolbar.htmlButton.getAttribute('aria-pressed'), 'false');
+});
+
+test('Dialog verarbeitet Enter und Escape lokal, setzt aria-invalid zurück und entfernt sich beim Destroy', () => {
+    const document = createDocument();
+    const inserted = [];
+    const dialog = createPhilosophyLinkDialog({ document, onInsert(url) { inserted.push(url); return true; } });
+    const input = findByRole(dialog.element, 'link-url');
+    const submit = findByRole(dialog.element, 'link-submit');
+
+    dialog.open();
+    input.value = 'http://unsicher.example';
+    submit.dispatch('click');
+    assert.equal(input.getAttribute('aria-invalid'), 'true');
+    input.dispatch('input');
+    assert.equal(input.getAttribute('aria-invalid'), 'false');
+    input.value = 'https://beispiel.de';
+    input.dispatch('keydown', { key: 'Enter' });
+    assert.deepEqual(inserted, ['https://beispiel.de']);
+
+    dialog.open();
+    dialog.element.dispatch('cancel');
+    assert.equal(dialog.element.open, false);
+    dialog.destroy();
+    assert.equal(document.body.children.includes(dialog.element), false);
+});
+
+test('Toolbar verwendet weder Netz-, Beacon- oder Browser-Speicher-APIs', () => {
+    const document = createDocument();
+    const calls = { beacon: 0, fetch: 0, storage: 0, webSocket: 0, xhr: 0 };
+    const replacements = {
+        XMLHttpRequest: () => { calls.xhr += 1; throw new Error('Nicht erlaubt'); },
+        WebSocket: () => { calls.webSocket += 1; throw new Error('Nicht erlaubt'); },
+        fetch: () => { calls.fetch += 1; throw new Error('Nicht erlaubt'); },
+        localStorage: new Proxy({}, { get() { calls.storage += 1; throw new Error('Nicht erlaubt'); } }),
+        navigator: { sendBeacon() { calls.beacon += 1; throw new Error('Nicht erlaubt'); } },
+        sessionStorage: new Proxy({}, { get() { calls.storage += 1; throw new Error('Nicht erlaubt'); } }),
+    };
+    const originals = new Map();
+    for (const [name, replacement] of Object.entries(replacements)) {
+        originals.set(name, Object.getOwnPropertyDescriptor(globalThis, name));
+        Object.defineProperty(globalThis, name, { configurable: true, value: replacement, writable: true });
+    }
     try {
         createPhilosophyToolbar({ document, adapter: { execute() {} } });
-        assert.equal(fetchCalls, 0);
+        assert.deepEqual(calls, { beacon: 0, fetch: 0, storage: 0, webSocket: 0, xhr: 0 });
     } finally {
-        globalThis.fetch = originalFetch;
+        for (const [name, original] of originals) {
+            if (original) {
+                Object.defineProperty(globalThis, name, original);
+            } else {
+                delete globalThis[name];
+            }
+        }
     }
 });

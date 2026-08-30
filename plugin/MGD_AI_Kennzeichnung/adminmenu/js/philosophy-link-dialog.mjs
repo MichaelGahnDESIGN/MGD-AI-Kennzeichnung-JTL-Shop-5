@@ -1,5 +1,8 @@
 import { isSafeHttpsUrl } from './philosophy-sanitizer.mjs';
 
+/* Eindeutige lokale Instanznummern verhindern Kollisionen bei mehreren Editoren. */
+let dialogInstanceCounter = 0;
+
 /**
  * Übernimmt eine Linkadresse nur, wenn sie exakt dem bereits servernah
  * geprüften HTTPS-Vertrag des Philosophie-Sanitizers entspricht.
@@ -21,7 +24,10 @@ export function normalizeSecureLink(value) {
  *
  * @param {{
  *   document?: Document|{createElement?: Function, body?: {append?: Function}},
- *   onInsert?: (url: string) => void,
+ *   instanceId?: string,
+ *   selection?: {capture?: () => unknown, restore?: (snapshot: unknown) => unknown},
+ *   onInsert?: (url: string) => unknown,
+ *   onCancel?: () => unknown,
  *   normalizeLink?: (value: unknown) => string|null,
  * }} [options] Kontrollierte Browser- und Callback-Abhängigkeiten.
  * @returns {{
@@ -38,7 +44,9 @@ export function createPhilosophyLinkDialog(options = {}) {
     const normalizeLink = typeof configuration.normalizeLink === 'function'
         ? configuration.normalizeLink
         : normalizeSecureLink;
-    const onInsert = typeof configuration.onInsert === 'function' ? configuration.onInsert : () => {};
+    const onInsert = typeof configuration.onInsert === 'function' ? configuration.onInsert : () => false;
+    const onCancel = typeof configuration.onCancel === 'function' ? configuration.onCancel : () => {};
+    const selection = isObject(configuration.selection) ? configuration.selection : {};
 
     if (!documentAdapter || typeof documentAdapter.createElement !== 'function') {
         return createUnsupportedDialog();
@@ -49,23 +57,25 @@ export function createPhilosophyLinkDialog(options = {}) {
         return createUnsupportedDialog();
     }
 
-    dialog.setAttribute('aria-labelledby', 'mgd-philosophy-link-title');
+    const ids = createDialogIds(configuration.instanceId);
+    dialog.setAttribute('aria-labelledby', ids.title);
     dialog.setAttribute('class', 'mgd-philosophy-link-dialog');
     dialog.setAttribute('data-mgd-philosophy-role', 'link-dialog');
 
     const title = createElement(documentAdapter, 'h2', 'Link einfügen');
-    title.setAttribute('id', 'mgd-philosophy-link-title');
+    title.setAttribute('id', ids.title);
     const label = createElement(documentAdapter, 'label', 'HTTPS-Adresse');
     const input = createElement(documentAdapter, 'input');
     input.setAttribute('type', 'url');
     input.setAttribute('inputmode', 'url');
     input.setAttribute('autocomplete', 'url');
-    input.setAttribute('aria-describedby', 'mgd-philosophy-link-error');
+    input.setAttribute('aria-describedby', ids.error);
+    input.setAttribute('aria-invalid', 'false');
     input.setAttribute('data-mgd-philosophy-role', 'link-url');
-    label.setAttribute('for', 'mgd-philosophy-link-url');
-    input.setAttribute('id', 'mgd-philosophy-link-url');
+    label.setAttribute('for', ids.input);
+    input.setAttribute('id', ids.input);
     const error = createElement(documentAdapter, 'p', '');
-    error.setAttribute('id', 'mgd-philosophy-link-error');
+    error.setAttribute('id', ids.error);
     error.setAttribute('role', 'alert');
     error.setAttribute('data-mgd-philosophy-role', 'link-error');
     const actions = createElement(documentAdapter, 'div');
@@ -81,6 +91,8 @@ export function createPhilosophyLinkDialog(options = {}) {
 
     let insertionInProgress = false;
     let open = false;
+    let hasSelectionSnapshot = false;
+    let selectionSnapshot;
 
     /** Öffnet den Dialog nur einmal; die bestehende Editor-Auswahl bleibt dabei unangetastet. */
     const openDialog = () => {
@@ -88,8 +100,11 @@ export function createPhilosophyLinkDialog(options = {}) {
             return false;
         }
 
-        error.textContent = '';
+        clearError();
         input.value = '';
+        if (!captureSelection()) {
+            return false;
+        }
         try {
             dialog.showModal();
             open = true;
@@ -142,7 +157,7 @@ export function createPhilosophyLinkDialog(options = {}) {
             normalized = null;
         }
         if (typeof normalized !== 'string' || !isSafeHttpsUrl(normalized)) {
-            error.textContent = 'Bitte geben Sie eine vollständige sichere HTTPS-Adresse ohne Zugangsdaten oder fremden Port ein.';
+            showError('Bitte geben Sie eine vollständige sichere HTTPS-Adresse ohne Zugangsdaten oder fremden Port ein.');
             return;
         }
 
@@ -150,31 +165,45 @@ export function createPhilosophyLinkDialog(options = {}) {
         /* Ein modal geöffneter Dialog macht den übrigen Editor inert. */
         if (!closeDialog(false)) {
             insertionInProgress = false;
-            error.textContent = 'Der Linkdialog konnte nicht sicher geschlossen werden.';
+            showError('Der Linkdialog konnte nicht sicher geschlossen werden.');
             return;
         }
-        try {
-            onInsert(normalized);
-        } catch {
-            error.textContent = 'Der Link konnte nicht eingefügt werden. Bitte versuchen Sie es erneut.';
-        } finally {
+        if (!restoreSelection() || !didSucceed(callSynchronously(onInsert, normalized))) {
             insertionInProgress = false;
+            reopenAfterFailure('Der Link konnte nicht eingefügt werden. Bitte versuchen Sie es erneut.');
+            return;
         }
+        clearSelectionSnapshot();
+        insertionInProgress = false;
     };
 
     const cancelLink = (event) => {
         if (event && typeof event.preventDefault === 'function') {
             event.preventDefault();
         }
-        closeDialog();
+        if (closeDialog()) {
+            restoreSelection();
+            clearSelectionSnapshot();
+            callSynchronously(onCancel);
+        }
     };
     const handleClose = () => {
         open = false;
     };
+    const handleInput = () => { clearError(); };
+    const handleInputKeydown = (event) => {
+        if (event && event.key === 'Enter') {
+            submitLink(event);
+        }
+    };
+    const handleCancel = (event) => { cancelLink(event); };
 
     cancel.addEventListener('click', cancelLink);
     submit.addEventListener('click', submitLink);
     dialog.addEventListener('close', handleClose);
+    dialog.addEventListener('cancel', handleCancel);
+    input.addEventListener('input', handleInput);
+    input.addEventListener('keydown', handleInputKeydown);
 
     return {
         element: dialog,
@@ -185,9 +214,70 @@ export function createPhilosophyLinkDialog(options = {}) {
             cancel.removeEventListener('click', cancelLink);
             submit.removeEventListener('click', submitLink);
             dialog.removeEventListener('close', handleClose);
+            dialog.removeEventListener('cancel', handleCancel);
+            input.removeEventListener('input', handleInput);
+            input.removeEventListener('keydown', handleInputKeydown);
             closeDialog();
+            if (typeof dialog.remove === 'function') {
+                dialog.remove();
+            }
         },
     };
+
+    /** Erfasst die Auswahl vor dem ersten Dialogfokus; globale Selection-APIs bleiben außen vor. */
+    function captureSelection() {
+        if (typeof selection.capture !== 'function') {
+            clearSelectionSnapshot();
+            return true;
+        }
+
+        const snapshot = callSynchronously(selection.capture);
+        if (snapshot === SYNCHRONOUS_CALLBACK_FAILED) {
+            return false;
+        }
+        selectionSnapshot = snapshot;
+        hasSelectionSnapshot = true;
+
+        return true;
+    }
+
+    /** Stellt die Auswahl erst nach dem vollständigen Schließen des modalen Dialogs wieder her. */
+    function restoreSelection() {
+        if (!hasSelectionSnapshot || typeof selection.restore !== 'function') {
+            return true;
+        }
+
+        return didSucceed(callSynchronously(selection.restore, selectionSnapshot));
+    }
+
+    /** Öffnet nach einem fehlgeschlagenen synchronen Adapter erneut, ohne die Linkeingabe zu verlieren. */
+    function reopenAfterFailure(message) {
+        showError(message);
+        try {
+            dialog.showModal();
+            open = true;
+            if (typeof input.focus === 'function') {
+                input.focus();
+            }
+        } catch {
+            /* Ohne nativen Dialog bleibt der Fehler fail-closed statt den Link zu übernehmen. */
+        }
+    }
+
+    function showError(message) {
+        error.textContent = message;
+        input.setAttribute('aria-invalid', 'true');
+    }
+
+    function clearError() {
+        error.textContent = '';
+        input.setAttribute('aria-invalid', 'false');
+    }
+
+    function clearSelectionSnapshot() {
+        selectionSnapshot = undefined;
+        hasSelectionSnapshot = false;
+    }
 }
 
 /** Liefert eine explizit nicht unterstützte Steuerung statt unsicherer Ersatzdialoge. */
@@ -196,9 +286,61 @@ function createUnsupportedDialog() {
         element: null,
         supported: false,
         open: () => false,
-        close: () => {},
+        close: () => false,
         destroy: () => {},
     };
+}
+
+/** Erzeugt pro Dialog eindeutige, sichere IDs oder akzeptiert eine explizite lokale Instanzkennung. */
+function createDialogIds(instanceId) {
+    const serial = String(++dialogInstanceCounter);
+    const candidate = typeof instanceId === 'string' && /^[A-Za-z0-9_-]{1,64}$/u.test(instanceId)
+        ? instanceId
+        : 'dialog';
+    const prefix = `mgd-philosophy-link-${candidate}-${serial}`;
+
+    return Object.freeze({ error: `${prefix}-error`, input: `${prefix}-url`, title: `${prefix}-title` });
+}
+
+const SYNCHRONOUS_CALLBACK_FAILED = Symbol('synchronous-callback-failed');
+
+/** Führt Callbacks ausschließlich synchron aus und konsumiert abgewiesene Thenables sicher. */
+function callSynchronously(callback, ...argumentsList) {
+    try {
+        const result = callback(...argumentsList);
+        if (isThenable(result)) {
+            consumeThenable(result);
+            return SYNCHRONOUS_CALLBACK_FAILED;
+        }
+
+        return result;
+    } catch {
+        return SYNCHRONOUS_CALLBACK_FAILED;
+    }
+}
+
+/** Ein explizites `false` oder ein asynchroner/fehlerhafter Wert bedeutet keinen Erfolg. */
+function didSucceed(result) {
+    return result !== false && result !== SYNCHRONOUS_CALLBACK_FAILED;
+}
+
+function isThenable(value) {
+    try {
+        return value !== null
+            && (typeof value === 'object' || typeof value === 'function')
+            && typeof value.then === 'function';
+    } catch {
+        return true;
+    }
+}
+
+/** Hängt beide Promise-Ausgänge an, damit Ablehnungen niemals als unhandled verbleiben. */
+function consumeThenable(thenable) {
+    try {
+        Promise.resolve(thenable).then(() => {}, () => {});
+    } catch {
+        /* Auch exotische Thenables dürfen die Dialogsteuerung nicht unterbrechen. */
+    }
 }
 
 /** Erstellt Textknoten ausschließlich über `textContent`, niemals über HTML-Zeichenketten. */
