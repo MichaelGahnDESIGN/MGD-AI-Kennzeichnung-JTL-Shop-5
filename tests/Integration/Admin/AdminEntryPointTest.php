@@ -123,6 +123,7 @@ final class AdminEntryPointTest extends TestCase
         self::assertStringNotContainsString('evil=', $html);
 
         \JTL\Smarty\JTLSmarty::$testFetchOutput = '<section>Neutraler Lesetab</section>';
+        \JTL\Smarty\JTLSmarty::$zuweisungen = [];
         try {
             $otherOutputs = [];
             foreach ([['philosophy.php', 10], ['display.php', 11], ['impressum.php', 12]] as [$file, $menuId]) {
@@ -131,12 +132,33 @@ final class AdminEntryPointTest extends TestCase
                 include dirname(__DIR__, 3) . '/plugin/MGD_AI_Kennzeichnung/adminmenu/' . $file;
                 $otherOutputs[$file] = (string) ob_get_clean();
             }
+
+            $_GET = [];
+            $_POST = [];
+            \JTL\Smarty\JTLSmarty::$zuweisungen = [];
+            $menu = (object) ['kPluginAdminMenu' => 10];
+            ob_start();
+            include dirname(__DIR__, 3) . '/plugin/MGD_AI_Kennzeichnung/adminmenu/philosophy.php';
+            $philosophyOutput = (string) ob_get_clean();
         } finally {
             \JTL\Smarty\JTLSmarty::$testFetchOutput = '';
         }
         foreach ($otherOutputs as $file => $output) {
             self::assertSame('<section>Neutraler Lesetab</section>', $output, $file . ' darf die Assets-Query nicht verarbeiten.');
         }
+        self::assertSame('<section>Neutraler Lesetab</section>', $philosophyOutput);
+        $adminUrls = array_values(array_map(
+            static fn (array $zuweisung): mixed => $zuweisung['value'],
+            array_filter(
+                \JTL\Smarty\JTLSmarty::$zuweisungen,
+                static fn (array $zuweisung): bool => $zuweisung['name'] === 'adminUrl',
+            ),
+        ));
+        self::assertSame(
+            ['/plugin/17/adminmenu/'],
+            $adminUrls,
+            'Smarty darf ausschließlich die bekannte lokale Plugin-Admin-URL erhalten.',
+        );
         self::assertSame([], $logger->records, 'Die fremde Assets-Query darf in keinem Nachbartab Fehler loggen.');
     }
 }

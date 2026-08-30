@@ -1,0 +1,83 @@
+/*
+ * Der sichere HTML-Fallback bleibt immer sichtbar und bedienbar.
+ * Das später ergänzte Editor-Modul darf diese Grundlage nur erweitern.
+ */
+.mgd-philosophy-form {
+    display: block;
+    width: 100%;
+    max-width: 72rem;
+}
+
+/* Jede Sprache bleibt als eigenständige, gut erkennbare Karte untereinander. */
+.mgd-philosophy-language {
+    display: block;
+    width: 100%;
+    margin-block: 1.5rem;
+    padding: 1.25rem;
+    border: 1px solid #c7cdd4;
+    border-radius: 0.375rem;
+    background: #ffffff;
+}
+
+.mgd-philosophy-language h2 {
+    margin-block: 0 0.75rem;
+}
+
+.mgd-philosophy-language label,
+.mgd-philosophy-language textarea {
+    display: block;
+    width: 100%;
+}
+
+.mgd-philosophy-language label {
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+}
+
+/* Die großzügige Mindesthöhe ermöglicht die Pflege längerer Texte ohne JavaScript. */
+.mgd-philosophy-language textarea {
+    min-height: 22.5rem;
+    padding: 0.75rem;
+    border: 1px solid #7b8794;
+    border-radius: 0.25rem;
+    color: #17202a;
+    background: #ffffff;
+    font: inherit;
+    line-height: 1.5;
+    resize: vertical;
+}
+
+/* Deutliche Fokusrahmen bleiben auch bei späteren Editor-Erweiterungen erhalten. */
+.mgd-philosophy-language textarea:focus,
+.mgd-philosophy-form button:focus-visible {
+    outline: 3px solid #005fcc;
+    outline-offset: 2px;
+}
+
+.mgd-philosophy-form button {
+    display: block;
+    min-height: 2.75rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #004a9f;
+    border-radius: 0.25rem;
+    color: #ffffff;
+    background: #005fcc;
+    cursor: pointer;
+}
+
+/* Eine spätere Werkzeugleiste bleibt auf schmalen Ansichten vollständig erreichbar. */
+.mgd-philosophy-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+@media (max-width: 42rem) {
+    .mgd-philosophy-language {
+        padding: 1rem;
+    }
+
+    .mgd-philosophy-form button {
+        width: 100%;
+    }
+}

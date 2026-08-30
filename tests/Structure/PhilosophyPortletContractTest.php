@@ -81,6 +81,40 @@ final class PhilosophyPortletContractTest extends TestCase
     }
 
     #[Test]
+    public function philosophie_editor_ist_lokal_progressiv_und_ohne_externe_assets(): void
+    {
+        $template = (string) file_get_contents(self::ROOT . '/adminmenu/templates/philosophy.tpl');
+        $cssPfad = self::ROOT . '/adminmenu/philosophy.css';
+        $css = is_file($cssPfad) ? (string) file_get_contents($cssPfad) : '';
+
+        /* Alle Verletzungen gemeinsam ausgeben, damit der Rotlauf den vollständigen Assetvertrag zeigt. */
+        $verletzungen = [];
+        foreach ([
+            'Sprachkarten' => str_contains($template, 'class="mgd-philosophy-language"'),
+            'deutsches Textfeld' => str_contains($template, 'name="content_de"'),
+            'englisches Textfeld' => str_contains($template, 'name="content_en"'),
+            'lokales Stylesheet' => str_contains($template, 'philosophy.css'),
+            'lokales Editor-Modul' => str_contains($template, 'js/philosophy-editor.mjs'),
+            'modulares Script' => str_contains($template, 'type="module"'),
+            'CSS-Datei' => is_file($cssPfad),
+            'Mindesthöhe der Textfelder' => str_contains($css, 'min-height: 22.5rem'),
+        ] as $vertragsteil => $erfuellt) {
+            if (!$erfuellt) {
+                $verletzungen[] = $vertragsteil;
+            }
+        }
+
+        if (preg_match('~(?:src|href)\\s*=\\s*["\'][^"\']*https?://~i', $template) === 1) {
+            $verletzungen[] = 'externe Template-Referenz';
+        }
+        if (preg_match('~(?:@import|url\\()\\s*["\']?https?://~i', $css) === 1) {
+            $verletzungen[] = 'externe CSS-Referenz';
+        }
+
+        self::assertSame([], $verletzungen, 'Der Editor darf ausschließlich lokale, progressive Assets verwenden.');
+    }
+
+    #[Test]
     public function plugin_veroeffentlicht_oder_verknuepft_keine_seite_automatisch(): void
     {
         $info = file_get_contents(self::ROOT . '/info.xml');

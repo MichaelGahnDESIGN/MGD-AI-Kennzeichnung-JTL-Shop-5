@@ -298,8 +298,13 @@ class JTLSmarty
     /** Die Testhülle macht erfolgreiche lokale Template-Renderings sichtbar. */
     public static string $testFetchOutput = '';
 
+    /** @var list<array{name: string, value: mixed}> Dokumentiert Zuweisungen für Entry-Point-Vertragstests. */
+    public static array $zuweisungen = [];
+
     public function assign(string $name, mixed $value): self
     {
+        self::$zuweisungen[] = ['name' => $name, 'value' => $value];
+
         return $this;
     }
 

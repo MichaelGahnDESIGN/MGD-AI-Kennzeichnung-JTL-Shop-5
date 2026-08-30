@@ -68,6 +68,7 @@ try {
 
     echo Shop::Smarty()
         ->assign('csrfToken', $csrf->token())
+        ->assign('adminUrl', rtrim($oPlugin->getPaths()->getAdminURL(), '/') . '/')
         ->assign('pluginId', $oPlugin->getID())
         ->assign('adminMenuId', $adminMenuId)
         ->assign('contentDe', $inhalte['de'])
