@@ -182,6 +182,92 @@ class BrowsernaherTestDomParser extends TestDomParser {
     }
 }
 
+const ACTIVE_TEST_ELEMENTS = [
+    'script',
+    'style',
+    'iframe',
+    'object',
+    'embed',
+    'svg',
+    'math',
+    'template',
+    'noscript',
+    'form',
+];
+
+/**
+ * Simuliert das HTML5-Foster-Parenting, das Tabelleninhalt aus einem dort
+ * ungültigen Formular heraus vor das Formular verschiebt.
+ */
+class FosterParentingTestDomParser extends TestDomParser {
+    parseFromString(html) {
+        let browserStruktur = html;
+        for (const name of ACTIVE_TEST_ELEMENTS) {
+            browserStruktur = browserStruktur.replace(
+                `<table><${name}><tr><td>bad</td></tr></${name}></table>`,
+                `<${name}></${name}>bad`,
+            );
+        }
+
+        return super.parseFromString(browserStruktur);
+    }
+}
+
+const PARSER_STATE_ELEMENTS = ['plaintext', 'xmp', 'listing', 'textarea', 'title', 'noembed', 'noframes'];
+
+function findFirstElementByName(parent, name) {
+    for (const child of parent.childNodes) {
+        if (child.localName === name) {
+            return child;
+        }
+
+        const nested = findFirstElementByName(child, name);
+        if (nested !== null) {
+            return nested;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Bildet Browser-Tokenizerzustände nach, in denen Markup als Text gelesen wird.
+ * PHP/libxml behandelt diese passiven Elemente dagegen wie normale Container.
+ */
+class ParserzustandTestDomParser extends TestDomParser {
+    parseFromString(html) {
+        for (const name of PARSER_STATE_ELEMENTS) {
+            const startMatch = new RegExp(`<${name}(?:\\s[^>]*)?>`, 'iu').exec(html);
+            if (startMatch === null) {
+                continue;
+            }
+
+            const contentStart = startMatch.index + startMatch[0].length;
+            let rawContent = html.slice(contentStart);
+            let rest = '';
+
+            if (name !== 'plaintext') {
+                const closingMatch = new RegExp(`</${name}\\s*>`, 'iu').exec(rawContent);
+                if (closingMatch !== null) {
+                    rest = rawContent.slice(closingMatch.index + closingMatch[0].length);
+                    rawContent = rawContent.slice(0, closingMatch.index);
+                }
+            }
+
+            const strukturHtml = `${html.slice(0, startMatch.index)}<${name}></${name}>${rest}`;
+            const document = super.parseFromString(strukturHtml);
+            const element = findFirstElementByName(document.body, name);
+            if (element !== null) {
+                element.appendChild(new TestTextNode(rawContent));
+            }
+
+            return document;
+        }
+
+        return super.parseFromString(html);
+    }
+}
+
 function sanitize(input, overrides = {}) {
     return sanitizePhilosophyHtml(input, {
         domParser: new TestDomParser(),
@@ -244,6 +330,22 @@ test('entfernt auch Inhalte aller weiteren aktiven Container vollständig', () =
     );
 });
 
+test('entfernt Inhalte aller aktiven Elemente vor browserseitigem Foster-Parenting', () => {
+    for (const name of ACTIVE_TEST_ELEMENTS) {
+        assert.equal(sanitize(
+            `<table><${name}><tr><td>bad</td></tr></${name}></table><p>end</p>`,
+            { domParser: new FosterParentingTestDomParser() },
+        ), '<p>end</p>', name);
+    }
+});
+
+test('ignoriert verschachtelte Form-Starts wie der PHP-Parser', () => {
+    assert.equal(
+        sanitize('<form>outer<form>inner</form>tail</form><p>end</p>'),
+        'tail<p>end</p>',
+    );
+});
+
 test('behandelt selbstschließende und ähnlich benannte Embed-Tags wie der Server', () => {
     assert.equal(
         sanitize('<embed />Text</embed><p>Sicher</p>'),
@@ -294,6 +396,24 @@ test('behält passive Metadaten-Tags durch einen gekapselten Body-Fragmentkontex
     assert.equal(sanitize('<title>Titel</title><p>Sicher</p>', {
         domParser: new BrowsernaherTestDomParser(),
     }), 'Titel<p>Sicher</p>');
+});
+
+test('neutralisiert parserzustandsverändernde passive Elemente vor dem Fragment-Wrapper', () => {
+    const faelle = [
+        '<plaintext>text<p>more</p>',
+        '<xmp>text<p>more</p></xmp>',
+        '<listing>text<p>more</p></listing>',
+        '<textarea>text<p>more</p></textarea>',
+        '<title>text<p>more</p></title>',
+        '<noembed>text<p>more</p></noembed>',
+        '<noframes>text<p>more</p></noframes>',
+    ];
+
+    for (const html of faelle) {
+        assert.equal(sanitize(html, {
+            domParser: new ParserzustandTestDomParser(),
+        }), 'text<p>more</p>', html);
+    }
 });
 
 test('entfernt Nullbytes vor der Längenbegrenzung', () => {

@@ -31,6 +31,26 @@ const ACTIVE_PHILOSOPHY_ELEMENTS = new Set([
     'form',
 ]);
 
+const NON_NESTING_ACTIVE_ELEMENTS = new Set([
+    'script',
+    'style',
+    'iframe',
+    'embed',
+    'noscript',
+    'form',
+]);
+
+const PARSER_STATE_ELEMENTS = new Set([
+    'plaintext',
+    'xmp',
+    'listing',
+    'textarea',
+    'title',
+    'noembed',
+    'noframes',
+]);
+const PASSIVE_PARSER_CONTAINER = 'mgd-ai-passive-container';
+
 const ALLOWED_ELEMENT_SET = new Set(ALLOWED_PHILOSOPHY_ELEMENTS);
 const MAXIMUM_INPUT_LENGTH = 10_000;
 const SOURCE_ROOT_ID = 'mgd-ai-philosophy-client-root';
@@ -108,9 +128,14 @@ export function sanitizePhilosophyHtml(input, adapters = {}) {
             return '';
         }
 
-        const vorbereitet = dekodiert.replaceAll('--!>', '-->');
+        const kommentareNormalisiert = dekodiert.replaceAll('--!>', '-->');
+        const parserzustaendeNeutralisiert = neutralizeParserStateElements(kommentareNormalisiert);
+        let vorbereitet = parserzustaendeNeutralisiert;
+        for (const elementName of ACTIVE_PHILOSOPHY_ELEMENTS) {
+            vorbereitet = removeExplicitActiveContent(vorbereitet, elementName);
+        }
         const parser = resolveDomParser(adapters);
-        const quellHtml = `<div id="${SOURCE_ROOT_ID}">${removeExplicitEmbedContent(vorbereitet)}</div>`;
+        const quellHtml = `<div id="${SOURCE_ROOT_ID}">${vorbereitet}</div>`;
         const quellDokument = parser.parseFromString(quellHtml, 'text/html');
         if (!quellDokument || !quellDokument.body) {
             return '';
@@ -220,20 +245,19 @@ function resolveDomParser(adapters) {
 }
 
 /**
- * Entfernt explizite `<embed>…</embed>`-Bereiche noch vor dem Browser-Parser.
+ * Entfernt parserkritische aktive Bereiche noch vor dem Browser-Parser.
  *
- * Browser behandeln `embed` als inhaltsloses Element und würden den sichtbar
- * zwischen Start- und Endtag stehenden Text sonst als Geschwisterknoten
- * erhalten. Der serverseitige Parser ordnet diesen Text dagegen dem aktiven
- * Element zu und entfernt ihn. Der kleine Scanner berücksichtigt Anführungs-
- * zeichen in Attributen, Kommentare und verschachtelte Embed-Bereiche.
+ * Das betrifft `embed`, das Browser als inhaltslos behandeln, und `form`,
+ * dessen Kinder beim HTML5-Foster-Parenting aus dem aktiven Element verschoben
+ * werden können. Der kleine Scanner berücksichtigt Anführungszeichen in
+ * Attributen, Kommentare und verschachtelte gleichnamige Bereiche.
  */
-function removeExplicitEmbedContent(input) {
+function removeExplicitActiveContent(input, elementName) {
     let ausgabe = '';
     let cursor = 0;
 
     while (cursor < input.length) {
-        const startTag = findNextHtmlTag(input, cursor, 'embed', false);
+        const startTag = findNextHtmlTag(input, cursor, elementName, false);
         if (startTag === null) {
             ausgabe += input.slice(cursor);
             break;
@@ -242,7 +266,7 @@ function removeExplicitEmbedContent(input) {
         ausgabe += input.slice(cursor, startTag.start);
         const endPosition = startTag.selfClosing
             ? startTag.end
-            : findMatchingEmbedEnd(input, startTag.end);
+            : findMatchingActiveElementEnd(input, startTag.end, elementName);
 
         /* Der PHP-Parser ordnet bei fehlendem Endtag den gesamten Rest zu. */
         cursor = endPosition ?? input.length;
@@ -251,12 +275,12 @@ function removeExplicitEmbedContent(input) {
     return ausgabe;
 }
 
-function findMatchingEmbedEnd(input, startPosition) {
+function findMatchingActiveElementEnd(input, startPosition, elementName) {
     let tiefe = 1;
     let cursor = startPosition;
 
     while (cursor < input.length) {
-        const tag = findNextHtmlTag(input, cursor, 'embed');
+        const tag = findNextHtmlTag(input, cursor, elementName);
         if (tag === null) {
             return null;
         }
@@ -267,12 +291,74 @@ function findMatchingEmbedEnd(input, startPosition) {
             if (tiefe === 0) {
                 return tag.end;
             }
-        } else if (!tag.selfClosing) {
+        } else if (!tag.selfClosing && !NON_NESTING_ACTIVE_ELEMENTS.has(elementName)) {
             tiefe += 1;
         }
     }
 
     return null;
+}
+
+/**
+ * Neutralisiert passive Elemente, die den HTML-Tokenizer in einen Textzustand
+ * versetzen würden. Das attributlose Ersatzelement ist nicht freigegeben und
+ * wird später wie jede passive unbekannte Formatierung ausgewickelt.
+ */
+function neutralizeParserStateElements(input) {
+    let ausgabe = '';
+    let cursor = 0;
+
+    while (cursor < input.length) {
+        const tagStart = input.indexOf('<', cursor);
+        if (tagStart === -1) {
+            ausgabe += input.slice(cursor);
+            break;
+        }
+
+        ausgabe += input.slice(cursor, tagStart);
+        if (input.startsWith('<!--', tagStart)) {
+            const commentEnd = input.indexOf('-->', tagStart + 4);
+            if (commentEnd === -1) {
+                ausgabe += input.slice(tagStart);
+                break;
+            }
+
+            ausgabe += input.slice(tagStart, commentEnd + 3);
+            cursor = commentEnd + 3;
+
+            continue;
+        }
+
+        const tag = readHtmlTag(input, tagStart);
+        if (tag === null) {
+            ausgabe += '<';
+            cursor = tagStart + 1;
+
+            continue;
+        }
+        if (tag.unterminated === true) {
+            ausgabe += input.slice(tagStart);
+            break;
+        }
+
+        if (!PARSER_STATE_ELEMENTS.has(tag.name)) {
+            ausgabe += input.slice(tagStart, tag.end);
+            cursor = tag.end;
+
+            continue;
+        }
+
+        if (tag.closing) {
+            ausgabe += `</${PASSIVE_PARSER_CONTAINER}>`;
+        } else if (tag.selfClosing) {
+            ausgabe += `<${PASSIVE_PARSER_CONTAINER}></${PASSIVE_PARSER_CONTAINER}>`;
+        } else {
+            ausgabe += `<${PASSIVE_PARSER_CONTAINER}>`;
+        }
+        cursor = tag.end;
+    }
+
+    return ausgabe;
 }
 
 /** Sucht echte HTML-Tags, ohne tagähnlichen Text in Attributen zu beachten. */
