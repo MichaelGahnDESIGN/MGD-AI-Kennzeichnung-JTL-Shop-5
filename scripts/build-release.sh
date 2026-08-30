@@ -132,6 +132,10 @@ find "${paketordner}" -type f -exec chmod 0644 {} +
 TZ=UTC find "${paketordner}" -exec touch -t 202608120000.00 {} +
 
 (
+    # Info-ZIP schreibt DOS-Zeitstempel ohne Zeitzonenangabe. Deshalb muss
+    # nicht nur das vorherige `touch`, sondern auch der Archivierungsprozess
+    # selbst unabhängig von der Zeitzone des ausführenden Servers laufen.
+    export TZ=UTC
     cd "${arbeitsordner}"
     # JTL-Shop 5.7.2 bestimmt den Plugin-Stamm aus dem ersten ZIP-Eintrag.
     # Deshalb muss der Stammordner zwingend vor der sortierten Dateiliste stehen.

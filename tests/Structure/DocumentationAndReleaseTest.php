@@ -141,6 +141,24 @@ BASH;
     }
 
     #[Test]
+    public function build_erzeugt_in_unterschiedlichen_prozesszeitzonen_dasselbe_paket(): void
+    {
+        [$utcStatus, $utcAusgabe] = $this->runBuildRelease(timezone: 'UTC');
+        self::assertSame(0, $utcStatus, $utcAusgabe);
+        $utcHash = hash_file('sha256', self::ZIP);
+        self::assertIsString($utcHash);
+
+        [$berlinStatus, $berlinAusgabe] = $this->runBuildRelease(timezone: 'Europe/Berlin');
+        self::assertSame(0, $berlinStatus, $berlinAusgabe);
+
+        self::assertSame(
+            $utcHash,
+            hash_file('sha256', self::ZIP),
+            'Die Prozesszeitzone darf weder ZIP-Zeitstempel noch Paketinhalt verändern.',
+        );
+    }
+
+    #[Test]
     public function build_lehnt_sensible_dateitypen_in_freigegebenen_verzeichnissen_fail_closed_ab(): void
     {
         $this->buildRelease();
@@ -470,7 +488,7 @@ BASH;
     }
 
     /** @return array{0: int, 1: string} */
-    private function runBuildRelease(?string $pathPrefix = null): array
+    private function runBuildRelease(?string $pathPrefix = null, ?string $timezone = null): array
     {
         $ausgabe = [];
         $status = 1;
@@ -478,8 +496,15 @@ BASH;
         $pathAssignment = $pathPrefix === null
             ? ''
             : 'PATH=' . escapeshellarg($pathPrefix . PATH_SEPARATOR . $path) . ' ';
+        $timezoneAssignment = $timezone === null
+            ? ''
+            : 'TZ=' . escapeshellarg($timezone) . ' ';
         exec(
-            $pathAssignment . 'bash ' . escapeshellarg(self::ROOT . '/scripts/build-release.sh') . ' 2>&1',
+            $pathAssignment
+                . $timezoneAssignment
+                . 'bash '
+                . escapeshellarg(self::ROOT . '/scripts/build-release.sh')
+                . ' 2>&1',
             $ausgabe,
             $status,
         );
