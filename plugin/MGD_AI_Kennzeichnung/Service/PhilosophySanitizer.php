@@ -154,7 +154,11 @@ final class PhilosophySanitizer
         }
 
         $authority = preg_split('/[\/?#]/u', substr($url, strlen('https://')), 2)[0] ?? '';
-        if ($authority === '' || str_contains($authority, '@') || !$this->hasSafeRawPortSyntax($authority)) {
+        if ($authority === ''
+            || str_contains($authority, '@')
+            || preg_match('/%(?:00|2f|5c|40|3a)/iu', $authority) === 1
+            || !$this->hasSafeRawPortSyntax($authority)
+        ) {
             return false;
         }
 

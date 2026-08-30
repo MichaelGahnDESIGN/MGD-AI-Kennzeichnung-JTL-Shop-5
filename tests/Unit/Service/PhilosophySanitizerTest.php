@@ -106,6 +106,35 @@ final class PhilosophySanitizerTest extends TestCase
     }
 
     #[Test]
+    public function prozentkodierte_verbotene_authorityzeichen_werden_abgelehnt(): void
+    {
+        $sanitizer = new PhilosophySanitizer();
+
+        foreach (['00', '2f', '5c', '40', '3a'] as $code) {
+            $url = 'https://exa%' . $code . 'mple.org/path';
+            self::assertSame('Text', $sanitizer->sanitize('<a href="' . $url . '">Text</a>'), $url);
+        }
+
+        self::assertSame(
+            '<a href="https://example.org/path" rel="noopener noreferrer">DNS</a>',
+            $sanitizer->sanitize('<a href="https://example.org/path">DNS</a>'),
+        );
+        self::assertSame(
+            '<a href="https://[2001:db8::1]/path" rel="noopener noreferrer">IPv6</a>',
+            $sanitizer->sanitize('<a href="https://[2001:db8::1]/path">IPv6</a>'),
+        );
+    }
+
+    #[Test]
+    public function kombinierte_entitaeten_bleiben_sichtbar_eindeutig_serialisiert(): void
+    {
+        self::assertSame(
+            '<p>&amp;…</p>',
+            (new PhilosophySanitizer())->sanitize('<p>&amp;&lt;&gt;…</p>'),
+        );
+    }
+
+    #[Test]
     public function gleichnamig_verschachtelte_aktive_container_verlieren_auch_tail_inhalt(): void
     {
         $sanitizer = new PhilosophySanitizer();

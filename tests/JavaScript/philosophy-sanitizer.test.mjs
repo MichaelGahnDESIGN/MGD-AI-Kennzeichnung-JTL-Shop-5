@@ -99,6 +99,62 @@ class TestDocument extends TestNode {
 
 const VOID_ELEMENTS = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source']);
 
+/** Zerlegt Test-HTML quote-sensitiv wie ein Browser bis zum echten Tagende. */
+function tokenizeTestHtml(html) {
+    const teile = [];
+    let cursor = 0;
+
+    while (cursor < html.length) {
+        if (html.startsWith('<!--', cursor)) {
+            const ende = html.indexOf('-->', cursor + 4);
+            if (ende === -1) {
+                teile.push(html.slice(cursor));
+                break;
+            }
+            teile.push(html.slice(cursor, ende + 3));
+            cursor = ende + 3;
+
+            continue;
+        }
+
+        if (html[cursor] !== '<') {
+            const naechsterTag = html.indexOf('<', cursor);
+            const ende = naechsterTag === -1 ? html.length : naechsterTag;
+            teile.push(html.slice(cursor, ende));
+            cursor = ende;
+
+            continue;
+        }
+
+        let position = cursor + 1;
+        let quote = null;
+        while (position < html.length) {
+            const zeichen = html[position];
+            if (quote !== null) {
+                if (zeichen === quote) {
+                    quote = null;
+                }
+            } else if (zeichen === '"' || zeichen === "'") {
+                quote = zeichen;
+            } else if (zeichen === '>') {
+                position += 1;
+                break;
+            }
+            position += 1;
+        }
+
+        if (position > html.length || html[position - 1] !== '>') {
+            teile.push('<');
+            cursor += 1;
+        } else {
+            teile.push(html.slice(cursor, position));
+            cursor = position;
+        }
+    }
+
+    return teile;
+}
+
 function decodeAttributeEntities(value) {
     return value
         .replace(/&colon;/giu, ':')
@@ -117,7 +173,7 @@ class TestDomParser {
     parseFromString(html) {
         const document = new TestDocument();
         const stapel = [document.body];
-        const teile = html.match(/<!--[\s\S]*?-->|<\/?[a-z][^>]*>|[^<]+|</giu) ?? [];
+        const teile = tokenizeTestHtml(html);
 
         for (const teil of teile) {
             if (teil.startsWith('<!--')) {
@@ -126,7 +182,8 @@ class TestDomParser {
                 continue;
             }
 
-            const ende = teil.match(/^<\/\s*([a-z][\w:-]*)[^>]*>$/iu);
+            /* Browser verlangen den Namen unmittelbar nach `</`. */
+            const ende = teil.match(/^<\/([a-z][\w:-]*)[^>]*>$/iu);
             if (ende) {
                 const name = ende[1].toLowerCase();
                 const passendePosition = stapel.findLastIndex((element) => element.localName === name);
@@ -137,7 +194,7 @@ class TestDomParser {
                 continue;
             }
 
-            const anfang = teil.match(/^<\s*([a-z][\w:-]*)([^>]*)>$/iu);
+            const anfang = teil.match(/^<([a-z][\w:-]*)([\s\S]*)>$/iu);
             if (anfang) {
                 const name = anfang[1].toLowerCase();
                 const element = new TestElement(name);
@@ -371,6 +428,55 @@ test('wertet Slash mit folgendem Whitespace bei aktiven Tags nicht als selbstsch
     );
 });
 
+test('akzeptiert Whitespace nach einem Endtag-Slash nicht als aktives Ende', () => {
+    for (const name of ACTIVE_TEST_ELEMENTS) {
+        for (const whitespace of [' ', '\t', '\n', '\f']) {
+            assert.equal(
+                sanitize(
+                    `<${name}>BAD</${whitespace}${name}>`
+                    + '<a href="https://example.org/leak">LEAK</a>'
+                    + `</${name}><p>end</p>`,
+                ),
+                '<p>end</p>',
+                `${name} / ${JSON.stringify(whitespace)}`,
+            );
+        }
+    }
+});
+
+test('akzeptiert Whitespace vor einem Endtag-Slash nicht als aktives Ende', () => {
+    for (const name of ACTIVE_TEST_ELEMENTS) {
+        for (const whitespace of [' ', '\t', '\n', '\f']) {
+            assert.equal(
+                sanitize(
+                    `<${name}>BAD<${whitespace}/${name}>`
+                    + '<a href="https://example.org/leak">LEAK</a>'
+                    + `</${name}><p>end</p>`,
+                ),
+                '<p>end</p>',
+                `${name} / ${JSON.stringify(whitespace)}`,
+            );
+        }
+    }
+});
+
+test('erzeugt beim Angleichen leerer Tags keine aktiven Endtags neu', () => {
+    for (const name of ACTIVE_TEST_ELEMENTS) {
+        const trennstelle = Math.max(1, Math.floor(name.length / 2));
+        const fragmentiert = `${name.slice(0, trennstelle)}<>${name.slice(trennstelle)}`;
+
+        assert.equal(
+            sanitize(
+                `<${name}>BAD</${fragmentiert}>`
+                + '<a href="https://example.org/leak">LEAK</a>'
+                + `</${name}><p>end</p>`,
+            ),
+            '<p>end</p>',
+            name,
+        );
+    }
+});
+
 test('behandelt selbstschließende und ähnlich benannte Embed-Tags wie der Server', () => {
     assert.equal(
         sanitize('<embed />Text</embed><p>Sicher</p>'),
@@ -408,6 +514,30 @@ test('erkennt alternative und abrupte Kommentarenden PHP-kompatibel', () => {
     );
     assert.equal(sanitize('<!--><embed>Text</embed><p>Sicher</p>'), '');
     assert.equal(sanitize('<!---><embed>Text</embed><p>Sicher</p>'), '');
+});
+
+test('normalisiert alternative Kommentarenden nur innerhalb echter Kommentare', () => {
+    assert.equal(
+        sanitize(
+            '<!-- Kommentar --!><p>Sicher</p> --!> '
+            + '<a href="https://example.org/a--!>b">Link</a>',
+        ),
+        '<p>Sicher</p> --!&gt; '
+        + '<a href="https://example.org/a--!&gt;b" rel="noopener noreferrer">Link</a>',
+    );
+    assert.equal(
+        sanitize('<a href="https://example.org/a<!--x--!>b">Link</a>'),
+        '<a href="https://example.org/a&lt;!--x--!&gt;b" rel="noopener noreferrer">Link</a>',
+    );
+});
+
+test('verarbeitet viele Kommentare innerhalb der Eingabegrenze in linearer Zeit', () => {
+    const html = `${'<!--x-->'.repeat(1_200)}<p>Sicher</p>`;
+    const gestartet = performance.now();
+
+    assert.equal(sanitize(html), '<p>Sicher</p>');
+    const laufzeit = performance.now() - gestartet;
+    assert.ok(laufzeit < 150, `Kommentarverarbeitung dauerte ${laufzeit.toFixed(1)} ms`);
 });
 
 test('wickelt unbekannte passive Format-Tags aus', () => {
@@ -452,6 +582,10 @@ test('begrenzt Eingaben vor dem Parsen auf 10.000 Unicode-Zeichen', () => {
     assert.equal(sanitize(`${'a'.repeat(9_999)}😀x`), `${'a'.repeat(9_999)}😀`);
 });
 
+test('serialisiert kombinierte Entitäten sichtbar PHP-paritätisch', () => {
+    assert.equal(sanitize('<p>&amp;&lt;&gt;…</p>'), '<p>&amp;…</p>');
+});
+
 test('prüft HTTPS-URLs unabhängig von der HTML-Bereinigung', () => {
     assert.equal(isSafeHttpsUrl('https://example.org/path'), true);
     assert.equal(isSafeHttpsUrl('https://example.org:443/path'), true);
@@ -478,6 +612,14 @@ test('lehnt von WHATWG normalisierte, serverseitig ungültige URL-Schreibweisen 
     ];
 
     for (const url of serverseitigUngueltigeUrls) {
+        assert.equal(isSafeHttpsUrl(url), false, url);
+        assert.equal(sanitize(`<a href="${url}">Text</a>`), 'Text', url);
+    }
+});
+
+test('lehnt prozentkodierte verbotene Authorityzeichen ab', () => {
+    for (const code of ['00', '2f', '5c', '40', '3a']) {
+        const url = `https://exa%${code}mple.org/path`;
         assert.equal(isSafeHttpsUrl(url), false, url);
         assert.equal(sanitize(`<a href="${url}">Text</a>`), 'Text', url);
     }

@@ -51,6 +51,7 @@ const PASSIVE_PARSER_CONTAINER = 'mgd-ai-passive-container';
 const ALLOWED_ELEMENT_SET = new Set(ALLOWED_PHILOSOPHY_ELEMENTS);
 const MAXIMUM_INPUT_LENGTH = 10_000;
 const SOURCE_ROOT_ID = 'mgd-ai-philosophy-client-root';
+const EMPTY_HTML_TOKEN_BOUNDARY = '<!--mgd-ai-empty-token-->';
 const ELEMENT_NODE = 1;
 const TEXT_NODE = 3;
 
@@ -79,7 +80,10 @@ export function isSafeHttpsUrl(value) {
     }
 
     const authority = value.slice('https://'.length).split(/[/?#]/u, 1)[0];
-    if (authority === '' || authority.includes('@') || !hasSafeRawPortSyntax(authority)) {
+    if (authority === ''
+        || authority.includes('@')
+        || /%(?:00|2f|5c|40|3a)/iu.test(authority)
+        || !hasSafeRawPortSyntax(authority)) {
         return false;
     }
 
@@ -151,7 +155,8 @@ export function sanitizePhilosophyHtml(input, adapters = {}) {
             return '';
         }
 
-        const kommentareNormalisiert = dekodiert.replaceAll('--!>', '-->');
+        const leereTagsBereinigt = removeEmptyHtmlTokens(dekodiert);
+        const kommentareNormalisiert = normalizeAlternativeCommentEnds(leereTagsBereinigt);
         const parserzustaendeNeutralisiert = neutralizeParserStateElements(kommentareNormalisiert);
         let vorbereitet = parserzustaendeNeutralisiert;
         for (const elementName of ACTIVE_PHILOSOPHY_ELEMENTS) {
@@ -268,6 +273,113 @@ function resolveDomParser(adapters) {
 }
 
 /**
+ * Ersetzt leere `<>`-Tokens außerhalb echter Tags und Kommentare durch eine
+ * feste, unsichtbare Knotengrenze. libxml verwirft diese Tokens ebenfalls;
+ * die Grenze verhindert zusätzlich, dass getrennte Tagfragmente zu neuem
+ * Markup zusammengefügt werden. Attribute und Kommentare bleiben bytegenau.
+ */
+function removeEmptyHtmlTokens(input) {
+    let ausgabe = '';
+    let cursor = 0;
+
+    while (cursor < input.length) {
+        if (input.startsWith('<!--', cursor)) {
+            const kommentarEnde = findHtmlCommentEnd(input, cursor);
+            if (kommentarEnde === null) {
+                return ausgabe + input.slice(cursor);
+            }
+
+            ausgabe += input.slice(cursor, kommentarEnde.end);
+            cursor = kommentarEnde.end;
+
+            continue;
+        }
+
+        if (input.startsWith('<>', cursor)) {
+            ausgabe += EMPTY_HTML_TOKEN_BOUNDARY;
+            cursor += 2;
+
+            continue;
+        }
+
+        if (input[cursor] === '<') {
+            const tag = readHtmlTag(input, cursor);
+            if (tag?.unterminated === true) {
+                return ausgabe + input.slice(cursor);
+            }
+            if (tag !== null) {
+                ausgabe += input.slice(cursor, tag.end);
+                cursor = tag.end;
+
+                continue;
+            }
+        }
+
+        ausgabe += input[cursor];
+        cursor += 1;
+    }
+
+    return ausgabe;
+}
+
+/**
+ * Vereinheitlicht das alternative HTML-Kommentarende nur in echten
+ * Kommentaren. Der Cursor läuft monoton, damit viele kurze Kommentare nicht
+ * zu wiederholten Suchen über den gesamten Resttext führen.
+ */
+function normalizeAlternativeCommentEnds(input) {
+    let ausgabe = '';
+    let cursor = 0;
+
+    while (cursor < input.length) {
+        if (input.startsWith('<!--', cursor)) {
+            const kommentarEnde = findHtmlCommentEnd(input, cursor);
+            if (kommentarEnde === null) {
+                return ausgabe + input.slice(cursor);
+            }
+
+            ausgabe += input.slice(cursor, kommentarEnde.start);
+            ausgabe += '-->';
+            cursor = kommentarEnde.end;
+
+            continue;
+        }
+
+        if (input[cursor] === '<') {
+            const tag = readHtmlTag(input, cursor);
+            if (tag?.unterminated === true) {
+                return ausgabe + input.slice(cursor);
+            }
+            if (tag !== null) {
+                ausgabe += input.slice(cursor, tag.end);
+                cursor = tag.end;
+
+                continue;
+            }
+        }
+
+        ausgabe += input[cursor];
+        cursor += 1;
+    }
+
+    return ausgabe;
+}
+
+/** Findet das erste gültige Standard- oder Alternativende eines Kommentars. */
+function findHtmlCommentEnd(input, commentStart) {
+    for (let position = commentStart + 4; position < input.length; position += 1) {
+        if (input.startsWith('-->', position)) {
+            return { start: position, end: position + 3 };
+        }
+        if (input.startsWith('--!>', position)) {
+            return { start: position, end: position + 4 };
+        }
+    }
+
+    return null;
+}
+
+/**
  * Entfernt parserkritische aktive Bereiche noch vor dem Browser-Parser.
  *
  * Das betrifft `embed`, das Browser als inhaltslos behandeln, und `form`,
@@ -340,14 +452,14 @@ function neutralizeParserStateElements(input) {
 
         ausgabe += input.slice(cursor, tagStart);
         if (input.startsWith('<!--', tagStart)) {
-            const commentEnd = input.indexOf('-->', tagStart + 4);
-            if (commentEnd === -1) {
+            const kommentarEnde = findHtmlCommentEnd(input, tagStart);
+            if (kommentarEnde === null) {
                 ausgabe += input.slice(tagStart);
                 break;
             }
 
-            ausgabe += input.slice(tagStart, commentEnd + 3);
-            cursor = commentEnd + 3;
+            ausgabe += input.slice(tagStart, kommentarEnde.end);
+            cursor = kommentarEnde.end;
 
             continue;
         }
@@ -395,15 +507,12 @@ function findNextHtmlTag(input, startPosition, expectedName, includeClosing = tr
         }
 
         if (input.startsWith('<!--', tagStart)) {
-            const standardEnd = input.indexOf('-->', tagStart + 4);
-            const alternativeEnd = input.indexOf('--!>', tagStart + 4);
-            const vorhandeneEnden = [standardEnd, alternativeEnd].filter((position) => position !== -1);
-            if (vorhandeneEnden.length === 0) {
+            const kommentarEnde = findHtmlCommentEnd(input, tagStart);
+            if (kommentarEnde === null) {
                 return null;
             }
 
-            const commentEnd = Math.min(...vorhandeneEnden);
-            cursor = commentEnd + (commentEnd === alternativeEnd ? 4 : 3);
+            cursor = kommentarEnde.end;
 
             continue;
         }
@@ -435,16 +544,10 @@ function findNextHtmlTag(input, startPosition, expectedName, includeClosing = tr
  */
 function readHtmlTag(input, startPosition) {
     let position = startPosition + 1;
-    while (/\s/u.test(input[position] ?? '')) {
-        position += 1;
-    }
 
     const closing = input[position] === '/';
     if (closing) {
         position += 1;
-        while (/\s/u.test(input[position] ?? '')) {
-            position += 1;
-        }
     }
 
     const nameStart = position;
