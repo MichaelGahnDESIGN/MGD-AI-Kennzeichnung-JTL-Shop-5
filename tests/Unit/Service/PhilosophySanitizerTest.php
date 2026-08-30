@@ -55,6 +55,68 @@ final class PhilosophySanitizerTest extends TestCase
     }
 
     #[Test]
+    public function ipv6_links_bleiben_browsergueltig_und_sicher_serialisiert(): void
+    {
+        $clean = (new PhilosophySanitizer())->sanitize(
+            '<a href="https://[2001:db8::1]:443/path">IPv6</a>',
+        );
+
+        self::assertSame(
+            '<a href="https://[2001:db8::1]:443/path" rel="noopener noreferrer">IPv6</a>',
+            $clean,
+        );
+    }
+
+    #[Test]
+    public function nur_exakt_roher_https_port_443_wird_akzeptiert(): void
+    {
+        $sanitizer = new PhilosophySanitizer();
+
+        foreach ([
+            'https://example.org:0443/path',
+            'https://example.org:00443/path',
+            'https://[2001:db8::1]:0443/path',
+            'https://[2001:db8::1]:00443/path',
+        ] as $url) {
+            self::assertSame('Text', $sanitizer->sanitize('<a href="' . $url . '">Text</a>'), $url);
+        }
+
+        self::assertSame(
+            '<a href="https://example.org:443/path" rel="noopener noreferrer">Text</a>',
+            $sanitizer->sanitize('<a href="https://example.org:443/path">Text</a>'),
+        );
+        self::assertSame(
+            '<a href="https://[2001:db8::1]:443/path" rel="noopener noreferrer">Text</a>',
+            $sanitizer->sanitize('<a href="https://[2001:db8::1]:443/path">Text</a>'),
+        );
+    }
+
+    #[Test]
+    public function geklammerte_hosts_muessen_gueltige_ipv6_adressen_sein(): void
+    {
+        $sanitizer = new PhilosophySanitizer();
+
+        foreach ([
+            'https://[]/path',
+            'https://[not-ipv6]/path',
+            'https://[2001:db8::zz]:443/path',
+        ] as $url) {
+            self::assertSame('Text', $sanitizer->sanitize('<a href="' . $url . '">Text</a>'), $url);
+        }
+    }
+
+    #[Test]
+    public function gleichnamig_verschachtelte_aktive_container_verlieren_auch_tail_inhalt(): void
+    {
+        $sanitizer = new PhilosophySanitizer();
+
+        foreach (['iframe', 'embed', 'noscript'] as $name) {
+            $html = '<' . $name . '>outer<' . $name . '>inner</' . $name . '>tail</' . $name . '><p>end</p>';
+            self::assertSame('<p>end</p>', $sanitizer->sanitize($html), $name);
+        }
+    }
+
+    #[Test]
     public function mehrfach_kodiertes_aktives_markup_wird_vor_der_pruefung_aufgeloest(): void
     {
         $clean = (new PhilosophySanitizer())->sanitize(

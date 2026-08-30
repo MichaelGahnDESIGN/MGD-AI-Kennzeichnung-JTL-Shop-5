@@ -34,9 +34,6 @@ const ACTIVE_PHILOSOPHY_ELEMENTS = new Set([
 const NON_NESTING_ACTIVE_ELEMENTS = new Set([
     'script',
     'style',
-    'iframe',
-    'embed',
-    'noscript',
     'form',
 ]);
 

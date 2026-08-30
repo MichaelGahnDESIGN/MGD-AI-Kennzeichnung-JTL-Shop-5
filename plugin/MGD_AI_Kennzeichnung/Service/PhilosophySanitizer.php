@@ -61,10 +61,7 @@ final class PhilosophySanitizer
         $this->sanitizeChildren($wurzel);
         $ausgabe = '';
         foreach ($this->children($wurzel) as $kind) {
-            $html = $dokument->saveHTML($kind);
-            if (is_string($html)) {
-                $ausgabe .= $html;
-            }
+            $ausgabe .= $this->serializeNode($kind);
         }
 
         return trim($ausgabe);
@@ -149,6 +146,18 @@ final class PhilosophySanitizer
 
     private function isSafeHttpsUrl(string $url): bool
     {
+        if (!str_starts_with($url, 'https://')
+            || str_contains($url, '\\')
+            || preg_match('/[\x00-\x20\x7f]/u', $url) === 1
+        ) {
+            return false;
+        }
+
+        $authority = preg_split('/[\/?#]/u', substr($url, strlen('https://')), 2)[0] ?? '';
+        if ($authority === '' || str_contains($authority, '@') || !$this->hasSafeRawPortSyntax($authority)) {
+            return false;
+        }
+
         $teile = parse_url($url);
 
         return is_array($teile)
@@ -158,6 +167,84 @@ final class PhilosophySanitizer
             && !isset($teile['user'])
             && !isset($teile['pass'])
             && (!isset($teile['port']) || $teile['port'] === 443);
+    }
+
+    /** Prüft die Portschreibweise vor jeder Normalisierung durch parse_url(). */
+    private function hasSafeRawPortSyntax(string $authority): bool
+    {
+        if (str_starts_with($authority, '[')) {
+            $klammerEnde = strpos($authority, ']');
+            if ($klammerEnde === false) {
+                return false;
+            }
+
+            $ipv6 = substr($authority, 1, $klammerEnde - 1);
+            if (filter_var($ipv6, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) === false) {
+                return false;
+            }
+
+            $suffix = substr($authority, $klammerEnde + 1);
+
+            return $suffix === '' || $suffix === ':443';
+        }
+
+        $ersterDoppelpunkt = strpos($authority, ':');
+        if ($ersterDoppelpunkt === false) {
+            return true;
+        }
+
+        return $ersterDoppelpunkt === strrpos($authority, ':')
+            && substr($authority, $ersterDoppelpunkt) === ':443';
+    }
+
+    /**
+     * Serialisiert ausschließlich den bereits bereinigten Positivlisten-Baum.
+     * Dadurch bleiben IPv6-Klammern gültig, ohne nachträgliche Stringersetzung.
+     */
+    private function serializeNode(DOMNode $node): string
+    {
+        if ($node->nodeType === XML_TEXT_NODE) {
+            return htmlspecialchars(
+                is_string($node->nodeValue) ? $node->nodeValue : '',
+                ENT_NOQUOTES | ENT_SUBSTITUTE | ENT_HTML5,
+                'UTF-8',
+            );
+        }
+
+        if (!$node instanceof DOMElement) {
+            return '';
+        }
+
+        $name = strtolower($node->tagName);
+        if (!in_array($name, self::ALLOWED_ELEMENTS, true)) {
+            return '';
+        }
+
+        $attribute = '';
+        if ($name === 'a') {
+            $href = $node->getAttribute('href');
+            if (!$this->isSafeHttpsUrl($href)) {
+                return $this->serializeChildren($node);
+            }
+
+            $attribute = ' href="' . htmlspecialchars(
+                $href,
+                ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5,
+                'UTF-8',
+            ) . '" rel="noopener noreferrer"';
+        }
+
+        return '<' . $name . $attribute . '>' . $this->serializeChildren($node) . '</' . $name . '>';
+    }
+
+    private function serializeChildren(DOMNode $parent): string
+    {
+        $html = '';
+        foreach ($this->children($parent) as $child) {
+            $html .= $this->serializeNode($child);
+        }
+
+        return $html;
     }
 
     private function decodeEntities(string $text): string

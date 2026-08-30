@@ -346,6 +346,16 @@ test('ignoriert verschachtelte Form-Starts wie der PHP-Parser', () => {
     );
 });
 
+test('entfernt Tail-Inhalt gleichnamig verschachtelter aktiver Container PHP-paritätisch', () => {
+    for (const name of ['iframe', 'embed', 'noscript']) {
+        assert.equal(
+            sanitize(`<${name}>outer<${name}>inner</${name}>tail</${name}><p>end</p>`),
+            '<p>end</p>',
+            name,
+        );
+    }
+});
+
 test('wertet Slash mit folgendem Whitespace bei aktiven Tags nicht als selbstschließend', () => {
     for (const name of ACTIVE_TEST_ELEMENTS) {
         assert.equal(
