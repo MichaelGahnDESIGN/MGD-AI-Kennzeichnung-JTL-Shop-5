@@ -31,6 +31,7 @@ const MODES = new Set(['visual', 'html']);
  *   html: {value: unknown},
  *   visual: {render: (safeHtml: string) => void, serialize: () => unknown},
  *   sanitize: (html: unknown) => unknown,
+ *   initialMode?: 'visual'|'html',
  *   onModeChange?: (mode: 'visual'|'html') => void,
  * }} adapters Abhängigkeiten einer einzelnen Sprachinstanz.
  * @returns {{
@@ -49,9 +50,13 @@ export function createPhilosophySourceSync(adapters) {
     const onModeChange = configuration.onModeChange;
 
     /* Die Zustandsmaschine kennt absichtlich nur die zwei sichtbaren Modi. */
-    let mode = 'html';
-    /* Vor dem ersten Wechsel ist das serverseitige Formularfeld maßgeblich. */
-    let hasSynchronizedRepresentation = false;
+    let mode = resolveInitialMode(configuration.initialMode);
+    /* Der letzte sicher bereinigte Wert schützt nach Adapterfehlern vor Stale-Reads. */
+    let canonicalValue = '';
+    let hasCanonicalValue = false;
+    let requiresCanonicalRecovery = false;
+    /* Reentrante Adapter und Callbacks erhalten ein fail-closed Busy-Ergebnis. */
+    let synchronizationInProgress = false;
 
     /** Wechselt in die visuelle Bearbeitung und bereinigt deren Eingabequelle. */
     function showVisual() {
@@ -86,42 +91,67 @@ export function createPhilosophySourceSync(adapters) {
             return createResult(false, mode, '');
         }
 
-        const input = readCurrentValue();
-        const sanitization = sanitizeValue(input.value, sanitize);
-        const safeValue = sanitization.value;
-
-        /* Der Modus bleibt selbst bei Fehlern ein gültiger, nachvollziehbarer Zustand. */
-        mode = nextMode;
-        if (announceModeChange) {
-            notifyModeChange(onModeChange, mode);
+        if (synchronizationInProgress) {
+            return createResult(false, mode, hasCanonicalValue ? canonicalValue : '');
         }
 
-        const sourceWritten = writeField(source, safeValue);
-        const htmlWritten = writeField(html, safeValue);
-        const visualRendered = renderVisual(visual, safeValue);
-        /*
-         * Ein defekter Visualadapter darf die bereits sicher aktualisierten
-         * Formular- und HTML-Werte nicht wieder zur unsicheren Initialquelle
-         * zurückstufen. Für den nächsten Wechsel sind diese beiden Werte daher
-         * weiterhin die maßgebliche, sichere Basis.
-         */
-        hasSynchronizedRepresentation = sourceWritten && htmlWritten;
+        synchronizationInProgress = true;
+        try {
+            const input = readCurrentValue();
+            const sanitization = sanitizeValue(input.value, sanitize);
+            const safeValue = sanitization.value;
 
-        return createResult(
-            input.ok && sanitization.ok && sourceWritten && htmlWritten && visualRendered,
-            mode,
-            safeValue,
-        );
+            /*
+             * Der kanonische Wert wird vor Adapterzugriffen festgehalten. Falls
+             * ein Adapter nur teilweise schreibt oder einen alten Visualzustand
+             * behält, darf dieser Inhalt später niemals wieder Formularquelle sein.
+             */
+            canonicalValue = safeValue;
+            hasCanonicalValue = true;
+
+            /*
+             * Klare Fail-closed-Reihenfolge: zuerst der zu sendende Formularwert,
+             * dann HTML und zuletzt der rein visuelle Adapter. Alle drei erhalten
+             * ausschließlich den bereits bereinigten Wert.
+             */
+            const sourceWritten = writeField(source, safeValue);
+            const htmlWritten = writeField(html, safeValue);
+            const visualRendered = renderVisual(visual, safeValue);
+            const synchronized = input.ok && sanitization.ok
+                && sourceWritten && htmlWritten && visualRendered;
+
+            if (!synchronized) {
+                /*
+                 * DOM-Schreibvorgänge sind nicht transaktional. Statt einen
+                 * möglicherweise alten Adapter erneut auszulesen, verwenden alle
+                 * folgenden Aufrufe ausschließlich diesen sicheren Fallback.
+                 */
+                requiresCanonicalRecovery = true;
+
+                return createResult(false, mode, safeValue);
+            }
+
+            /* Modus und UI-Callback werden erst nach dem vollständigen Commit sichtbar. */
+            mode = nextMode;
+            requiresCanonicalRecovery = false;
+            if (announceModeChange) {
+                notifyModeChange(onModeChange, mode);
+            }
+
+            return createResult(true, mode, safeValue);
+        } finally {
+            synchronizationInProgress = false;
+        }
     }
 
     /**
-     * Beim ersten Aufruf stammt der Inhalt immer aus dem servergerenderten
-     * Formularfeld. Danach liest die Zustandsmaschine ausschließlich die
-     * gerade sichtbare Repräsentation.
+     * Der Initialmodus ist standardmäßig HTML. Deshalb liest der erste Submit
+     * den sichtbaren `html`-Adapter. Nach einem fehlgeschlagenen Adapter-Commit
+     * ersetzt der sichere kanonische Wert jede potenziell veraltete Darstellung.
      */
     function readCurrentValue() {
-        if (!hasSynchronizedRepresentation) {
-            return readField(source);
+        if (requiresCanonicalRecovery && hasCanonicalValue) {
+            return { ok: true, value: canonicalValue };
         }
 
         return mode === 'visual' ? serializeVisual(visual) : readField(html);
@@ -155,7 +185,8 @@ function writeField(field, safeValue) {
 
         field.value = safeValue;
 
-        return true;
+        /* Manche DOM-Wrapper ignorieren Schreibvorgänge still; deshalb zwingender Read-back. */
+        return field.value === safeValue;
     } catch {
         return false;
     }
@@ -220,4 +251,9 @@ function notifyModeChange(callback, mode) {
 /** Akzeptiert auch prototypfreie Adapterobjekte, aber keine primitiven Werte. */
 function isObject(value) {
     return value !== null && typeof value === 'object';
+}
+
+/** Nutzt nur einen explizit erlaubten Startmodus und fällt sonst auf HTML zurück. */
+function resolveInitialMode(initialMode) {
+    return MODES.has(initialMode) ? initialMode : 'html';
 }
