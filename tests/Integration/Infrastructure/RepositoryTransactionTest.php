@@ -413,27 +413,29 @@ final class RepositoryTransactionTest extends TestCase
     }
 
     #[Test]
-    public function philosophy_entfernt_einfach_entity_kodierte_script_tags_vollstaendig(): void
+    public function philosophy_behandelt_einfach_kodierte_script_tags_als_text(): void
     {
         $inhalt = $this->speicherePhilosophie('&lt;script&gt;alert(1)&lt;/script&gt; Sicherer Text');
 
-        self::assertSame('Sicherer Text', $inhalt);
-        $this->assertKeinMarkup($inhalt);
+        self::assertSame('&lt;script&gt;alert(1)&lt;/script&gt; Sicherer Text', $inhalt);
+        self::assertStringNotContainsString('<', $inhalt);
+        self::assertStringNotContainsString('>', $inhalt);
     }
 
     #[Test]
-    public function philosophy_entfernt_auch_doppelt_entity_kodierte_script_tags_vollstaendig(): void
+    public function philosophy_behandelt_doppelt_kodierte_script_tags_als_text(): void
     {
         $inhalt = $this->speicherePhilosophie(
             '&amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt; Doppelt sicher',
         );
 
-        self::assertSame('Doppelt sicher', $inhalt);
-        $this->assertKeinMarkup($inhalt);
+        self::assertSame('&amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt; Doppelt sicher', $inhalt);
+        self::assertStringNotContainsString('<', $inhalt);
+        self::assertStringNotContainsString('>', $inhalt);
     }
 
     #[Test]
-    public function philosophy_entfernt_gemischte_script_tags_attribute_und_eventhandler(): void
+    public function philosophy_behandelt_gemischtes_kodiertes_markup_als_text(): void
     {
         $inhalt = $this->speicherePhilosophie(
             '&LT;ScRiPt type=&quot;text/javascript&quot; OnLoAd=&quot;alert(1)&quot;&GT;'
@@ -441,10 +443,13 @@ final class RepositoryTransactionTest extends TestCase
             . '&lt;p onclick=&quot;alert(2)&quot;&gt;Haltung&lt;/p&gt;',
         );
 
-        self::assertSame('<p>Haltung</p>', $inhalt);
-        self::assertStringNotContainsStringIgnoringCase('script', $inhalt);
-        self::assertStringNotContainsStringIgnoringCase('onclick', $inhalt);
-        self::assertStringNotContainsStringIgnoringCase('onload', $inhalt);
+        self::assertSame(
+            '&lt;ScRiPt type="text/javascript" OnLoAd="alert(1)"&gt;alert(1)'
+            . '&lt;/sCrIpT&gt;&lt;p onclick="alert(2)"&gt;Haltung&lt;/p&gt;',
+            $inhalt,
+        );
+        self::assertStringNotContainsString('<', $inhalt);
+        self::assertStringNotContainsString('>', $inhalt);
     }
 
     #[Test]
@@ -475,32 +480,31 @@ final class RepositoryTransactionTest extends TestCase
     }
 
     #[Test]
-    public function philosophy_weist_extrem_tief_kodiertes_rest_markup_sicher_ab(): void
+    public function philosophy_behandelt_extrem_tief_kodiertes_markup_weiterhin_als_text(): void
     {
         $inhalt = '<img src="x" onerror="alert(1)">';
         for ($durchlauf = 0; $durchlauf < 12; ++$durchlauf) {
             $inhalt = htmlspecialchars($inhalt, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         }
 
-        $db = new TransactionalDatabaseFake();
-        $db->setMarker('xplugin_mgd_ai_philosophy', self::MARKER);
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('darf nicht leer sein');
+        $gespeichert = $this->speicherePhilosophie($inhalt);
 
-        (new PhilosophyRepository($db))->upsert('de', $inhalt);
+        self::assertSame($inhalt, $gespeichert);
+        self::assertStringNotContainsString('<img', $gespeichert);
     }
 
     #[Test]
-    public function philosophy_neutralisiert_semikolonlose_numerische_tag_entities(): void
+    public function philosophy_behandelt_numerische_tag_entities_als_text(): void
     {
         foreach ([
-            '&#60script&#62alert(1)&#60/script&#62',
-            '&#60;script&#62;alert(1)&#60;/script&#62;',
-            '&#x3cscript&#x3ealert(1)&#x3c/script&#x3e',
-        ] as $angriff) {
+            '&#60script&#62alert(1)&#60/script&#62' => '&lt;script&gt;alert(1)&lt;/script&gt; Sicher',
+            '&#60;script&#62;alert(1)&#60;/script&#62;' => '&lt;script&gt;alert(1)&lt;/script&gt; Sicher',
+            '&#x3cscript&#x3ealert(1)&#x3c/script&#x3e' => '&lt;scriptϪlert(1)&lt;/script&gt; Sicher',
+        ] as $angriff => $erwartet) {
             $inhalt = $this->speicherePhilosophie($angriff . ' Sicher');
-            self::assertSame('Sicher', $inhalt);
-            $this->assertKeinMarkup($inhalt);
+            self::assertSame($erwartet, $inhalt);
+            self::assertStringNotContainsString('<', $inhalt);
+            self::assertStringNotContainsString('>', $inhalt);
         }
     }
 
@@ -528,13 +532,6 @@ final class RepositoryTransactionTest extends TestCase
         (new PhilosophyRepository($db))->upsert('de', $inhalt);
 
         return $db->philosophies()['de'];
-    }
-
-    private function assertKeinMarkup(string $inhalt): void
-    {
-        self::assertStringNotContainsString('<', $inhalt);
-        self::assertStringNotContainsString('>', $inhalt);
-        self::assertStringNotContainsStringIgnoringCase('script', $inhalt);
     }
 
     /**

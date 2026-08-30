@@ -156,13 +156,45 @@ function tokenizeTestHtml(html) {
 }
 
 function decodeAttributeEntities(value) {
-    return value
-        .replace(/&colon;/giu, ':')
-        .replace(/&#0*58;?/giu, ':')
-        .replace(/&#x0*3a;?/giu, ':')
-        .replace(/&quot;/giu, '"')
-        .replace(/&apos;/giu, "'")
-        .replace(/&amp;/giu, '&');
+    return decodeTextEntitiesOnce(value, true);
+}
+
+/** Bildet genau einen nativen HTML-Entity-Dekodierdurchlauf im Test-DOM ab. */
+function decodeTextEntitiesOnce(value, attribut = false) {
+    const named = {
+        amp: '&',
+        apos: "'",
+        colon: ':',
+        gt: '>',
+        lt: '<',
+        ltimes: '⋉',
+        notin: '∉',
+        quot: '"',
+        sol: '/',
+    };
+
+    return value.replace(
+        /&(?:#x([0-9a-f]+);?|#([0-9]+);?|(AMP|GT|LT|QUOT|amp|apos|colon|gt|ltimes|lt|notin|quot|sol)(;?))/gu,
+        (treffer, hexadezimal, dezimal, name, semikolon, position, eingabe) => {
+            if (name !== undefined) {
+                const legacyOhneSemikolon = ['amp', 'gt', 'lt', 'quot'].includes(name.toLowerCase());
+                const folgezeichen = eingabe[position + treffer.length] ?? '';
+                if (semikolon === '' && (!legacyOhneSemikolon
+                    || (attribut && /^[A-Za-z0-9=]$/u.test(folgezeichen)))) {
+                    return treffer;
+                }
+
+                return named[name.toLowerCase()] ?? treffer;
+            }
+
+            const codepoint = Number.parseInt(hexadezimal ?? dezimal, hexadezimal === undefined ? 10 : 16);
+            try {
+                return String.fromCodePoint(codepoint);
+            } catch {
+                return '\ufffd';
+            }
+        },
+    );
 }
 
 /**
@@ -194,12 +226,12 @@ class TestDomParser {
                 continue;
             }
 
-            const anfang = teil.match(/^<([a-z][\w:-]*)([\s\S]*)>$/iu);
+            const anfang = teil.match(/^<([a-z][\w:-]*)([^]*)>$/iu);
             if (anfang) {
                 const name = anfang[1].toLowerCase();
                 const element = new TestElement(name);
                 const attributText = anfang[2];
-                const attributMuster = /([^\s=/>]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/gu;
+                const attributMuster = /([^\t\n\f\r =/>]+)(?:[\t\n\f\r ]*=[\t\n\f\r ]*(?:"([^"]*)"|'([^']*)'|([^\t\n\f\r "'=<>`]+)))?/gu;
                 let treffer;
                 while ((treffer = attributMuster.exec(attributText)) !== null) {
                     element.setAttribute(
@@ -216,7 +248,7 @@ class TestDomParser {
                 continue;
             }
 
-            stapel.at(-1).appendChild(new TestTextNode(teil));
+            stapel.at(-1).appendChild(new TestTextNode(decodeTextEntitiesOnce(teil)));
         }
 
         return document;
@@ -231,7 +263,7 @@ class TestDomParser {
 class BrowsernaherTestDomParser extends TestDomParser {
     parseFromString(html) {
         const document = super.parseFromString(html);
-        if (!/^<div\s+id=/iu.test(html)) {
+        if (!/^<div[\t\n\f\r ]+id=/iu.test(html)) {
             document.body.childNodes = document.body.childNodes.filter((child) => child.localName !== 'title');
         }
 
@@ -250,6 +282,20 @@ const ACTIVE_TEST_ELEMENTS = [
     'template',
     'noscript',
     'form',
+];
+
+const NON_VOID_ACTIVE_TEST_ELEMENTS = ACTIVE_TEST_ELEMENTS.filter((name) => name !== 'embed');
+
+/**
+ * Gespeicherte Gegenproben aus Chrome-HTML-Tokenizer und PHP-DOMDocument:
+ * Diese Unicode-Zeichen sind JavaScript-Whitespace, aber kein HTML-Whitespace.
+ */
+const NON_HTML_WHITESPACE_COUNTERPROBES = [
+    ['VT', '\u000b'],
+    ['NBSP', '\u00a0'],
+    ['OGHAM', '\u1680'],
+    ['LS', '\u2028'],
+    ['BOM', '\ufeff'],
 ];
 
 /**
@@ -294,7 +340,7 @@ function findFirstElementByName(parent, name) {
 class ParserzustandTestDomParser extends TestDomParser {
     parseFromString(html) {
         for (const name of PARSER_STATE_ELEMENTS) {
-            const startMatch = new RegExp(`<${name}(?:\\s[^>]*)?>`, 'iu').exec(html);
+            const startMatch = new RegExp(`<${name}(?:[\\t\\n\\f\\r ][^>]*)?>`, 'iu').exec(html);
             if (startMatch === null) {
                 continue;
             }
@@ -304,7 +350,7 @@ class ParserzustandTestDomParser extends TestDomParser {
             let rest = '';
 
             if (name !== 'plaintext') {
-                const closingMatch = new RegExp(`</${name}\\s*>`, 'iu').exec(rawContent);
+                const closingMatch = new RegExp(`</${name}[\\t\\n\\f\\r ]*>`, 'iu').exec(rawContent);
                 if (closingMatch !== null) {
                     rest = rawContent.slice(closingMatch.index + closingMatch[0].length);
                     rawContent = rawContent.slice(0, closingMatch.index);
@@ -477,6 +523,47 @@ test('erzeugt beim Angleichen leerer Tags keine aktiven Endtags neu', () => {
     }
 });
 
+test('behandelt Unicode-Whitespace außerhalb der HTML-Positivliste nicht als Taggrammatik', () => {
+    for (const name of NON_VOID_ACTIVE_TEST_ELEMENTS) {
+        for (const [bezeichnung, whitespace] of NON_HTML_WHITESPACE_COUNTERPROBES) {
+            assert.equal(
+                sanitize(
+                    `<${name}>BAD</${name}${whitespace}>`
+                    + '<a href="https://example.org/leak">LEAK</a>'
+                    + `</${name}><p>end</p>`,
+                ),
+                '<p>end</p>',
+                `${name} / ${bezeichnung}`,
+            );
+        }
+    }
+});
+
+test('erzeugt aus Entities weder Endtags noch selbstschließende aktive Starttags', () => {
+    for (const name of NON_VOID_ACTIVE_TEST_ELEMENTS) {
+        assert.equal(
+            sanitize(
+                `<${name}>BAD</${name}&#32;>`
+                + '<a href="https://example.org/leak">LEAK</a>'
+                + `</${name}><p>end</p>`,
+            ),
+            '<p>end</p>',
+            name,
+        );
+    }
+
+    const weitereFaelle = [
+        '<script>BAD</script&amp;#32;><a href="https://example.org/leak">LEAK</a></script><p>end</p>',
+        '<script &#47;>BAD</script><p>end</p>',
+        '<script &amp;#47;>BAD</script><p>end</p>',
+        '<script &sol;>BAD</script><p>end</p>',
+    ];
+
+    for (const html of weitereFaelle) {
+        assert.equal(sanitize(html), '<p>end</p>', html);
+    }
+});
+
 test('behandelt selbstschließende und ähnlich benannte Embed-Tags wie der Server', () => {
     assert.equal(
         sanitize('<embed />Text</embed><p>Sicher</p>'),
@@ -583,7 +670,49 @@ test('begrenzt Eingaben vor dem Parsen auf 10.000 Unicode-Zeichen', () => {
 });
 
 test('serialisiert kombinierte Entitäten sichtbar PHP-paritätisch', () => {
-    assert.equal(sanitize('<p>&amp;&lt;&gt;…</p>'), '<p>&amp;…</p>');
+    const gegenproben = [
+        ['<p>&amp;&lt;&gt;…</p>', '<p>&amp;&lt;&gt;…</p>'],
+        ['<p>A&lt; &gt;B</p>', '<p>A&lt; &gt;B</p>'],
+        ['<p>A&lt;/&gt;B</p>', '<p>A&lt;/&gt;B</p>'],
+        ['<p>A&#60;&#62;B</p>', '<p>A&lt;&gt;B</p>'],
+        ['<p>A&#x3c;&#x3e;B</p>', '<p>A&lt;&gt;B</p>'],
+        ['<p>A&amp;lt;&amp;gt;B</p>', '<p>A&amp;lt;&amp;gt;B</p>'],
+    ];
+
+    for (const [html, erwartet] of gegenproben) {
+        assert.equal(sanitize(html), erwartet, html);
+    }
+    assert.equal(
+        sanitize('<a href="https://example.org/?a=1&amp;b=2">Link</a>'),
+        '<a href="https://example.org/?a=1&amp;b=2" rel="noopener noreferrer">Link</a>',
+    );
+});
+
+test('spiegelt semikolonlose HTML5-Legacy-Entitäten in Text und Attributen', () => {
+    const textfaelle = [
+        ['<p>&amp </p>', '<p>&amp; </p>'],
+        ['<p>&lt Text &gt; &quot </p>', '<p>&lt; Text &gt; " </p>'],
+        ['<p>&ampx</p>', '<p>&amp;x</p>'],
+        ['<p>&AMP &Amp</p>', '<p>&amp; &amp;Amp</p>'],
+        ['<p>&ltimes; &notin;</p>', '<p>⋉ ∉</p>'],
+    ];
+
+    for (const [html, erwartet] of textfaelle) {
+        assert.equal(sanitize(html), erwartet, html);
+    }
+
+    assert.equal(
+        sanitize('<a href="https://example.org/a&amp/b">Link</a>'),
+        '<a href="https://example.org/a&amp;/b" rel="noopener noreferrer">Link</a>',
+    );
+    assert.equal(
+        sanitize('<a href="https://example.org/a&amp=b">Link</a>'),
+        '<a href="https://example.org/a&amp;amp=b" rel="noopener noreferrer">Link</a>',
+    );
+    assert.equal(
+        sanitize('<a href="https://example.org/a&ampb">Link</a>'),
+        '<a href="https://example.org/a&amp;ampb" rel="noopener noreferrer">Link</a>',
+    );
 });
 
 test('prüft HTTPS-URLs unabhängig von der HTML-Bereinigung', () => {
@@ -617,18 +746,33 @@ test('lehnt von WHATWG normalisierte, serverseitig ungültige URL-Schreibweisen 
     }
 });
 
-test('lehnt prozentkodierte verbotene Authorityzeichen ab', () => {
-    for (const code of ['00', '2f', '5c', '40', '3a']) {
-        const url = `https://exa%${code}mple.org/path`;
+test('lehnt jedes Prozentzeichen in der Authority fail-closed ab', () => {
+    const urls = [
+        ...['23', '01', '25', '3f', '5b', '7f'].map((code) => `https://exa%${code}mple.org/path`),
+        'https://exa%mple.org/path',
+        'https://exa%ggmple.org/path',
+        'https://exa%252fmple.org/path',
+    ];
+
+    for (const url of urls) {
         assert.equal(isSafeHttpsUrl(url), false, url);
         assert.equal(sanitize(`<a href="${url}">Text</a>`), 'Text', url);
     }
+
+    assert.equal(
+        sanitize('<a href="https://example.org/%2f/%25">Pfad</a>'),
+        '<a href="https://example.org/%2f/%25" rel="noopener noreferrer">Pfad</a>',
+    );
 });
 
-test('entfernt mehrfach kodierte aktive Elemente samt Inhalt', () => {
+test('behandelt einfach und mehrfach kodiertes Markup ausschließlich als Text', () => {
     assert.equal(
         sanitize('&amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt;<p>Sicher</p>'),
-        '<p>Sicher</p>',
+        '&amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt;<p>Sicher</p>',
+    );
+    assert.equal(
+        sanitize('&lt;script&gt;alert(1)&lt;/script&gt;<p>Sicher</p>'),
+        '&lt;script&gt;alert(1)&lt;/script&gt;<p>Sicher</p>',
     );
 });
 

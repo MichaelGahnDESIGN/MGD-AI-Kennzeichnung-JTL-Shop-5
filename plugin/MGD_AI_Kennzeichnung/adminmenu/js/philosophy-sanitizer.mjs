@@ -82,7 +82,7 @@ export function isSafeHttpsUrl(value) {
     const authority = value.slice('https://'.length).split(/[/?#]/u, 1)[0];
     if (authority === ''
         || authority.includes('@')
-        || /%(?:00|2f|5c|40|3a)/iu.test(authority)
+        || authority.includes('%')
         || !hasSafeRawPortSyntax(authority)) {
         return false;
     }
@@ -145,17 +145,16 @@ export function sanitizePhilosophyHtml(input, adapters = {}) {
 
     try {
         const begrenzt = limitInput(input);
-        const dekodiert = decodeHtmlEntities(begrenzt);
-        if (dekodiert === null || dekodiert === '') {
+        if (begrenzt === '') {
             return '';
         }
 
         /* libxml behandelt diese abrupten Formen als Kommentar bis zum EOF. */
-        if (/<!--(?:>|->)/u.test(dekodiert)) {
+        if (/<!--(?:>|->)/u.test(begrenzt)) {
             return '';
         }
 
-        const leereTagsBereinigt = removeEmptyHtmlTokens(dekodiert);
+        const leereTagsBereinigt = removeEmptyHtmlTokens(begrenzt);
         const kommentareNormalisiert = normalizeAlternativeCommentEnds(leereTagsBereinigt);
         const parserzustaendeNeutralisiert = neutralizeParserStateElements(kommentareNormalisiert);
         let vorbereitet = parserzustaendeNeutralisiert;
@@ -196,64 +195,6 @@ function limitInput(input) {
     const ohneNullbytes = input.replaceAll('\0', '');
 
     return Array.from(ohneNullbytes).slice(0, MAXIMUM_INPUT_LENGTH).join('');
-}
-
-/**
- * Dekodiert die für Markup und URLs relevanten HTML-Entitäten wiederholt.
- * Mehrfach kodierte Winkelklammern können dadurch keine aktive Struktur an
- * der Prüfung vorbeischmuggeln. Nach zehn Stufen wird verbleibendes mögliches
- * Markup wie auf dem Server vollständig abgewiesen.
- */
-function decodeHtmlEntities(input) {
-    let dekodiert = input;
-
-    for (let durchlauf = 0; durchlauf < 10; durchlauf += 1) {
-        const naechsterWert = decodeEntityPass(dekodiert);
-        if (naechsterWert === dekodiert) {
-            return dekodiert;
-        }
-        dekodiert = naechsterWert;
-    }
-
-    const restlichesMarkup = /&(?:(?:amp|#0*38|#x0*26);)*(?:lt|gt|#0*(?:60|62);?|#x0*(?:3c|3e);?)/iu;
-
-    return restlichesMarkup.test(dekodiert) ? null : dekodiert;
-}
-
-function decodeEntityPass(input) {
-    const winkelDekodiert = input.replace(
-        /&#0*60;?(?![0-9])|&#x0*3c;?|&#0*62;?(?![0-9])|&#x0*3e;?/giu,
-        (treffer) => /(?:3c|60)/iu.test(treffer) ? '<' : '>',
-    );
-
-    const numerischDekodiert = winkelDekodiert.replace(
-        /&#(?:x([0-9a-f]+)|([0-9]+));/giu,
-        (treffer, hexadezimal, dezimal) => {
-            const codepoint = Number.parseInt(hexadezimal ?? dezimal, hexadezimal === undefined ? 10 : 16);
-            if (!Number.isInteger(codepoint) || codepoint < 0 || codepoint > 0x10ffff) {
-                return '\ufffd';
-            }
-
-            try {
-                return String.fromCodePoint(codepoint);
-            } catch {
-                return '\ufffd';
-            }
-        },
-    );
-
-    const benannteEntitaeten = {
-        amp: '&',
-        apos: "'",
-        gt: '>',
-        lt: '<',
-        quot: '"',
-    };
-
-    return numerischDekodiert.replace(
-        /&(amp|apos|gt|lt|quot);/giu,
-        (treffer, name) => benannteEntitaeten[name.toLowerCase()] ?? treffer,
-    );
 }
 
 function resolveDomParser(adapters) {
@@ -559,7 +500,7 @@ function readHtmlTag(input, startPosition) {
         position += 1;
     }
 
-    if (!/[\s/>]/u.test(input[position] ?? '')) {
+    if (!isHtmlWhitespace(input[position]) && !['/', '>'].includes(input[position])) {
         return null;
     }
 
@@ -591,7 +532,7 @@ function readHtmlTag(input, startPosition) {
         }
 
         if (state === 'beforeAttribute') {
-            if (/\s/u.test(character)) {
+            if (isHtmlWhitespace(character)) {
                 position += 1;
             } else if (character === '/') {
                 const selfClosingEnd = findSelfClosingEnd(input, position);
@@ -609,7 +550,7 @@ function readHtmlTag(input, startPosition) {
         }
 
         if (state === 'attributeName') {
-            if (/\s/u.test(character)) {
+            if (isHtmlWhitespace(character)) {
                 state = 'afterAttributeName';
             } else if (character === '=') {
                 state = 'beforeAttributeValue';
@@ -625,7 +566,7 @@ function readHtmlTag(input, startPosition) {
         }
 
         if (state === 'afterAttributeName') {
-            if (/\s/u.test(character)) {
+            if (isHtmlWhitespace(character)) {
                 position += 1;
             } else if (character === '=') {
                 state = 'beforeAttributeValue';
@@ -646,7 +587,7 @@ function readHtmlTag(input, startPosition) {
         }
 
         if (state === 'beforeAttributeValue') {
-            if (/\s/u.test(character)) {
+            if (isHtmlWhitespace(character)) {
                 position += 1;
             } else if (character === '"' || character === "'") {
                 quote = character;
@@ -661,7 +602,7 @@ function readHtmlTag(input, startPosition) {
         }
 
         if (state === 'unquotedValue') {
-            if (/\s/u.test(character)) {
+            if (isHtmlWhitespace(character)) {
                 state = 'beforeAttribute';
             }
             position += 1;
@@ -670,7 +611,7 @@ function readHtmlTag(input, startPosition) {
         }
 
         /* Zustand direkt hinter einem korrekt geschlossenen Quote. */
-        if (/\s/u.test(character)) {
+        if (isHtmlWhitespace(character)) {
             state = 'beforeAttribute';
             position += 1;
         } else if (character === '/') {
@@ -687,6 +628,15 @@ function readHtmlTag(input, startPosition) {
     }
 
     return { unterminated: true };
+}
+
+/** HTML kennt ausschließlich diese fünf ASCII-Zeichen als Whitespace. */
+function isHtmlWhitespace(value) {
+    return value === '\t'
+        || value === '\n'
+        || value === '\f'
+        || value === '\r'
+        || value === ' ';
 }
 
 function findSelfClosingEnd(input, slashPosition) {

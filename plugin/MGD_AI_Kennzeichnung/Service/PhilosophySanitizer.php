@@ -25,23 +25,41 @@ final class PhilosophySanitizer
         'script', 'style', 'iframe', 'object', 'embed', 'svg', 'math', 'template', 'noscript', 'form',
     ];
 
+    /**
+     * Benannte HTML5-Referenzen, deren Semikolon historisch fehlen darf.
+     *
+     * Der Sanitizer benötigt nur die vier HTML-Sonderzeichen, die seine
+     * kontrollierte Text- und Attributserialisierung eindeutig abbildet. Die
+     * Schreibweise bleibt case-sensitiv; beliebige weitere Namen oder
+     * mehrfach kodiertes Markup werden dadurch nicht geöffnet.
+     *
+     * @var list<string>
+     */
+    private const HTML5_LEGACY_ENTITY_NAMES = [
+        'AMP', 'GT', 'LT', 'QUOT', 'amp', 'gt', 'lt', 'quot',
+    ];
+
+    /** Feste Grenze, damit libxml Entities nicht zu aktiver Taggrammatik macht. */
+    private const ACTIVE_ENTITY_BOUNDARY = 'x';
+
     public function sanitize(mixed $input): string
     {
         if (!is_string($input)) {
             return '';
         }
 
-        $dekodiert = $this->decodeEntities(mb_substr(str_replace("\0", '', $input), 0, 10_000));
-        if ($dekodiert === '') {
+        $begrenzt = mb_substr(str_replace("\0", '', $input), 0, 10_000);
+        if ($begrenzt === '') {
             return '';
         }
+        $parserSicher = $this->prepareParserInput($begrenzt);
 
         $dokument = new DOMDocument('1.0', 'UTF-8');
         $vorher = libxml_use_internal_errors(true);
         try {
             $geladen = $dokument->loadHTML(
                 '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>'
-                . '<div id="mgd-ai-philosophy-root">' . $dekodiert . '</div></body></html>',
+                . '<div id="mgd-ai-philosophy-root">' . $parserSicher . '</div></body></html>',
                 LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING,
             );
         } finally {
@@ -93,7 +111,7 @@ final class PhilosophySanitizer
             }
 
             if ($name === 'a') {
-                $href = $kind->getAttribute('href');
+                $href = $this->decodeNativeHtmlValue($kind->getAttribute('href'), true);
                 if (!$this->isSafeHttpsUrl($href)) {
                     $this->unwrap($kind);
 
@@ -156,7 +174,7 @@ final class PhilosophySanitizer
         $authority = preg_split('/[\/?#]/u', substr($url, strlen('https://')), 2)[0] ?? '';
         if ($authority === ''
             || str_contains($authority, '@')
-            || preg_match('/%(?:00|2f|5c|40|3a)/iu', $authority) === 1
+            || str_contains($authority, '%')
             || !$this->hasSafeRawPortSyntax($authority)
         ) {
             return false;
@@ -208,8 +226,10 @@ final class PhilosophySanitizer
     private function serializeNode(DOMNode $node): string
     {
         if ($node->nodeType === XML_TEXT_NODE) {
+            $text = $this->decodeNativeHtmlValue(is_string($node->nodeValue) ? $node->nodeValue : '');
+
             return htmlspecialchars(
-                is_string($node->nodeValue) ? $node->nodeValue : '',
+                $text,
                 ENT_NOQUOTES | ENT_SUBSTITUTE | ENT_HTML5,
                 'UTF-8',
             );
@@ -251,35 +271,149 @@ final class PhilosophySanitizer
         return $html;
     }
 
-    private function decodeEntities(string $text): string
+    /**
+     * Verhindert libxml-spezifische Entity-Dekodierung in aktiver Taggrammatik.
+     *
+     * HTML5 wertet Entities innerhalb von Tag- und Attributnamen nicht als
+     * Struktur aus. libxml tut dies teilweise dennoch. Nur Kandidaten der
+     * aktiven Sperrliste werden deshalb vor dem Parser maskiert; ihr gesamter
+     * Knoten wird anschließend ohnehin verworfen. Sichtbarer Text und erlaubte
+     * Linkattribute behalten ihre native einmalige Entity-Dekodierung.
+     */
+    private function prepareParserInput(string $html): string
     {
-        $dekodiert = $text;
-        for ($durchlauf = 0; $durchlauf < 10; ++$durchlauf) {
-            $naechster = html_entity_decode(
-                $this->decodeNumericTagEntities($dekodiert),
-                ENT_QUOTES | ENT_HTML5,
-                'UTF-8',
-            );
-            if ($naechster === $dekodiert) {
-                return $dekodiert;
+        $ausgabe = '';
+        $cursor = 0;
+        $laenge = strlen($html);
+
+        while ($cursor < $laenge) {
+            $tagStart = strpos($html, '<', $cursor);
+            if ($tagStart === false) {
+                return $ausgabe . $this->protectNativeEntities(substr($html, $cursor));
             }
-            $dekodiert = $naechster;
+
+            $ausgabe .= $this->protectNativeEntities(substr($html, $cursor, $tagStart - $cursor));
+            $tag = $this->readRawTagCandidate($html, $tagStart);
+            if ($tag === null) {
+                $ausgabe .= '<';
+                $cursor = $tagStart + 1;
+
+                continue;
+            }
+
+            $roh = substr($html, $tagStart, $tag['end'] - $tagStart);
+            $ausgabe .= in_array($tag['name'], self::ACTIVE_ELEMENTS, true)
+                ? str_replace('&', self::ACTIVE_ENTITY_BOUNDARY . '&', $roh)
+                : $this->protectNativeEntities($roh);
+            $cursor = $tag['end'];
         }
 
-        /* Nach zehn Stufen verbliebenes potenzielles Markup wird abgewiesen. */
-        $restMarkup = '/&(?:(?:amp|#0*38|#x0*26);)*(?:lt|gt|#0*(?:60|62);?|#x0*(?:3c|3e);?)/iu';
-
-        return preg_match($restMarkup, $dekodiert) === 1 ? '' : $dekodiert;
+        return $ausgabe;
     }
 
-    /** Dekodiert zusätzlich semikolonlose numerische Winkelklammern. */
-    private function decodeNumericTagEntities(string $text): string
+    /** Hält Entities bis zur sicheren Dekodierung im fertigen DOM-Wert inert. */
+    private function protectNativeEntities(string $text): string
     {
-        return preg_replace_callback(
-            '/&#0*60;?(?![0-9])|&#x0*3c;?|&#0*62;?(?![0-9])|&#x0*3e;?/iu',
-            static fn(array $treffer): string => str_contains(strtolower($treffer[0]), '3c')
-                || preg_match('/60/', $treffer[0]) === 1 ? '<' : '>',
-            $text,
+        return str_replace('&', '&amp;', $text);
+    }
+
+    /**
+     * Dekodiert einen fertigen DOM-Wert genau einmal nach HTML5-Semantik.
+     *
+     * PHPs Decoder benötigt bei numerischen und benannten Legacy-Referenzen
+     * ein Semikolon, der Browser nicht. Das kontrollierte Ergänzen geschieht
+     * erst nach dem Parsen; daraus kann deshalb niemals neue Tag- oder
+     * Attributstruktur entstehen.
+     */
+    private function decodeNativeHtmlValue(string $value, bool $attribut = false): string
+    {
+        $normalisiert = preg_replace_callback(
+            '/&#(?:x[0-9a-f]+|[0-9]+);?/iu',
+            static fn(array $treffer): string => str_ends_with($treffer[0], ';')
+                ? $treffer[0]
+                : $treffer[0] . ';',
+            $value,
         ) ?? '';
+
+        $legacyMuster = '/&(' . implode('|', self::HTML5_LEGACY_ENTITY_NAMES) . ')(?!;)/';
+        $normalisiert = preg_replace_callback(
+            pattern: $legacyMuster,
+            callback: static function (array $treffer) use ($attribut, $normalisiert): string {
+                $roh = $treffer[0][0];
+                $position = $treffer[0][1];
+                $folgezeichen = $normalisiert[$position + strlen($roh)] ?? '';
+
+                /*
+                 * Eine längere, gültige Referenz mit Semikolon hat Vorrang.
+                 * Beispiel: `&ltimes;` darf nicht zu `&lt;imes;` werden.
+                 */
+                $rest = substr($normalisiert, $position);
+                if (preg_match('/^&[A-Za-z0-9]+;/', $rest, $vollstaendig) === 1
+                    && html_entity_decode(
+                        $vollstaendig[0],
+                        ENT_QUOTES | ENT_HTML5,
+                        'UTF-8',
+                    ) !== $vollstaendig[0]
+                ) {
+                    return $roh;
+                }
+
+                /*
+                 * Im Attributkontext bleibt eine semikolonlose Referenz vor
+                 * ASCII-Buchstaben, Ziffern oder `=` historisch unverändert.
+                 */
+                if ($attribut && preg_match('/^[A-Za-z0-9=]$/D', $folgezeichen) === 1) {
+                    return $roh;
+                }
+
+                return $roh . ';';
+            },
+            subject: $normalisiert,
+            flags: PREG_OFFSET_CAPTURE,
+        ) ?? '';
+
+        return html_entity_decode($normalisiert, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    }
+
+    /** @return array{end: int, name: string}|null */
+    private function readRawTagCandidate(string $html, int $start): ?array
+    {
+        $laenge = strlen($html);
+        $position = $start + 1;
+        if (($html[$position] ?? '') === '/') {
+            ++$position;
+        }
+
+        $nameStart = $position;
+        if (preg_match('/^[A-Za-z]$/D', $html[$position] ?? '') !== 1) {
+            return null;
+        }
+        ++$position;
+        while (preg_match('/^[A-Za-z0-9_:-]$/D', $html[$position] ?? '') === 1) {
+            ++$position;
+        }
+
+        $trennzeichen = $html[$position] ?? '';
+        if (!in_array($trennzeichen, ["\t", "\n", "\f", "\r", ' ', '/', '>', '&'], true)) {
+            return null;
+        }
+
+        $name = strtolower(substr($html, $nameStart, $position - $nameStart));
+        $quote = null;
+        while ($position < $laenge) {
+            $zeichen = $html[$position];
+            if ($quote !== null) {
+                if ($zeichen === $quote) {
+                    $quote = null;
+                }
+            } elseif ($zeichen === '"' || $zeichen === "'") {
+                $quote = $zeichen;
+            } elseif ($zeichen === '>') {
+                return ['end' => $position + 1, 'name' => $name];
+            }
+            ++$position;
+        }
+
+        return ['end' => $laenge, 'name' => $name];
     }
 }

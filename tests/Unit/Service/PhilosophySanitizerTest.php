@@ -106,12 +106,22 @@ final class PhilosophySanitizerTest extends TestCase
     }
 
     #[Test]
-    public function prozentkodierte_verbotene_authorityzeichen_werden_abgelehnt(): void
+    public function jedes_prozentzeichen_in_der_authority_wird_abgelehnt(): void
     {
         $sanitizer = new PhilosophySanitizer();
 
-        foreach (['00', '2f', '5c', '40', '3a'] as $code) {
-            $url = 'https://exa%' . $code . 'mple.org/path';
+        $urls = array_map(
+            static fn(string $code): string => 'https://exa%' . $code . 'mple.org/path',
+            ['23', '01', '25', '3f', '5b', '7f'],
+        );
+        array_push(
+            $urls,
+            'https://exa%mple.org/path',
+            'https://exa%ggmple.org/path',
+            'https://exa%252fmple.org/path',
+        );
+
+        foreach ($urls as $url) {
             self::assertSame('Text', $sanitizer->sanitize('<a href="' . $url . '">Text</a>'), $url);
         }
 
@@ -123,15 +133,79 @@ final class PhilosophySanitizerTest extends TestCase
             '<a href="https://[2001:db8::1]/path" rel="noopener noreferrer">IPv6</a>',
             $sanitizer->sanitize('<a href="https://[2001:db8::1]/path">IPv6</a>'),
         );
+        self::assertSame(
+            '<a href="https://example.org/%2f/%25" rel="noopener noreferrer">Pfad</a>',
+            $sanitizer->sanitize('<a href="https://example.org/%2f/%25">Pfad</a>'),
+        );
     }
 
     #[Test]
     public function kombinierte_entitaeten_bleiben_sichtbar_eindeutig_serialisiert(): void
     {
+        $sanitizer = new PhilosophySanitizer();
+        foreach ([
+            '<p>&amp;&lt;&gt;…</p>' => '<p>&amp;&lt;&gt;…</p>',
+            '<p>A&lt; &gt;B</p>' => '<p>A&lt; &gt;B</p>',
+            '<p>A&lt;/&gt;B</p>' => '<p>A&lt;/&gt;B</p>',
+            '<p>A&#60;&#62;B</p>' => '<p>A&lt;&gt;B</p>',
+            '<p>A&#x3c;&#x3e;B</p>' => '<p>A&lt;&gt;B</p>',
+            '<p>A&amp;lt;&amp;gt;B</p>' => '<p>A&amp;lt;&amp;gt;B</p>',
+        ] as $html => $erwartet) {
+            self::assertSame($erwartet, $sanitizer->sanitize($html), $html);
+        }
         self::assertSame(
-            '<p>&amp;…</p>',
-            (new PhilosophySanitizer())->sanitize('<p>&amp;&lt;&gt;…</p>'),
+            '<a href="https://example.org/?a=1&amp;b=2" rel="noopener noreferrer">Link</a>',
+            $sanitizer->sanitize('<a href="https://example.org/?a=1&amp;b=2">Link</a>'),
         );
+    }
+
+    #[Test]
+    public function semikolonlose_html5_legacy_entitaeten_folgen_dem_browserkontext(): void
+    {
+        $sanitizer = new PhilosophySanitizer();
+        foreach ([
+            '<p>&amp </p>' => '<p>&amp; </p>',
+            '<p>&lt Text &gt; &quot </p>' => '<p>&lt; Text &gt; " </p>',
+            '<p>&ampx</p>' => '<p>&amp;x</p>',
+            '<p>&AMP &Amp</p>' => '<p>&amp; &amp;Amp</p>',
+            '<p>&ltimes; &notin;</p>' => '<p>⋉ ∉</p>',
+        ] as $html => $erwartet) {
+            self::assertSame($erwartet, $sanitizer->sanitize($html), $html);
+        }
+
+        self::assertSame(
+            '<a href="https://example.org/a&amp;/b" rel="noopener noreferrer">Link</a>',
+            $sanitizer->sanitize('<a href="https://example.org/a&amp/b">Link</a>'),
+        );
+        self::assertSame(
+            '<a href="https://example.org/a&amp;amp=b" rel="noopener noreferrer">Link</a>',
+            $sanitizer->sanitize('<a href="https://example.org/a&amp=b">Link</a>'),
+        );
+        self::assertSame(
+            '<a href="https://example.org/a&amp;ampb" rel="noopener noreferrer">Link</a>',
+            $sanitizer->sanitize('<a href="https://example.org/a&ampb">Link</a>'),
+        );
+    }
+
+    #[Test]
+    public function entities_erzeugen_keine_aktive_tagstruktur(): void
+    {
+        $sanitizer = new PhilosophySanitizer();
+        foreach (['script', 'style', 'iframe', 'object', 'svg', 'math', 'template', 'noscript', 'form'] as $name) {
+            $html = '<' . $name . '>BAD</' . $name . '&#32;>'
+                . '<a href="https://example.org/leak">LEAK</a>'
+                . '</' . $name . '><p>end</p>';
+            self::assertSame('<p>end</p>', $sanitizer->sanitize($html), $name);
+        }
+
+        foreach ([
+            '<script>BAD</script&amp;#32;><a href="https://example.org/leak">LEAK</a></script><p>end</p>',
+            '<script &#47;>BAD</script><p>end</p>',
+            '<script &amp;#47;>BAD</script><p>end</p>',
+            '<script &sol;>BAD</script><p>end</p>',
+        ] as $html) {
+            self::assertSame('<p>end</p>', $sanitizer->sanitize($html), $html);
+        }
     }
 
     #[Test]
@@ -146,13 +220,18 @@ final class PhilosophySanitizerTest extends TestCase
     }
 
     #[Test]
-    public function mehrfach_kodiertes_aktives_markup_wird_vor_der_pruefung_aufgeloest(): void
+    public function kodiertes_aktives_markup_bleibt_text(): void
     {
-        $clean = (new PhilosophySanitizer())->sanitize(
-            '&amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt;<p>Sichtbar</p>',
-        );
+        $sanitizer = new PhilosophySanitizer();
 
-        self::assertSame('<p>Sichtbar</p>', $clean);
+        self::assertSame(
+            '&amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt;<p>Sichtbar</p>',
+            $sanitizer->sanitize('&amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt;<p>Sichtbar</p>'),
+        );
+        self::assertSame(
+            '&lt;script&gt;alert(1)&lt;/script&gt;<p>Sichtbar</p>',
+            $sanitizer->sanitize('&lt;script&gt;alert(1)&lt;/script&gt;<p>Sichtbar</p>'),
+        );
     }
 
     #[Test]
