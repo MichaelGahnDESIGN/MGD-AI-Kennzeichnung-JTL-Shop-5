@@ -308,6 +308,23 @@ class JTLSmarty
         return $this;
     }
 
+    /**
+     * Liefert alle Werte einer bestimmten Smarty-Zuweisung in ihrer tatsächlichen Reihenfolge.
+     *
+     * @return list<mixed>
+     */
+    public static function zuweisungenMitNamen(string $name): array
+    {
+        $werte = [];
+        foreach (self::$zuweisungen as $zuweisung) {
+            if ($zuweisung['name'] === $name) {
+                $werte[] = $zuweisung['value'];
+            }
+        }
+
+        return $werte;
+    }
+
     public function fetch(string $path): string
     {
         return self::$testFetchOutput;
