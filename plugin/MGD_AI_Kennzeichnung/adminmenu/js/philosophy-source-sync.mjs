@@ -37,6 +37,7 @@ const MODES = new Set(['visual', 'html']);
  * @returns {{
  *   showVisual: () => {ok: boolean, mode: 'visual'|'html', value: string},
  *   showHtml: () => {ok: boolean, mode: 'visual'|'html', value: string},
+ *   prepareInput: () => {ok: boolean, mode: 'visual'|'html', value: string},
  *   prepareSubmit: () => {ok: boolean, mode: 'visual'|'html', value: string},
  *   currentMode: () => 'visual'|'html',
  * }} Kleine Steuerungs-API für einen späteren Editor-Bootstrap.
@@ -69,6 +70,15 @@ export function createPhilosophySourceSync(adapters) {
     }
 
     /**
+     * Synchronisiert während des Tippens, ohne das aktive HTML-Textfeld zu
+     * überschreiben. So bleiben unvollständige Tags und die Cursorposition
+     * bearbeitbar, während Source und inaktive Visualansicht sicher bleiben.
+     */
+    function prepareInput() {
+        return synchronize(mode, false, true);
+    }
+
+    /**
      * Bereitet den Formularwert vor, ohne den Modus zu ändern. Dadurch wird
      * auch ein noch nicht ausgelöster Editor-Input beim Submit berücksichtigt.
      */
@@ -86,7 +96,7 @@ export function createPhilosophySourceSync(adapters) {
      * in einer sicheren Reihenfolge zurück. Der Formularwert wird zuerst
      * überschrieben, damit Adapterfehler keinen unsicheren Rohwert bewahren.
      */
-    function synchronize(nextMode, announceModeChange = true) {
+    function synchronize(nextMode, announceModeChange = true, preserveActiveHtml = false) {
         if (!MODES.has(nextMode)) {
             return createResult(false, mode, '');
         }
@@ -115,7 +125,9 @@ export function createPhilosophySourceSync(adapters) {
              * ausschließlich den bereits bereinigten Wert.
              */
             const sourceWritten = writeField(source, safeValue);
-            const htmlWritten = writeField(html, safeValue);
+            const htmlWritten = preserveActiveHtml && mode === 'html'
+                ? true
+                : writeField(html, safeValue);
             const visualRendered = renderVisual(visual, safeValue);
             const synchronized = input.ok && sanitization.ok
                 && sourceWritten && htmlWritten && visualRendered;
@@ -157,7 +169,7 @@ export function createPhilosophySourceSync(adapters) {
         return mode === 'visual' ? serializeVisual(visual) : readField(html);
     }
 
-    return { showVisual, showHtml, prepareSubmit, currentMode };
+    return { showVisual, showHtml, prepareInput, prepareSubmit, currentMode };
 }
 
 /** Erzeugt ein einheitliches, für UI und Formularlogik einfach prüfbares Ergebnis. */

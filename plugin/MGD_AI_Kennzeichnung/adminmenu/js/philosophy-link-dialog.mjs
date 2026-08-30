@@ -98,13 +98,14 @@ export function createPhilosophyLinkDialog(options = {}) {
 
     let insertionInProgress = false;
     let open = false;
+    let destroyed = false;
     let hasSelectionSnapshot = false;
     let selectionSnapshot;
     const busyListeners = new Set();
 
     /** Öffnet den Dialog nur einmal; die bestehende Editor-Auswahl bleibt dabei unangetastet. */
     const openDialog = () => {
-        if (!selectionReady || insertionInProgress || open || dialog.open) {
+        if (destroyed || !selectionReady || insertionInProgress || open || dialog.open) {
             return false;
         }
 
@@ -123,6 +124,7 @@ export function createPhilosophyLinkDialog(options = {}) {
             return true;
         } catch {
             /* Ein nicht öffnbarer nativer Dialog ist sicherheitshalber unbenutzbar. */
+            clearSelectionSnapshot();
             return false;
         }
     };
@@ -149,7 +151,7 @@ export function createPhilosophyLinkDialog(options = {}) {
     /** Der öffentliche Close-Pfad verhält sich wie ein Abbruch: Auswahl wiederherstellen und verwerfen. */
     const closeDialog = () => {
         /* Ohne Abort-Vertrag darf ein laufender Adapter nicht halb abgebrochen werden. */
-        if (insertionInProgress) {
+        if (destroyed || insertionInProgress) {
             return false;
         }
         if (!closeModal()) {
@@ -166,7 +168,7 @@ export function createPhilosophyLinkDialog(options = {}) {
         if (event && typeof event.preventDefault === 'function') {
             event.preventDefault();
         }
-        if (insertionInProgress || (!open && !dialog.open)) {
+        if (destroyed || insertionInProgress || (!open && !dialog.open)) {
             return;
         }
 
@@ -238,7 +240,7 @@ export function createPhilosophyLinkDialog(options = {}) {
             return insertionInProgress;
         },
         subscribeBusy(listener) {
-            if (typeof listener !== 'function') {
+            if (destroyed || typeof listener !== 'function') {
                 return () => {};
             }
             busyListeners.add(listener);
@@ -249,13 +251,27 @@ export function createPhilosophyLinkDialog(options = {}) {
         open: openDialog,
         close: closeDialog,
         destroy() {
+            if (destroyed) {
+                return;
+            }
+            destroyed = true;
             cancel.removeEventListener('click', cancelLink);
             submit.removeEventListener('click', submitLink);
             dialog.removeEventListener('close', handleClose);
             dialog.removeEventListener('cancel', handleCancel);
             input.removeEventListener('input', handleInput);
             input.removeEventListener('keydown', handleInputKeydown);
-            closeDialog();
+            insertionInProgress = false;
+            busyListeners.clear();
+            clearSelectionSnapshot();
+            try {
+                if (dialog.open) {
+                    dialog.close();
+                }
+            } catch {
+                /* Entfernen bleibt auch dann der sichere Abschluss. */
+            }
+            open = false;
             if (typeof dialog.remove === 'function') {
                 dialog.remove();
             }
@@ -269,7 +285,7 @@ export function createPhilosophyLinkDialog(options = {}) {
         }
 
         const snapshot = callCallback(selection.capture);
-        if (snapshot === CALLBACK_FAILED || isThenable(snapshot)) {
+        if (snapshot === null || snapshot === undefined || snapshot === CALLBACK_FAILED || isThenable(snapshot)) {
             consumeBestEffortResult(snapshot);
             return false;
         }
@@ -296,6 +312,9 @@ export function createPhilosophyLinkDialog(options = {}) {
 
     /** Öffnet nach einem fehlgeschlagenen Adapter erneut, ohne die Linkeingabe zu verlieren. */
     function reopenAfterFailure(message) {
+        if (destroyed) {
+            return;
+        }
         showError(message);
         try {
             dialog.showModal();
@@ -325,6 +344,11 @@ export function createPhilosophyLinkDialog(options = {}) {
 
     /** Beendet den Pending-Zustand erst nach dem asynchronen Linkadapter und öffnet bei Fehler erneut. */
     function finalizeInsertion(result) {
+        if (destroyed) {
+            insertionInProgress = false;
+            clearSelectionSnapshot();
+            return;
+        }
         setInsertionInProgress(false);
         if (didSucceed(result)) {
             clearSelectionSnapshot();

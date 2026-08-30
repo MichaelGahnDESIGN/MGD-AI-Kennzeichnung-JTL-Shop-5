@@ -633,6 +633,48 @@ test('asynchrone Benachrichtigungen halten nur die Sperre und lassen den Mutatio
     assert.equal(toolbar.htmlButton.getAttribute('aria-pressed'), 'true');
 });
 
+test('Destroy invalidiert ausstehende Toolbar-Befehle und Moduswechsel ohne spätere Nebenwirkung', async () => {
+    const document = createDocument();
+    const visual = new TestElement('div');
+    let resolveCommand;
+    let changes = 0;
+    const pendingCommand = new Promise((resolve) => { resolveCommand = resolve; });
+    const toolbar = createPhilosophyToolbar({
+        document,
+        visual,
+        adapter: { toggleInlineFormat() { return pendingCommand; } },
+        onChange() { changes += 1; },
+    });
+    const commandResult = toolbar.executeCommand('bold');
+
+    toolbar.destroy();
+    resolveCommand(true);
+
+    assert.equal(await commandResult, false);
+    assert.equal(changes, 0);
+    assert.equal(visual.focusCalls, 0);
+    assert.equal(toolbar.executeCommand('bold'), false);
+    assert.equal(toolbar.setMode('html'), false);
+
+    const modeDocument = createDocument();
+    let resolveMode;
+    const modeChanges = [];
+    const pendingMode = new Promise((resolve) => { resolveMode = resolve; });
+    const modeToolbar = createPhilosophyToolbar({
+        document: modeDocument,
+        sync: { showHtml() { return pendingMode; } },
+        onModeChange(mode) { modeChanges.push(mode); },
+    });
+    const modeResult = modeToolbar.setMode('html');
+    modeToolbar.destroy();
+    resolveMode({ ok: true });
+
+    assert.equal(await modeResult, false);
+    assert.deepEqual(modeChanges, []);
+    assert.equal(modeToolbar.visualButton.getAttribute('aria-pressed'), 'true');
+    assert.equal(modeToolbar.htmlButton.getAttribute('aria-pressed'), 'false');
+});
+
 test('ohne vollständigen Auswahladapter bleibt der Link deaktiviert und der Dialog geschlossen', () => {
     const document = createDocument();
     const noSelection = createPhilosophyToolbar({
@@ -648,6 +690,43 @@ test('ohne vollständigen Auswahladapter bleibt der Link deaktiviert und der Dia
     assert.equal(noSelection.buttons.get('link').disabled, true);
     assert.equal(noSelection.linkDialog.open(), false);
     assert.equal(partialSelection.buttons.get('link').disabled, true);
+});
+
+test('Linkdialog öffnet ohne echten Selection-Snapshot nicht', () => {
+    const dialog = createPhilosophyLinkDialog({
+        document: createDocument(),
+        selection: { capture() { return null; }, restore() { return true; } },
+    });
+
+    assert.equal(dialog.open(), false);
+    assert.equal(dialog.element.open, false);
+});
+
+test('Destroy hält einen ausstehenden Linkdialog nach später Ablehnung dauerhaft entfernt', async () => {
+    const document = createDocument();
+    let resolveInsert;
+    const pendingInsert = new Promise((resolve) => { resolveInsert = resolve; });
+    const dialog = createPhilosophyLinkDialog({
+        document,
+        selection: createSelectionAdapter(),
+        onInsert() { return pendingInsert; },
+    });
+    const input = findByRole(dialog.element, 'link-url');
+    const submit = findByRole(dialog.element, 'link-submit');
+
+    dialog.open();
+    input.value = 'https://beispiel.de';
+    submit.dispatch('click');
+    dialog.destroy();
+    resolveInsert(false);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    assert.equal(document.body.children.includes(dialog.element), false);
+    assert.equal(dialog.element.open, false);
+    assert.equal(dialog.element.showModalCalls, 1);
+    assert.equal(dialog.busy, false);
+    assert.equal(dialog.open(), false);
 });
 
 test('injizierte Linkdialoge werden anhand ihrer eigenen Sicherheits- und Busy-Capabilities freigegeben', () => {

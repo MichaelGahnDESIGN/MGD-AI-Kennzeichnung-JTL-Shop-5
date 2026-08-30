@@ -115,6 +115,7 @@ export function createPhilosophyToolbar(options = {}) {
     let activeMode = configuration.initialMode === 'html' ? 'html' : 'visual';
     let commandInProgress = false;
     let modeChangeInProgress = false;
+    let destroyed = false;
 
     const toolbar = documentAdapter.createElement('div');
     toolbar.setAttribute('class', 'mgd-philosophy-toolbar');
@@ -191,7 +192,7 @@ export function createPhilosophyToolbar(options = {}) {
     function executeCommand(commandId, value) {
         const command = COMMANDS_BY_ID.get(commandId);
         const payload = resolveCommandPayload(command, value);
-        if (!payload.ok || commandInProgress) {
+        if (destroyed || !payload.ok || commandInProgress) {
             return false;
         }
 
@@ -212,7 +213,7 @@ export function createPhilosophyToolbar(options = {}) {
 
         /** Trennt die erfolgreiche Editor-Mutation strikt von der optionalen UI-Benachrichtigung. */
         function finishCommand(adapterResult) {
-            if (adapterResult === false) {
+            if (destroyed || adapterResult === false) {
                 commandInProgress = false;
                 return false;
             }
@@ -229,19 +230,25 @@ export function createPhilosophyToolbar(options = {}) {
             focusVisual();
             if (isThenable(notificationResult)) {
                 return Promise.resolve(notificationResult).then(
-                    () => { commandInProgress = false; return true; },
-                    () => { commandInProgress = false; return true; },
+                    () => finishCommandNotification(),
+                    () => finishCommandNotification(),
                 );
             }
             commandInProgress = false;
 
-            return true;
+            return !destroyed;
+        }
+
+        function finishCommandNotification() {
+            commandInProgress = false;
+
+            return !destroyed;
         }
     }
 
     /** Wechselt ausschließlich zwischen den beiden festen Ansichten und veröffentlicht erst Erfolg. */
     function setMode(mode) {
-        if ((mode !== 'visual' && mode !== 'html') || modeChangeInProgress) {
+        if (destroyed || (mode !== 'visual' && mode !== 'html') || modeChangeInProgress) {
             return false;
         }
 
@@ -264,7 +271,7 @@ export function createPhilosophyToolbar(options = {}) {
 
         /** Veröffentlicht den erfolgreichen Modus vor der rein nachgelagerten Benachrichtigung. */
         function finishModeChange(result) {
-            if (result && result.ok === false) {
+            if (destroyed || (result && result.ok === false)) {
                 modeChangeInProgress = false;
                 return false;
             }
@@ -283,13 +290,19 @@ export function createPhilosophyToolbar(options = {}) {
             }
             if (isThenable(notificationResult)) {
                 return Promise.resolve(notificationResult).then(
-                    () => { modeChangeInProgress = false; return true; },
-                    () => { modeChangeInProgress = false; return true; },
+                    () => finishModeNotification(),
+                    () => finishModeNotification(),
                 );
             }
             modeChangeInProgress = false;
 
-            return true;
+            return !destroyed;
+        }
+
+        function finishModeNotification() {
+            modeChangeInProgress = false;
+
+            return !destroyed;
         }
     }
 
@@ -319,7 +332,7 @@ export function createPhilosophyToolbar(options = {}) {
 
     /** Rückgabe des Fokus bleibt lokal und ist absichtlich unabhängig von Browser-Selections. */
     function focusVisual() {
-        if (visual && typeof visual.focus === 'function') {
+        if (!destroyed && visual && typeof visual.focus === 'function') {
             visual.focus();
         }
     }
@@ -331,7 +344,7 @@ export function createPhilosophyToolbar(options = {}) {
      */
     function claimButtonForCurrentTurn(buttonId, event) {
         /* Ein zweiter nativer Click eines Doppelklicks trägt zuverlässig detail > 1. */
-        if (event && Number.isInteger(event.detail) && event.detail > 1) {
+        if (destroyed || (event && Number.isInteger(event.detail) && event.detail > 1)) {
             return false;
         }
         if (pressedButtonIds.has(buttonId)) {
@@ -360,6 +373,11 @@ export function createPhilosophyToolbar(options = {}) {
         executeCommand,
         setMode,
         destroy() {
+            if (destroyed) {
+                return;
+            }
+            destroyed = true;
+            pressedButtonIds.clear();
             unsubscribeLinkBusy();
             for (const [commandId, button] of buttons) {
                 const listener = commandListeners.get(commandId);

@@ -10,12 +10,12 @@
         <input type="hidden" name="csrf_token" value="{$csrfToken|escape:'html':'UTF-8'}">
         <section class="mgd-philosophy-language" data-philosophy-language="de">
             <h2>Deutsch</h2>
-            <label for="mgd-ai-philosophy-de">Deutscher Inhalt</label>
+            <label for="mgd-ai-philosophy-de" data-philosophy-source-label>Deutscher Inhalt</label>
             <textarea id="mgd-ai-philosophy-de" name="content_de" rows="18" data-philosophy-source>{$contentDe|escape:'html':'UTF-8'}</textarea>
         </section>
         <section class="mgd-philosophy-language" data-philosophy-language="en">
             <h2>English</h2>
-            <label for="mgd-ai-philosophy-en">Englischer Inhalt</label>
+            <label for="mgd-ai-philosophy-en" data-philosophy-source-label>Englischer Inhalt</label>
             <textarea id="mgd-ai-philosophy-en" name="content_en" rows="18" data-philosophy-source>{$contentEn|escape:'html':'UTF-8'}</textarea>
         </section>
         <button type="submit">Beide Sprachfassungen speichern</button>

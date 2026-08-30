@@ -65,7 +65,7 @@
     cursor: pointer;
 }
 
-/* Eine spätere Werkzeugleiste bleibt auf schmalen Ansichten vollständig erreichbar. */
+/* Die lokale Werkzeugleiste bleibt auf schmalen Ansichten vollständig erreichbar. */
 .mgd-philosophy-toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -73,7 +73,7 @@
     margin-block: 0.75rem;
 }
 
-/* Lokale Textsymbole bleiben ohne Iconfont, Bilddatei oder externe Quelle lesbar. */
+/* Lokale Textsymbole bleiben ohne Symbolschrift, Bilddatei oder externe Quelle lesbar. */
 .mgd-philosophy-toolbar button {
     display: inline-flex;
     align-items: center;
@@ -99,6 +99,46 @@
     background: #e8edf2;
     border-color: #aab4be;
     cursor: not-allowed;
+}
+
+/* Beide Editoransichten erhalten dieselbe robuste, gut lesbare Arbeitsfläche. */
+.mgd-philosophy-editor__visual,
+.mgd-philosophy-editor__html {
+    display: block;
+    width: 100%;
+    min-height: 22.5rem;
+    padding: 0.75rem;
+    border: 1px solid #7b8794;
+    border-radius: 0.25rem;
+    color: #17202a;
+    background: #ffffff;
+    font: inherit;
+    line-height: 1.5;
+}
+
+/* Die visuelle Fläche bleibt auch bei langen Texten kontrolliert bedienbar. */
+.mgd-philosophy-editor__visual {
+    overflow: auto;
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
+
+.mgd-philosophy-editor__html {
+    resize: vertical;
+}
+
+.mgd-philosophy-editor__visual:focus,
+.mgd-philosophy-editor__html:focus {
+    outline: 3px solid #005fcc;
+    outline-offset: 2px;
+}
+
+/* Statusmeldungen behalten Platz und verursachen beim Wechsel keinen Layoutsprung. */
+.mgd-philosophy-editor__status {
+    min-height: 1.5rem;
+    margin-block: 0.5rem 0;
+    color: #34495e;
+    font-weight: 700;
 }
 
 /* Der gleiche deutlich sichtbare Fokus gilt für Toolbar und Dialogbedienung. */

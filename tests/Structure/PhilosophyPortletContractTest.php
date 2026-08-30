@@ -86,18 +86,30 @@ final class PhilosophyPortletContractTest extends TestCase
         $template = (string) file_get_contents(self::ROOT . '/adminmenu/templates/philosophy.tpl');
         $cssPfad = self::ROOT . '/adminmenu/philosophy.css';
         $css = is_file($cssPfad) ? (string) file_get_contents($cssPfad) : '';
+        $editorPfad = self::ROOT . '/adminmenu/js/philosophy-editor.mjs';
 
         /* Alle Verletzungen gemeinsam ausgeben, damit der Rotlauf den vollständigen Assetvertrag zeigt. */
         $verletzungen = [];
         foreach ([
-            'Sprachkarten' => str_contains($template, 'class="mgd-philosophy-language"'),
+            'exakt zwei Sprachkarten' => substr_count($template, 'data-philosophy-language=') === 2,
+            'deutsche Sprachkarte' => str_contains($template, 'data-philosophy-language="de"'),
+            'englische Sprachkarte' => str_contains($template, 'data-philosophy-language="en"'),
             'deutsches Textfeld' => str_contains($template, 'name="content_de"'),
             'englisches Textfeld' => str_contains($template, 'name="content_en"'),
+            'Fallback-Labels' => substr_count($template, 'data-philosophy-source-label') === 2,
+            'Fallback-Textfelder' => preg_match_all(
+                '/<textarea\\b[^>]*\\bdata-philosophy-source(?:\\s|>)/iu',
+                $template,
+            ) === 2,
             'lokales Stylesheet' => str_contains($template, 'philosophy.css'),
             'lokales Editor-Modul' => str_contains($template, 'js/philosophy-editor.mjs'),
             'modulares Script' => str_contains($template, 'type="module"'),
             'CSS-Datei' => is_file($cssPfad),
+            'Editor-Modul' => is_file($editorPfad),
             'Mindesthöhe der Textfelder' => str_contains($css, 'min-height: 22.5rem'),
+            'visuelle Editorfläche' => str_contains($css, '.mgd-philosophy-editor__visual'),
+            'HTML-Editorfläche' => str_contains($css, '.mgd-philosophy-editor__html'),
+            'Editorstatus' => str_contains($css, '.mgd-philosophy-editor__status'),
         ] as $vertragsteil => $erfuellt) {
             if (!$erfuellt) {
                 $verletzungen[] = $vertragsteil;
@@ -112,6 +124,35 @@ final class PhilosophyPortletContractTest extends TestCase
         }
 
         self::assertSame([], $verletzungen, 'Der Editor darf ausschließlich lokale, progressive Assets verwenden.');
+    }
+
+    #[Test]
+    public function philosophie_editor_module_verwenden_weder_netz_noch_browser_speicher(): void
+    {
+        $dateien = [
+            self::ROOT . '/adminmenu/js/philosophy-sanitizer.mjs',
+            self::ROOT . '/adminmenu/js/philosophy-source-sync.mjs',
+            self::ROOT . '/adminmenu/js/philosophy-link-dialog.mjs',
+            self::ROOT . '/adminmenu/js/philosophy-toolbar.mjs',
+            self::ROOT . '/adminmenu/js/philosophy-editor.mjs',
+            self::ROOT . '/adminmenu/philosophy.css',
+        ];
+        $gesamt = '';
+        foreach ($dateien as $datei) {
+            self::assertFileExists($datei);
+            $inhalt = file_get_contents($datei);
+            self::assertIsString($inhalt);
+            $gesamt .= "\n" . $inhalt;
+        }
+
+        /* `https:` als Protokollvergleich im Sanitizer ist erlaubt, vollständige Fremd-URLs nicht. */
+        self::assertDoesNotMatchRegularExpression('~https?://[A-Za-z0-9]~iu', $gesamt);
+        self::assertDoesNotMatchRegularExpression(
+            '/\\b(?:fetch|XMLHttpRequest|WebSocket|sendBeacon|localStorage|sessionStorage)\\b/u',
+            $gesamt,
+        );
+        self::assertDoesNotMatchRegularExpression('/@import\\b/iu', $gesamt);
+        self::assertDoesNotMatchRegularExpression('~(?:cdn|fonts?\\.(?:googleapis|gstatic)|iconfont)~iu', $gesamt);
     }
 
     #[Test]

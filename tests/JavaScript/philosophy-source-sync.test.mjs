@@ -102,6 +102,26 @@ test('prepareSubmit verwendet vor dem ersten Wechsel den sichtbaren HTML-Wert', 
     assert.equal(visualAdapter.gerendert, '<p>Neu</p>');
 });
 
+test('prepareInput hält den aktiven HTML-Rohwert bearbeitbar und synchronisiert nur sichere Repräsentationen', () => {
+    const rawHtml = '<h2>Begonnen</h2><script>unsicher()</script>';
+    const { sourceFeld, htmlFeld, visualAdapter, synchronisierung } = erstelleInstanz({
+        source: '<p>Alt</p>',
+        html: rawHtml,
+    });
+
+    assert.deepEqual(synchronisierung.prepareInput(), {
+        ok: true,
+        mode: 'html',
+        value: '<h2>Begonnen</h2>',
+    });
+    assert.equal(sourceFeld.value, '<h2>Begonnen</h2>');
+    assert.equal(htmlFeld.value, rawHtml);
+    assert.equal(visualAdapter.gerendert, '<h2>Begonnen</h2>');
+
+    synchronisierung.prepareSubmit();
+    assert.equal(htmlFeld.value, '<h2>Begonnen</h2>');
+});
+
 test('Wechsel von HTML zu Visual bereinigt und schreibt alle Repräsentationen', () => {
     const { sourceFeld, htmlFeld, visualAdapter, synchronisierung } = erstelleInstanz({
         source: '<p>Alt</p>',
