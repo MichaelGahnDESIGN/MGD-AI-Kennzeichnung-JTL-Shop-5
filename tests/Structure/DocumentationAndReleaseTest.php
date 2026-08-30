@@ -199,6 +199,7 @@ BASH;
             'Wiki AI-Philosophie' => self::ROOT . '/wiki/AI-Philosophie.md',
             'Wiki Datenschutz' => self::ROOT . '/wiki/Datenschutz-und-Sicherheit.md',
             'Wiki Update' => self::ROOT . '/wiki/Installation-und-Update.md',
+            'Wiki Fußzeile' => self::ROOT . '/wiki/_Footer.md',
         ];
         $inhalte = [];
         foreach ($dateien as $name => $datei) {
@@ -212,6 +213,8 @@ BASH;
         foreach (['Version 1.3.0', 'Visuell', 'HTML', 'Beide Sprachfassungen speichern'] as $begriff) {
             self::assertStringContainsStringIgnoringCase($begriff, $inhalte['README']);
         }
+        self::assertStringContainsString('Version 1.3.0', $inhalte['Wiki Fußzeile']);
+        self::assertStringNotContainsString('Version 1.2.1', $inhalte['Wiki Fußzeile']);
         foreach (['p', 'h2', 'h3', 'ul', 'ol', 'li', 'strong', 'em', 'a'] as $element) {
             self::assertStringContainsString('`' . $element . '`', $inhalte['Wiki AI-Philosophie']);
         }
