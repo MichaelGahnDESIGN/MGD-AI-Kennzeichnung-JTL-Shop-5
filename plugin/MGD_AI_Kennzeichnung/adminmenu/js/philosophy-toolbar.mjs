@@ -69,9 +69,9 @@ const COMMAND_BUTTONS = Object.freeze([
  *   },
  *   visual?: {focus?: () => void},
  *   selection?: {capture?: () => unknown, restore?: (snapshot: unknown) => unknown},
- *   sync?: {showVisual?: () => {ok?: boolean}, showHtml?: () => {ok?: boolean}},
- *   onChange?: () => void,
- *   onModeChange?: (mode: 'visual'|'html') => void,
+ *   sync?: {showVisual?: () => ({ok?: boolean}|Promise<{ok?: boolean}>), showHtml?: () => ({ok?: boolean}|Promise<{ok?: boolean}>)},
+ *   onChange?: () => unknown,
+ *   onModeChange?: (mode: 'visual'|'html') => unknown,
  *   linkDialog?: {supported?: boolean, open?: () => boolean, destroy?: () => void},
  *   initialMode?: 'visual'|'html',
  *   scheduleMicrotask?: (callback: () => void) => void,
@@ -82,10 +82,12 @@ const COMMAND_BUTTONS = Object.freeze([
  *   visualButton: HTMLButtonElement|null,
  *   htmlButton: HTMLButtonElement|null,
  *   linkDialog: object,
- *   executeCommand: (commandId: string, value?: string) => boolean,
- *   setMode: (mode: 'visual'|'html') => boolean,
+ *   executeCommand: (commandId: string, value?: string) => boolean|Promise<boolean>,
+ *   setMode: (mode: 'visual'|'html') => boolean|Promise<boolean>,
  *   destroy: () => void,
- * }} Öffentliche Bedienoberfläche ohne globale Initialisierung.
+ * }} Öffentliche Bedienoberfläche ohne globale Initialisierung. Adapterpfade
+ * liefern synchron `boolean` oder asynchron `Promise<boolean>`; während einer
+ * Promise-Auflösung bleiben die jeweilige Aktion und Doppelklicks gesperrt.
  */
 export function createPhilosophyToolbar(options = {}) {
     const configuration = isObject(options) ? options : {};
@@ -100,6 +102,9 @@ export function createPhilosophyToolbar(options = {}) {
     const onModeChange = typeof configuration.onModeChange === 'function' ? configuration.onModeChange : () => {};
     const sync = isObject(configuration.sync) ? configuration.sync : null;
     const selection = isObject(configuration.selection) ? configuration.selection : null;
+    const hasSelectionAdapter = selection !== null
+        && typeof selection.capture === 'function'
+        && typeof selection.restore === 'function';
     const scheduleMicrotask = typeof configuration.scheduleMicrotask === 'function'
         ? configuration.scheduleMicrotask
         : scheduleForCurrentTurn;
@@ -128,7 +133,7 @@ export function createPhilosophyToolbar(options = {}) {
 
     for (const definition of COMMAND_BUTTONS) {
         const button = createToolbarButton(documentAdapter, definition.label, definition.text, definition.id);
-        if (definition.id === 'link' && linkDialog.supported !== true) {
+        if (definition.id === 'link' && (linkDialog.supported !== true || !hasSelectionAdapter)) {
             button.disabled = true;
         }
         const listener = (event) => {
@@ -175,35 +180,46 @@ export function createPhilosophyToolbar(options = {}) {
         }
 
         commandInProgress = true;
-        let releaseAfterThenable = false;
         try {
             const adapterResult = invokeAdapter(adapter, command, payload.value);
             if (isThenable(adapterResult)) {
-                releaseAfterThenable = true;
-                consumeThenableAndRelease(adapterResult, () => { commandInProgress = false; });
-                return false;
+                return Promise.resolve(adapterResult).then(
+                    (result) => finishCommand(result),
+                    () => finishCommand(false),
+                );
             }
+            return finishCommand(adapterResult);
+        } catch {
+            commandInProgress = false;
+            return false;
+        }
+
+        /** Trennt die erfolgreiche Editor-Mutation strikt von der optionalen UI-Benachrichtigung. */
+        function finishCommand(adapterResult) {
             if (adapterResult === false) {
+                commandInProgress = false;
                 return false;
             }
-            const changeResult = onChange();
-            if (isThenable(changeResult)) {
-                releaseAfterThenable = true;
-                consumeThenableAndRelease(changeResult, () => { commandInProgress = false; });
-                return false;
-            }
-            if (changeResult === false) {
-                return false;
+
+            let notificationResult;
+            try {
+                notificationResult = onChange();
+            } catch {
+                /* Die Mutation ist bereits erfolgreich; Benachrichtigungen dürfen sie nicht zurückrollen. */
+                focusVisual();
+                commandInProgress = false;
+                return true;
             }
             focusVisual();
+            if (isThenable(notificationResult)) {
+                return Promise.resolve(notificationResult).then(
+                    () => { commandInProgress = false; return true; },
+                    () => { commandInProgress = false; return true; },
+                );
+            }
+            commandInProgress = false;
 
             return true;
-        } catch {
-            return false;
-        } finally {
-            if (!releaseAfterThenable) {
-                commandInProgress = false;
-            }
         }
     }
 
@@ -214,41 +230,50 @@ export function createPhilosophyToolbar(options = {}) {
         }
 
         modeChangeInProgress = true;
-        let releaseAfterThenable = false;
         try {
             const result = sync && typeof (mode === 'visual' ? sync.showVisual : sync.showHtml) === 'function'
                 ? (mode === 'visual' ? sync.showVisual() : sync.showHtml())
                 : { ok: true };
             if (isThenable(result)) {
-                releaseAfterThenable = true;
-                consumeThenableAndRelease(result, () => { modeChangeInProgress = false; });
-                return false;
+                return Promise.resolve(result).then(
+                    (resolved) => finishModeChange(resolved),
+                    () => finishModeChange({ ok: false }),
+                );
             }
+            return finishModeChange(result);
+        } catch {
+            modeChangeInProgress = false;
+            return false;
+        }
+
+        /** Veröffentlicht den erfolgreichen Modus vor der rein nachgelagerten Benachrichtigung. */
+        function finishModeChange(result) {
             if (result && result.ok === false) {
+                modeChangeInProgress = false;
                 return false;
             }
-            const callbackResult = onModeChange(mode);
-            if (isThenable(callbackResult)) {
-                releaseAfterThenable = true;
-                consumeThenableAndRelease(callbackResult, () => { modeChangeInProgress = false; });
-                return false;
-            }
-            if (callbackResult === false) {
-                return false;
-            }
+
             activeMode = mode;
             updateModeButtons();
             if (mode === 'visual') {
                 focusVisual();
             }
+            let notificationResult;
+            try {
+                notificationResult = onModeChange(mode);
+            } catch {
+                modeChangeInProgress = false;
+                return true;
+            }
+            if (isThenable(notificationResult)) {
+                return Promise.resolve(notificationResult).then(
+                    () => { modeChangeInProgress = false; return true; },
+                    () => { modeChangeInProgress = false; return true; },
+                );
+            }
+            modeChangeInProgress = false;
 
             return true;
-        } catch {
-            return false;
-        } finally {
-            if (!releaseAfterThenable) {
-                modeChangeInProgress = false;
-            }
         }
     }
 
@@ -365,15 +390,6 @@ function isThenable(value) {
             && typeof value.then === 'function';
     } catch {
         return true;
-    }
-}
-
-/** Konsumiert beide Thenable-Ausgänge und hebt die Sperre erst nach ihrer Abwicklung auf. */
-function consumeThenableAndRelease(thenable, release) {
-    try {
-        Promise.resolve(thenable).then(release, release);
-    } catch {
-        release();
     }
 }
 

@@ -21,6 +21,9 @@ export function normalizeSecureLink(value) {
 /**
  * Erstellt einen rein lokalen Linkdialog. Die Auswahl im visuellen Editor wird
  * nicht manipuliert, solange der Mensch nicht eine gültige Adresse bestätigt.
+ * Ein vollständiger synchroner Auswahladapter ist Pflicht: Ohne ihn bleibt
+ * der Dialog geschlossen. `onInsert` darf `boolean` oder `Promise<boolean>`
+ * liefern; während eines Promise bleibt der Einfügevorgang gesperrt.
  *
  * @param {{
  *   document?: Document|{createElement?: Function, body?: {append?: Function}},
@@ -33,6 +36,7 @@ export function normalizeSecureLink(value) {
  * @returns {{
  *   element: HTMLDialogElement|null,
  *   supported: boolean,
+ *   selectionReady?: boolean,
  *   open: () => boolean,
  *   close: () => boolean,
  *   destroy: () => void,
@@ -47,6 +51,7 @@ export function createPhilosophyLinkDialog(options = {}) {
     const onInsert = typeof configuration.onInsert === 'function' ? configuration.onInsert : () => false;
     const onCancel = typeof configuration.onCancel === 'function' ? configuration.onCancel : () => {};
     const selection = isObject(configuration.selection) ? configuration.selection : {};
+    const selectionReady = typeof selection.capture === 'function' && typeof selection.restore === 'function';
 
     if (!documentAdapter || typeof documentAdapter.createElement !== 'function') {
         return createUnsupportedDialog();
@@ -96,7 +101,7 @@ export function createPhilosophyLinkDialog(options = {}) {
 
     /** Öffnet den Dialog nur einmal; die bestehende Editor-Auswahl bleibt dabei unangetastet. */
     const openDialog = () => {
-        if (open || dialog.open) {
+        if (!selectionReady || open || dialog.open) {
             return false;
         }
 
@@ -119,8 +124,8 @@ export function createPhilosophyLinkDialog(options = {}) {
         }
     };
 
-    /** Schließt ohne Callback und bewahrt somit Auswahl sowie Editorinhalt. */
-    const closeDialog = (releaseInsertionLock = true) => {
+    /** Schließt nur das modale Element; die Auswahl wird danach gezielt durch den aufrufenden Pfad behandelt. */
+    const closeModal = () => {
         if (!open && !dialog.open) {
             return true;
         }
@@ -134,11 +139,19 @@ export function createPhilosophyLinkDialog(options = {}) {
             return false;
         }
         open = false;
-        if (releaseInsertionLock) {
-            insertionInProgress = false;
-        }
 
         return true;
+    };
+
+    /** Der öffentliche Close-Pfad verhält sich wie ein Abbruch: Auswahl wiederherstellen und verwerfen. */
+    const closeDialog = () => {
+        if (!closeModal()) {
+            return false;
+        }
+        const restored = restoreSelection();
+        clearSelectionSnapshot();
+
+        return restored;
     };
 
     /** Bestätigt nur eine einmalige, unveränderte, positiv geprüfte HTTPS-Adresse. */
@@ -163,18 +176,25 @@ export function createPhilosophyLinkDialog(options = {}) {
 
         insertionInProgress = true;
         /* Ein modal geöffneter Dialog macht den übrigen Editor inert. */
-        if (!closeDialog(false)) {
+        if (!closeModal()) {
             insertionInProgress = false;
             showError('Der Linkdialog konnte nicht sicher geschlossen werden.');
             return;
         }
-        if (!restoreSelection() || !didSucceed(callSynchronously(onInsert, normalized))) {
+        if (!restoreSelection()) {
             insertionInProgress = false;
             reopenAfterFailure('Der Link konnte nicht eingefügt werden. Bitte versuchen Sie es erneut.');
             return;
         }
-        clearSelectionSnapshot();
-        insertionInProgress = false;
+        const insertionResult = callCallback(onInsert, normalized);
+        if (isThenable(insertionResult)) {
+            Promise.resolve(insertionResult).then(
+                (result) => finalizeInsertion(result),
+                () => finalizeInsertion(CALLBACK_FAILED),
+            );
+            return;
+        }
+        finalizeInsertion(insertionResult);
     };
 
     const cancelLink = (event) => {
@@ -182,9 +202,7 @@ export function createPhilosophyLinkDialog(options = {}) {
             event.preventDefault();
         }
         if (closeDialog()) {
-            restoreSelection();
-            clearSelectionSnapshot();
-            callSynchronously(onCancel);
+            consumeBestEffortResult(callCallback(onCancel));
         }
     };
     const handleClose = () => {
@@ -208,6 +226,7 @@ export function createPhilosophyLinkDialog(options = {}) {
     return {
         element: dialog,
         supported: true,
+        selectionReady,
         open: openDialog,
         close: closeDialog,
         destroy() {
@@ -227,12 +246,12 @@ export function createPhilosophyLinkDialog(options = {}) {
     /** Erfasst die Auswahl vor dem ersten Dialogfokus; globale Selection-APIs bleiben außen vor. */
     function captureSelection() {
         if (typeof selection.capture !== 'function') {
-            clearSelectionSnapshot();
-            return true;
+            return false;
         }
 
-        const snapshot = callSynchronously(selection.capture);
-        if (snapshot === SYNCHRONOUS_CALLBACK_FAILED) {
+        const snapshot = callCallback(selection.capture);
+        if (snapshot === CALLBACK_FAILED || isThenable(snapshot)) {
+            consumeBestEffortResult(snapshot);
             return false;
         }
         selectionSnapshot = snapshot;
@@ -247,10 +266,16 @@ export function createPhilosophyLinkDialog(options = {}) {
             return true;
         }
 
-        return didSucceed(callSynchronously(selection.restore, selectionSnapshot));
+        const result = callCallback(selection.restore, selectionSnapshot);
+        if (isThenable(result)) {
+            consumeBestEffortResult(result);
+            return false;
+        }
+
+        return didSucceed(result);
     }
 
-    /** Öffnet nach einem fehlgeschlagenen synchronen Adapter erneut, ohne die Linkeingabe zu verlieren. */
+    /** Öffnet nach einem fehlgeschlagenen Adapter erneut, ohne die Linkeingabe zu verlieren. */
     function reopenAfterFailure(message) {
         showError(message);
         try {
@@ -278,6 +303,16 @@ export function createPhilosophyLinkDialog(options = {}) {
         selectionSnapshot = undefined;
         hasSelectionSnapshot = false;
     }
+
+    /** Beendet den Pending-Zustand erst nach dem asynchronen Linkadapter und öffnet bei Fehler erneut. */
+    function finalizeInsertion(result) {
+        insertionInProgress = false;
+        if (didSucceed(result)) {
+            clearSelectionSnapshot();
+            return;
+        }
+        reopenAfterFailure('Der Link konnte nicht eingefügt werden. Bitte versuchen Sie es erneut.');
+    }
 }
 
 /** Liefert eine explizit nicht unterstützte Steuerung statt unsicherer Ersatzdialoge. */
@@ -302,26 +337,20 @@ function createDialogIds(instanceId) {
     return Object.freeze({ error: `${prefix}-error`, input: `${prefix}-url`, title: `${prefix}-title` });
 }
 
-const SYNCHRONOUS_CALLBACK_FAILED = Symbol('synchronous-callback-failed');
+const CALLBACK_FAILED = Symbol('callback-failed');
 
-/** Führt Callbacks ausschließlich synchron aus und konsumiert abgewiesene Thenables sicher. */
-function callSynchronously(callback, ...argumentsList) {
+/** Führt einen Callback aus und kapselt nur synchrone Ausnahmen; Thenables bleiben für den Aufrufer sichtbar. */
+function callCallback(callback, ...argumentsList) {
     try {
-        const result = callback(...argumentsList);
-        if (isThenable(result)) {
-            consumeThenable(result);
-            return SYNCHRONOUS_CALLBACK_FAILED;
-        }
-
-        return result;
+        return callback(...argumentsList);
     } catch {
-        return SYNCHRONOUS_CALLBACK_FAILED;
+        return CALLBACK_FAILED;
     }
 }
 
-/** Ein explizites `false` oder ein asynchroner/fehlerhafter Wert bedeutet keinen Erfolg. */
+/** Ein explizites `false` oder ein gekapselter Callbackfehler bedeutet keinen Erfolg. */
 function didSucceed(result) {
-    return result !== false && result !== SYNCHRONOUS_CALLBACK_FAILED;
+    return result !== false && result !== CALLBACK_FAILED;
 }
 
 function isThenable(value) {
@@ -335,9 +364,12 @@ function isThenable(value) {
 }
 
 /** Hängt beide Promise-Ausgänge an, damit Ablehnungen niemals als unhandled verbleiben. */
-function consumeThenable(thenable) {
+function consumeBestEffortResult(result) {
+    if (!isThenable(result)) {
+        return;
+    }
     try {
-        Promise.resolve(thenable).then(() => {}, () => {});
+        Promise.resolve(result).then(() => {}, () => {});
     } catch {
         /* Auch exotische Thenables dürfen die Dialogsteuerung nicht unterbrechen. */
     }
