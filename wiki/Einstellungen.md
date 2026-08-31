@@ -33,7 +33,7 @@ Dabei gilt:
 
 Die Verbindung entsteht nur beim Öffnen des adressierten Darstellungstabs.
 GitHub kann dabei technisch die **Server-IP**, den Zeitpunkt und den festen
-**User-Agent** `MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.0` erhalten. Bilder,
+**User-Agent** `MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.1` erhalten. Bilder,
 Tokens, Shop-, Kunden- und Formulardaten werden nicht übertragen. Auch ein
 Fehler oder eine nicht gefundene Release-Information wird zwölf Stunden lokal
 gespeichert.

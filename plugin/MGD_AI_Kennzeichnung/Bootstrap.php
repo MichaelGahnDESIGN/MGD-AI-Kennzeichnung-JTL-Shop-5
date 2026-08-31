@@ -20,6 +20,7 @@ use Plugin\MGD_AI_Kennzeichnung\Presentation\FrontendDocumentIntegrator;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\LocalPathNormalizer;
 use Plugin\MGD_AI_Kennzeichnung\Service\DisplaySettings;
 use Plugin\MGD_AI_Kennzeichnung\Service\SystemCompatibilityCheck;
+use Plugin\MGD_AI_Kennzeichnung\Setup\CompiledTemplateCacheRefresher;
 use Plugin\MGD_AI_Kennzeichnung\Setup\PluginDataLifecycle;
 use Throwable;
 
@@ -134,6 +135,21 @@ class Bootstrap extends Bootstrapper
         }
 
         return (new SystemCompatibilityCheck())->supports($shopVersion, PHP_VERSION);
+    }
+
+    /**
+     * Verwirft nach einem JTL-Update ausschließlich kompilierte Vorlagen dieses
+     * Plugins. Dadurch wird trotz reproduzierbarer Datei-Zeitstempel sofort die
+     * gerade installierte Oberfläche erzeugt.
+     *
+     * @param mixed $oldVersion Von JTL gemeldete bisherige Pluginversion
+     * @param mixed $newVersion Von JTL gemeldete neue Pluginversion
+     */
+    public function updated($oldVersion, $newVersion): void
+    {
+        (new CompiledTemplateCacheRefresher(Shop::Smarty()))
+            ->refresh($this->getPlugin()->getPaths()->getBasePath());
+        parent::updated($oldVersion, $newVersion);
     }
 
     /**

@@ -1,5 +1,14 @@
 # Produkt- und Sicherheitsentscheidungen
 
+## Gezielte Template-Neukompilierung nach Updates
+
+Reproduzierbare Release-Archive behalten feste Datei-Zeitstempel. Deshalb
+verwirft Version 1.3.1 im offiziellen JTL-Update-Lifecycle ausschließlich die
+kompilierten `.tpl`-Vorlagen innerhalb des eigenen Pluginverzeichnisses. Eine
+globale Cache-Löschung wäre unnötig breit und könnte fremde Erweiterungen
+beeinträchtigen. Bilddaten, Kennzeichnungen und redaktionelle Texte werden bei
+diesem Vorgang nicht gelesen oder verändert.
+
 ## Menschliche Einstufung statt automatischer Erkennung
 
 Das Plugin führt keine automatische KI-Erkennung durch. Technische Detektoren

@@ -6,7 +6,7 @@ Bitte mögliche Sicherheitslücken nicht als öffentliches Issue veröffentliche
 
 ## Unterstützter Stand
 
-Sicherheitskorrekturen werden für die aktuelle Version 1.3.0 bewertet. Voraussetzung für den produktiven Betrieb sind JTL-Shop ab 5.7.2, PHP ab 8.1, HTTPS, aktuelle Sicherheitsupdates und die in der Installationsanleitung genannten Backups.
+Sicherheitskorrekturen werden für die aktuelle Version 1.3.1 bewertet. Voraussetzung für den produktiven Betrieb sind JTL-Shop ab 5.7.2, PHP ab 8.1, HTTPS, aktuelle Sicherheitsupdates und die in der Installationsanleitung genannten Backups.
 
 ## Schutzgrenzen
 

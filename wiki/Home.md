@@ -36,9 +36,11 @@ Das Plugin hilft Ihnen, lokale Shopbilder strukturiert zu prüfen und transparen
 
 ## Aktuelle Version
 
-Die aktuelle **Version 1.3.0** ergänzt zwei große Sprachkarten für die
-AI-Philosophie. Inhalte lassen sich **Visuell** oder optional als bereinigtes
-**HTML** bearbeiten. Der Editor arbeitet vollständig lokal, lädt keine
+Die aktuelle **Version 1.3.1** enthält die zwei großen Sprachkarten und den
+lokalen Editor aus Version 1.3.0. Zusätzlich sorgt sie dafür, dass JTL nach
+einem Plugin-Update keine kompilierte Oberfläche der Vorversion weiterverwendet.
+Die Inhalte der AI-Philosophie lassen sich **Visuell** oder optional als
+bereinigtes **HTML** bearbeiten. Der Editor arbeitet vollständig lokal, lädt keine
 Drittinhalte und behält die Textfelder als No-JavaScript-Fallback bei. Die
 Darstellungsfunktionen aus Version 1.2.1 und die optionale Herstellernennung
 **supported by: Michael Gahn DESIGN** bleiben erhalten.

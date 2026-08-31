@@ -54,6 +54,12 @@ class Bootstrapper
 
     public function uninstalled(bool $deleteData = true): void {}
 
+    /**
+     * @param mixed $oldVersion
+     * @param mixed $newVersion
+     */
+    public function updated($oldVersion, $newVersion): void {}
+
     public function getDB(): \JTL\DB\DbInterface
     {
         throw new \RuntimeException('Im reinen Bootstrap-Strukturtest ist keine Datenbank gesetzt.');
@@ -101,6 +107,7 @@ class Paths
     public function __construct(
         private readonly string $adminURL = '/plugin/adminmenu/',
         private readonly string $frontendURL = 'https://example.test/plugin/frontend/',
+        private readonly string $basePath = '/plugin/',
     ) {}
 
     public function getAdminURL(): string
@@ -111,6 +118,11 @@ class Paths
     public function getFrontendURL(): string
     {
         return $this->frontendURL;
+    }
+
+    public function getBasePath(): string
+    {
+        return $this->basePath;
     }
 }
 
@@ -301,6 +313,9 @@ class JTLSmarty
     /** @var list<array{name: string, value: mixed}> Dokumentiert Zuweisungen für Entry-Point-Vertragstests. */
     public static array $zuweisungen = [];
 
+    /** @var list<string> Dokumentiert gezielt entfernte kompilierte Vorlagen. */
+    public static array $geleerteTemplates = [];
+
     public function assign(string $name, mixed $value): self
     {
         self::$zuweisungen[] = ['name' => $name, 'value' => $value];
@@ -328,6 +343,23 @@ class JTLSmarty
     public function fetch(string $path): string
     {
         return self::$testFetchOutput;
+    }
+
+    /**
+     * @param mixed $resource_name
+     * @param mixed $compile_id
+     * @param mixed $exp_time
+     */
+    public function clearCompiledTemplate(
+        $resource_name = null,
+        $compile_id = null,
+        $exp_time = null,
+    ): int {
+        if (is_string($resource_name)) {
+            self::$geleerteTemplates[] = $resource_name;
+        }
+
+        return 1;
     }
 }
 

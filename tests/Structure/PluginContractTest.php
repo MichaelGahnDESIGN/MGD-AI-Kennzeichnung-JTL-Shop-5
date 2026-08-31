@@ -47,9 +47,9 @@ final class PluginContractTest extends TestCase
             'Die minimale JTL-Shop-Version muss exakt 5.7.2 sein.',
         );
         self::assertSame(
-            '1.3.0',
+            '1.3.1',
             $this->liesXmlWert($xpath, 'Version'),
-            'Die Pluginversion muss exakt 1.3.0 sein.',
+            'Die Pluginversion muss exakt 1.3.1 sein.',
         );
         $phpVersionElemente = $xpath->query('//*[local-name()="PHPVersion"]');
         self::assertNotFalse($phpVersionElemente, 'Die Prüfung auf unbekannte PHP-Metadaten muss ausführbar sein.');
@@ -233,9 +233,9 @@ final class PluginContractTest extends TestCase
             ),
         ));
         self::assertSame(
-            ['boot', 'preInstallCheck', 'uninstalled'],
+            ['boot', 'preInstallCheck', 'updated', 'uninstalled'],
             $eigeneOeffentlicheMethoden,
-            'Der Bootstrap darf nur die drei vorgesehenen JTL-Lifecycle-Einstiege bereitstellen.',
+            'Der Bootstrap darf nur die vier vorgesehenen JTL-Lifecycle-Einstiege bereitstellen.',
         );
 
         JtlBootstrapper::$bootAufrufe = 0;

@@ -9,13 +9,13 @@
 - reguläre Schreibrechte für Plugin- und Cacheverzeichnisse;
 - empfohlen: NOVA oder ein sauber abgeleitetes NOVA-Child-Theme.
 
-Die Bildausgabe wurde mit Version 1.1.1 unter NOVA und einem NOVA-basierten OnvisTheme geprüft. Version 1.2.1 ergänzt den Darstellungstab und die globale Transparenz, Version 1.3.0 den lokalen Philosophie-Editor. Stark veränderte Templates müssen in einer eigenen Testumgebung abgenommen werden.
+Die Bildausgabe wurde mit Version 1.1.1 unter NOVA und einem NOVA-basierten OnvisTheme geprüft. Version 1.2.1 ergänzt den Darstellungstab und die globale Transparenz, Version 1.3.0 den lokalen Philosophie-Editor und Version 1.3.1 die gezielte Template-Neukompilierung nach einem Update. Stark veränderte Templates müssen in einer eigenen Testumgebung abgenommen werden.
 
 ## Das richtige ZIP verwenden
 
 Verwenden Sie aus dem GitHub-Release ausschließlich:
 
-`MGD_AI_Kennzeichnung-1.3.0.zip`
+`MGD_AI_Kennzeichnung-1.3.1.zip`
 
 Die automatisch angebotenen GitHub-Dateien **Source code (zip)** und **Source code (tar.gz)** sind keine installierbaren JTL-Pakete.
 

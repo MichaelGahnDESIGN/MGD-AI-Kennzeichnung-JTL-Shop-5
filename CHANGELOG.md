@@ -1,5 +1,17 @@
 # Änderungsprotokoll
 
+## 1.3.1 – 2026-08-31
+
+- veraltete, serverseitig kompilierte Smarty-Vorlagen nach einem JTL-Update
+  gezielt verworfen;
+- reproduzierbare Release-Zeitstempel und JTLs Template-Cache dadurch sicher
+  miteinander vereinbar gemacht;
+- Cache-Aktualisierung auf `.tpl`-Dateien innerhalb des eigenen
+  Pluginverzeichnisses begrenzt;
+- Regressionstests für den JTL-Update-Lifecycle und die gezielte
+  Template-Neukompilierung ergänzt;
+- Paket, Updatehinweis, Dokumentation und Wiki auf Version 1.3.1 aktualisiert.
+
 ## 1.3.0 – 2026-08-30
 
 - AI-Philosophie in zwei große, untereinander angeordnete Sprachkarten

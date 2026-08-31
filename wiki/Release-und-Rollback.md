@@ -1,5 +1,16 @@
 # Release und Rollback
 
+## Release 1.3.1
+
+Version 1.3.1 korrigiert veraltete Backend-Ansichten nach einem erfolgreichen
+JTL-Update. Der Update-Lifecycle verwirft nur die kompilierten `.tpl`-Vorlagen
+des eigenen Plugins. Bilder, Kennzeichnungen, Einstellungen und
+Philosophie-Inhalte bleiben unverändert.
+
+Nach dem Dev-Update muss der Tab **AI-Philosophie** zwei untereinander stehende
+Sprachkarten mit lokaler Werkzeugleiste sowie den Modi **Visuell** und **HTML**
+zeigen. Erst danach darf dasselbe Paket für Live freigegeben werden.
+
 ## Release-Paket prüfen
 
 Ein offizieller Release enthält:

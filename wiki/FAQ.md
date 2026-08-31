@@ -91,7 +91,7 @@ werden nicht übertragen.
 
 Nein.
 
-Version 1.3.0 wird per geprüftem, manuellem ZIP-Upload aus dem öffentlichen
+Version 1.3.1 wird per geprüftem, manuellem ZIP-Upload aus dem öffentlichen
 GitHub-Release installiert.
 
 ## Was bedeutet Transparenz?

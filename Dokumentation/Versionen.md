@@ -1,8 +1,15 @@
 # Versionsübersicht
 
+## 1.3.1 – 31. August 2026
+
+Aktueller freigegebener Stand. Verwirft nach dem JTL-Update gezielt veraltete,
+kompilierte Vorlagen dieses Plugins. Dadurch werden die Sprachkarten und die
+lokale Formatierungsleiste der AI-Philosophie unmittelbar aus Version 1.3.1
+erzeugt. Bild-, Kennzeichnungs- und Philosophie-Daten bleiben unverändert.
+
 ## 1.3.0 – 30. August 2026
 
-Aktueller freigegebener Stand. Ergänzt zwei große Sprachkarten für die
+Historischer Stand. Ergänzt zwei große Sprachkarten für die
 AI-Philosophie, einen vollständig lokalen visuellen Editor, den optionalen
 HTML-Modus, eine enge Positivliste und den No-JavaScript-Fallback. Das
 kostenlose Grund-Plugin enthält keine Lizenzschlüssel, Zahlung, Sperren,
