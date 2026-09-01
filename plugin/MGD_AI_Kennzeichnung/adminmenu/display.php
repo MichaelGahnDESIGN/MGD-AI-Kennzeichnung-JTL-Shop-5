@@ -116,7 +116,7 @@ try {
                         new FileReleaseCache($cachePath),
                         new SystemClock(),
                     );
-                $updateNotice = $checker->check(true, '1.3.3');
+                $updateNotice = $checker->check(true, '1.3.4');
             } catch (Throwable) {
                 // Die rein optionale Prüfung darf niemals einen Adminfehler erzeugen.
                 $updateNotice = null;

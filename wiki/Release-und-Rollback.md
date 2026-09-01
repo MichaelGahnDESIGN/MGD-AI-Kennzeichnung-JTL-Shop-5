@@ -1,12 +1,22 @@
 # Release und Rollback
 
+## Release 1.3.4
+
+Version 1.3.4 ergänzt für den Philosophie-Tab einen kleinen klassischen
+JTL-AJAX-Starter. Er lädt ausschließlich das lokale Stylesheet und das lokale
+Editor-Modul von derselben Shop-Domain. Dadurch erscheinen Werkzeugleiste,
+visueller Modus und HTML-Modus zuverlässig. Bei einem Ladefehler bleiben die
+beiden großen Textfelder weiterhin sichtbar und nutzbar.
+
 ## Release 1.3.3
 
 Version 1.3.3 verwendet über JTLs öffentliche `getSmarty()`-Methode die
 tatsächlich aktive Template-Engine. Dadurch erreicht die begrenzte
 Cache-Bereinigung auch im Smarty-4-Kompatibilitätsmodus den verwendeten
 Admin-Compile-Ordner. Bilder, Kennzeichnungen, Einstellungen und
-Philosophie-Inhalte bleiben unverändert.
+Philosophie-Inhalte bleiben unverändert. Der direkte `type="module"`-Start im
+AJAX-Fragment war jedoch nicht in jedem JTL-Tab wirksam; verwenden Sie deshalb
+Version 1.3.4 oder neuer.
 
 ## Release 1.3.2
 

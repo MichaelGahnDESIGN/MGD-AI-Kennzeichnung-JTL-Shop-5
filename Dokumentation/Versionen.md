@@ -1,12 +1,22 @@
 # Versionsübersicht
 
+## 1.3.4 – 1. September 2026
+
+Aktueller freigegebener Stand. Startet den vollständig lokalen
+AI-Philosophie-Editor über einen klassischen, JTL-kompatiblen AJAX-Starter.
+Dieser lädt nur das lokale Stylesheet und das lokale ES-Modul von derselben
+Shop-Domain. Die Textfelder bleiben bei einem Ladefehler als sicherer Fallback
+sichtbar. Die gezielte Backend-Template-Neucompilierung aus Version 1.3.3 bleibt
+unverändert erhalten.
+
 ## 1.3.3 – 1. September 2026
 
-Aktueller freigegebener Stand. Verwendet im JTL-Backend die tatsächlich aktive
+Historischer Stand. Verwendet im JTL-Backend die tatsächlich aktive
 Smarty-Engine. Dies ist besonders im Smarty-4-Kompatibilitätsmodus wichtig, in
 dem JTL die echte Engine innerhalb seiner Fassade kapselt. Die gezielte
-Cache-Bereinigung erreicht dadurch den verwendeten Admin-Compile-Ordner.
-Andere Caches und gespeicherte Plugininhalte bleiben unverändert.
+Cache-Bereinigung erreicht dadurch den verwendeten Admin-Compile-Ordner. Das
+direkte Modulskript im AJAX-Tab wurde von JTL jedoch nicht zuverlässig
+ausgeführt; Version 1.3.4 behebt diese Integrationsgrenze.
 
 ## 1.3.2 – 1. September 2026
 

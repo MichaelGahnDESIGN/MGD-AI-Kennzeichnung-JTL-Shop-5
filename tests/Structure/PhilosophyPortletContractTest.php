@@ -87,6 +87,8 @@ final class PhilosophyPortletContractTest extends TestCase
         $cssPfad = self::ROOT . '/adminmenu/philosophy.css';
         $css = is_file($cssPfad) ? (string) file_get_contents($cssPfad) : '';
         $editorPfad = self::ROOT . '/adminmenu/js/philosophy-editor.mjs';
+        $startPfad = self::ROOT . '/adminmenu/js/philosophy-editor-init.js';
+        $start = is_file($startPfad) ? (string) file_get_contents($startPfad) : '';
 
         /* Alle Verletzungen gemeinsam ausgeben, damit der Rotlauf den vollständigen Assetvertrag zeigt. */
         $verletzungen = [];
@@ -101,11 +103,18 @@ final class PhilosophyPortletContractTest extends TestCase
                 '/<textarea\\b[^>]*\\bdata-philosophy-source(?:\\s|>)/iu',
                 $template,
             ) === 2,
-            'lokales Stylesheet' => str_contains($template, 'philosophy.css'),
-            'lokales Editor-Modul' => str_contains($template, 'js/philosophy-editor.mjs'),
-            'modulares Script' => str_contains($template, 'type="module"'),
+            'lokales Stylesheet als Formularwert' => str_contains($template, 'data-philosophy-stylesheet='),
+            'lokales Editor-Modul als Formularwert' => str_contains($template, 'data-philosophy-module='),
+            'klassischer JTL-AJAX-Starter' => str_contains($template, 'js/philosophy-editor-init.js'),
+            'kein direktes Modulskript im AJAX-Fragment' => preg_match(
+                '/<script\\b[^>]*\\btype=["\']module["\']/iu',
+                $template,
+            ) !== 1,
             'CSS-Datei' => is_file($cssPfad),
             'Editor-Modul' => is_file($editorPfad),
+            'Starter-Datei' => is_file($startPfad),
+            'Starter lädt das lokale Modul dynamisch' => str_contains($start, 'import(moduleUrl.href)'),
+            'Starter hängt das lokale Stylesheet ein' => str_contains($start, 'stylesheetUrl.href'),
             'Mindesthöhe der Textfelder' => str_contains($css, 'min-height: 22.5rem'),
             'visuelle Editorfläche' => str_contains($css, '.mgd-philosophy-editor__visual'),
             'HTML-Editorfläche' => str_contains($css, '.mgd-philosophy-editor__html'),
@@ -122,6 +131,9 @@ final class PhilosophyPortletContractTest extends TestCase
         if (preg_match('~(?:@import|url\\()\\s*["\']?https?://~i', $css) === 1) {
             $verletzungen[] = 'externe CSS-Referenz';
         }
+        if (preg_match('~https?://[A-Za-z0-9]~iu', $start) === 1) {
+            $verletzungen[] = 'externe Starter-Referenz';
+        }
 
         self::assertSame([], $verletzungen, 'Der Editor darf ausschließlich lokale, progressive Assets verwenden.');
     }
@@ -130,6 +142,7 @@ final class PhilosophyPortletContractTest extends TestCase
     public function philosophie_editor_module_verwenden_weder_netz_noch_browser_speicher(): void
     {
         $dateien = [
+            self::ROOT . '/adminmenu/js/philosophy-editor-init.js',
             self::ROOT . '/adminmenu/js/philosophy-sanitizer.mjs',
             self::ROOT . '/adminmenu/js/philosophy-source-sync.mjs',
             self::ROOT . '/adminmenu/js/philosophy-link-dialog.mjs',

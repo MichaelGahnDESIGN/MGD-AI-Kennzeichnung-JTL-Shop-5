@@ -1,5 +1,16 @@
 # Änderungsprotokoll
 
+## 1.3.4 – 2026-09-01
+
+- vollständig lokalen AI-Philosophie-Editor auch in JTLs per AJAX
+  nachgeladenen Plugin-Tabs zuverlässig gestartet;
+- kleinen klassischen JTL-Starter ergänzt, der ausschließlich das lokale
+  Stylesheet und das lokale ES-Modul von derselben Shop-Domain lädt;
+- direkte `type="module"`-Ausführung im AJAX-Fragment nicht mehr vorausgesetzt;
+- bei Ladefehlern bleiben beide großen Textfelder sichtbar und nutzbar;
+- Strukturvertrag, Datenschutzprüfung, Dokumentation, Wiki und Releasepaket auf
+  Version 1.3.4 aktualisiert.
+
 ## 1.3.3 – 2026-09-01
 
 - Cache-Bereinigung im Smarty-4-Kompatibilitätsmodus auf die von JTL
