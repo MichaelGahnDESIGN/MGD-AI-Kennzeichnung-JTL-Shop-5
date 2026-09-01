@@ -8,6 +8,7 @@ use JTL\Backend\AdminIO;
 use JTL\Events\Dispatcher;
 use JTL\Plugin\Bootstrapper;
 use JTL\Shop;
+use JTL\Smarty\BackendSmarty;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlAuthorizationAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Admin\IO\AdminIoRegistration;
 use Plugin\MGD_AI_Kennzeichnung\Admin\IO\LoadLocalAssetLabel;
@@ -147,7 +148,15 @@ class Bootstrap extends Bootstrapper
      */
     public function updated($oldVersion, $newVersion): void
     {
-        (new CompiledTemplateCacheRefresher(Shop::Smarty()))
+        /*
+         * Während des frühen Update-Lifecycles ist JTLs globale Smarty-
+         * Instanz noch nicht zwingend als BackendSmarty initialisiert. Eine
+         * allgemeine Instanz würde den Frontend-Compile-Ordner bereinigen und
+         * die alte Adminoberfläche unangetastet lassen. JTL selbst verwendet
+         * für Backend-Updates deshalb ebenfalls eine ausdrückliche Instanz.
+         */
+        $backendSmarty = new BackendSmarty($this->getDB(), $this->getCache());
+        (new CompiledTemplateCacheRefresher($backendSmarty))
             ->refresh($this->getPlugin()->getPaths()->getBasePath());
         parent::updated($oldVersion, $newVersion);
     }

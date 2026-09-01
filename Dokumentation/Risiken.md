@@ -19,7 +19,7 @@ OnvisTheme geprüft. Stark abweichende Templates können andere Bildrahmen oder
 CSS-Regeln verwenden. Updates sollten deshalb zuerst auf einer getrennten
 Testinstallation geprüft werden.
 
-Seit Version 1.3.1 werden beim JTL-Update die kompilierten `.tpl`-Vorlagen
+Seit Version 1.3.2 werden beim JTL-Update die kompilierten `.tpl`-Vorlagen
 dieses Plugins gezielt verworfen. Das verhindert alte Backend-Ansichten trotz
 erfolgreich aktualisierter Dateien. Falls ein Hoster das Löschen kompilierter
 Vorlagen technisch blockiert, muss das Update abgebrochen beziehungsweise der

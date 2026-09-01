@@ -1,11 +1,20 @@
 # Release und Rollback
 
+## Release 1.3.2
+
+Version 1.3.2 bereinigt nach einem JTL-Update ausdrücklich den
+Backend-Templatecache. Dadurch erscheint der lokale Philosophie-Editor mit
+beiden Sprachkarten und den Modi **Visuell** und **HTML** auch dann zuverlässig,
+wenn das Backend im frühen Update-Lifecycle noch nicht vollständig
+initialisiert war. Andere Caches sowie Bilder, Kennzeichnungen, Einstellungen
+und Philosophie-Inhalte bleiben unverändert.
+
 ## Release 1.3.1
 
-Version 1.3.1 korrigiert veraltete Backend-Ansichten nach einem erfolgreichen
-JTL-Update. Der Update-Lifecycle verwirft nur die kompilierten `.tpl`-Vorlagen
-des eigenen Plugins. Bilder, Kennzeichnungen, Einstellungen und
-Philosophie-Inhalte bleiben unverändert.
+Version 1.3.1 führte die begrenzte Cache-Bereinigung ein. Im frühen
+Update-Lifecycle konnte die allgemeine Smarty-Instanz jedoch den
+Frontend-Compile-Ordner verwenden. Verwenden Sie deshalb Version 1.3.2 oder
+neuer.
 
 Nach dem Dev-Update muss der Tab **AI-Philosophie** zwei untereinander stehende
 Sprachkarten mit lokaler Werkzeugleiste sowie den Modi **Visuell** und **HTML**

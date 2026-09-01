@@ -1,11 +1,20 @@
 # Versionsübersicht
 
+## 1.3.2 – 1. September 2026
+
+Aktueller freigegebener Stand. Erzeugt im frühen JTL-Update-Lifecycle
+ausdrücklich einen `BackendSmarty`-Renderer und bereinigt damit den richtigen
+Admin-Compile-Ordner. Dadurch werden die Sprachkarten und die lokale
+Formatierungsleiste der AI-Philosophie nach dem Update zuverlässig aus dem
+aktuellen Paket erzeugt. Andere Shop-Caches sowie Bild-, Kennzeichnungs- und
+Philosophie-Daten bleiben unverändert.
+
 ## 1.3.1 – 31. August 2026
 
-Aktueller freigegebener Stand. Verwirft nach dem JTL-Update gezielt veraltete,
-kompilierte Vorlagen dieses Plugins. Dadurch werden die Sprachkarten und die
-lokale Formatierungsleiste der AI-Philosophie unmittelbar aus Version 1.3.1
-erzeugt. Bild-, Kennzeichnungs- und Philosophie-Daten bleiben unverändert.
+Historischer Stand. Führte die gezielte Cache-Bereinigung ein. Im frühen
+JTL-Update-Lifecycle konnte die allgemeine Smarty-Instanz jedoch noch auf den
+Frontend- statt den Backend-Compile-Ordner zeigen; diese Einschränkung wird
+durch Version 1.3.2 behoben.
 
 ## 1.3.0 – 30. August 2026
 

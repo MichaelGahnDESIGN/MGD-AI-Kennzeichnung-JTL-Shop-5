@@ -1,5 +1,17 @@
 # Änderungsprotokoll
 
+## 1.3.2 – 2026-09-01
+
+- Template-Cache des JTL-Backends im frühen Plugin-Update-Lifecycle nun
+  ausdrücklich über `BackendSmarty` angesprochen;
+- verhindert, dass eine noch nicht initialisierte allgemeine Smarty-Instanz
+  versehentlich nur den Frontend-Compile-Ordner bereinigt;
+- Cache-Löschung weiterhin auf kompilierte `.tpl`-Vorlagen im eigenen
+  Pluginverzeichnis begrenzt;
+- Regressionstest ergänzt, der die Erzeugung genau einer echten
+  Backend-Smarty-Instanz verbindlich prüft;
+- Paket, Updatehinweis, Dokumentation und Wiki auf Version 1.3.2 aktualisiert.
+
 ## 1.3.1 – 2026-08-31
 
 - veraltete, serverseitig kompilierte Smarty-Vorlagen nach einem JTL-Update

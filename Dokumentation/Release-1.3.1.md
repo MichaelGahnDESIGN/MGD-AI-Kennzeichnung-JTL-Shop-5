@@ -1,5 +1,10 @@
 # Release 1.3.1
 
+> **Historischer Hinweis:** Im frühen JTL-Update-Lifecycle konnte die hier
+> verwendete allgemeine Smarty-Instanz den Frontend- statt den
+> Backend-Compile-Ordner ansprechen. Verwenden Sie deshalb Version 1.3.2 oder
+> neuer. Die Nachfolgeversion behebt dies ausdrücklich über `BackendSmarty`.
+
 Version 1.3.1 korrigiert die Aktualisierung der Plugin-Oberfläche in
 JTL-Shop. Nach einem erfolgreichen Update konnte JTL weiterhin eine bereits
 kompilierte Vorlage der Vorversion anzeigen. Dadurch waren die neuen, großen

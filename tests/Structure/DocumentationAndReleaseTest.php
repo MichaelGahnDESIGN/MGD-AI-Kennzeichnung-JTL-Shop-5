@@ -11,8 +11,8 @@ use ZipArchive;
 final class DocumentationAndReleaseTest extends TestCase
 {
     private const ROOT = __DIR__ . '/../..';
-    private const VERSION = '1.3.1';
-    private const ZIP = self::ROOT . '/dist/MGD_AI_Kennzeichnung-1.3.1.zip';
+    private const VERSION = '1.3.2';
+    private const ZIP = self::ROOT . '/dist/MGD_AI_Kennzeichnung-1.3.2.zip';
 
     #[Test]
     public function releaseziel_und_lokale_artefakte_sind_eindeutig_abgegrenzt(): void
@@ -30,11 +30,11 @@ final class DocumentationAndReleaseTest extends TestCase
         self::assertIsString($infoXml);
         self::assertIsString($gitignore);
 
-        self::assertStringContainsString('MGD_AI_Kennzeichnung-1.3.1.zip', $script);
+        self::assertStringContainsString('MGD_AI_Kennzeichnung-1.3.2.zip', $script);
         self::assertStringNotContainsString('MGD_AI_Kennzeichnung-1.2.1.zip', $script);
-        self::assertStringContainsString('<Version>1.3.1</Version>', $infoXml);
-        self::assertStringContainsString('MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.1', $checker);
-        self::assertStringContainsString("check(true, '1.3.1')", $display);
+        self::assertStringContainsString('<Version>1.3.2</Version>', $infoXml);
+        self::assertStringContainsString('MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.2', $checker);
+        self::assertStringContainsString("check(true, '1.3.2')", $display);
         self::assertStringNotContainsString('MGD-AI-Kennzeichnung-JTL-Shop-5/1.2.1', $checker);
         self::assertStringNotContainsString("check(true, '1.2.1')", $display);
         self::assertStringNotContainsString('cp -R "${quellordner}/."', $script);
@@ -268,14 +268,14 @@ BASH;
     }
 
     #[Test]
-    public function version_1_3_1_ist_in_paket_ci_und_benutzerdokumentation_konsistent(): void
+    public function version_1_3_2_ist_in_paket_ci_und_benutzerdokumentation_konsistent(): void
     {
         $dateien = [
             'README' => self::ROOT . '/README.md',
             'CHANGELOG' => self::ROOT . '/CHANGELOG.md',
             'Sicherheit' => self::ROOT . '/SECURITY.md',
             'Darstellung' => self::ROOT . '/Dokumentation/Darstellung.md',
-            'Release' => self::ROOT . '/Dokumentation/Release-1.3.1.md',
+            'Release' => self::ROOT . '/Dokumentation/Release-1.3.2.md',
             'Datenschutz' => self::ROOT . '/Dokumentation/Datenschutz-und-Sicherheit.md',
             'Installation' => self::ROOT . '/Dokumentation/Installation-und-Livetest.md',
             'Wiki' => self::ROOT . '/wiki/Home.md',
@@ -298,7 +298,7 @@ BASH;
         }
 
         foreach ([
-            'Version 1.3.1',
+            'Version 1.3.2',
             'Live-Vorschau',
             'Transparenz',
             'Nur Vorschau',

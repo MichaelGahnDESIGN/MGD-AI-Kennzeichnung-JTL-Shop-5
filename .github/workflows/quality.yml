@@ -47,4 +47,4 @@ jobs:
       - name: Reproduzierbares Installationspaket erstellen
         run: bash scripts/build-release.sh
       - name: Installationspaket prüfen
-        run: unzip -t dist/MGD_AI_Kennzeichnung-1.3.1.zip
+        run: unzip -t dist/MGD_AI_Kennzeichnung-1.3.2.zip

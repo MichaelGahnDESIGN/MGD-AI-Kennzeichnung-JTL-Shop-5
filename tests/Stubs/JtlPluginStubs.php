@@ -65,6 +65,11 @@ class Bootstrapper
         throw new \RuntimeException('Im reinen Bootstrap-Strukturtest ist keine Datenbank gesetzt.');
     }
 
+    public function getCache(): \JTL\Cache\JTLCacheInterface
+    {
+        throw new \RuntimeException('Im reinen Bootstrap-Strukturtest ist kein Cache gesetzt.');
+    }
+
     public function getPlugin(): PluginInterface
     {
         throw new \RuntimeException('Im reinen Bootstrap-Strukturtest ist kein Pluginobjekt gesetzt.');
@@ -360,6 +365,25 @@ class JTLSmarty
         }
 
         return 1;
+    }
+}
+
+/**
+ * Bildet JTLs ausdrücklich für das Backend erzeugte Smarty-Instanz ab.
+ * Die Instanzzählung verhindert, dass Tests versehentlich die allgemeine
+ * Shop-Smarty-Instanz mit dem Backend-Cache gleichsetzen.
+ */
+class BackendSmarty extends JTLSmarty
+{
+    public static int $erzeugteInstanzen = 0;
+    public static ?\JTL\DB\DbInterface $letzteDatenbank = null;
+    public static ?\JTL\Cache\JTLCacheInterface $letzterCache = null;
+
+    public function __construct(\JTL\DB\DbInterface $db, \JTL\Cache\JTLCacheInterface $cache)
+    {
+        ++self::$erzeugteInstanzen;
+        self::$letzteDatenbank = $db;
+        self::$letzterCache = $cache;
     }
 }
 
