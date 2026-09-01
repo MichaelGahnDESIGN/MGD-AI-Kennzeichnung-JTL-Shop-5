@@ -107,7 +107,7 @@ final class GitHubReleaseChecker implements UpdateCheckerInterface
             url: self::ENDPOINT,
             headers: [
                 'Accept' => 'application/vnd.github+json',
-                'User-Agent' => 'MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.2',
+                'User-Agent' => 'MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.3',
             ],
             connectTimeoutSeconds: 2,
             totalTimeoutSeconds: 5,

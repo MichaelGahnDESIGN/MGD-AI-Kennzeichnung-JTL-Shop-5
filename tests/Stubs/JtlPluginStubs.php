@@ -366,6 +366,16 @@ class JTLSmarty
 
         return 1;
     }
+
+    /**
+     * Spiegelt JTLs Zugriff auf die tatsächlich aktive Smarty-Engine. Im
+     * normalen Modus ist dies die Fassade selbst, im Legacy-Modus liefert JTL
+     * stattdessen die intern gekapselte Smarty-4-Instanz.
+     */
+    public function getSmarty(): self
+    {
+        return $this;
+    }
 }
 
 /**

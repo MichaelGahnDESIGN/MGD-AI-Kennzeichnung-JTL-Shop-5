@@ -46,7 +46,7 @@ final class CompiledTemplateCacheRefresherTest extends TestCase
         self::assertNotFalse(file_put_contents($frontendTemplate, 'Frontend'));
         self::assertNotFalse(file_put_contents($this->testverzeichnis . '/adminmenu/templates/kein-template.php', 'PHP'));
 
-        $smarty = new class extends JTLSmarty {
+        $aktiveSmartyEngine = new class extends JTLSmarty {
             /** @var list<string> */
             public array $geleerteRessourcen = [];
 
@@ -67,15 +67,33 @@ final class CompiledTemplateCacheRefresherTest extends TestCase
                 return 1;
             }
         };
+        $smartyFassade = new class ($aktiveSmartyEngine) extends JTLSmarty {
+            public function __construct(private readonly JTLSmarty $aktiveSmartyEngine) {}
 
-        $anzahl = (new CompiledTemplateCacheRefresher($smarty))->refresh($this->testverzeichnis);
-        sort($smarty->geleerteRessourcen, SORT_STRING);
+            public function getSmarty(): JTLSmarty
+            {
+                return $this->aktiveSmartyEngine;
+            }
+
+            public function clearCompiledTemplate(
+                $resource_name = null,
+                $compile_id = null,
+                $exp_time = null,
+            ): int {
+                throw new \RuntimeException(
+                    'Die äußere JTL-Fassade darf im Smarty-4-Kompatibilitätsmodus nicht den Cache leeren.',
+                );
+            }
+        };
+
+        $anzahl = (new CompiledTemplateCacheRefresher($smartyFassade))->refresh($this->testverzeichnis);
+        sort($aktiveSmartyEngine->geleerteRessourcen, SORT_STRING);
         $erwartet = [realpath($adminTemplate), realpath($frontendTemplate)];
         self::assertNotContains(false, $erwartet);
         sort($erwartet, SORT_STRING);
 
         self::assertSame(2, $anzahl);
-        self::assertSame($erwartet, $smarty->geleerteRessourcen);
+        self::assertSame($erwartet, $aktiveSmartyEngine->geleerteRessourcen);
     }
 
     /** Entfernt ausschließlich das zuvor erzeugte, zufällige Testverzeichnis. */

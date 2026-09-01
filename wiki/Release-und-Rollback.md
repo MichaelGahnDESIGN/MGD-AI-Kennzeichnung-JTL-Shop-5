@@ -1,19 +1,25 @@
 # Release und Rollback
 
+## Release 1.3.3
+
+Version 1.3.3 verwendet über JTLs öffentliche `getSmarty()`-Methode die
+tatsächlich aktive Template-Engine. Dadurch erreicht die begrenzte
+Cache-Bereinigung auch im Smarty-4-Kompatibilitätsmodus den verwendeten
+Admin-Compile-Ordner. Bilder, Kennzeichnungen, Einstellungen und
+Philosophie-Inhalte bleiben unverändert.
+
 ## Release 1.3.2
 
-Version 1.3.2 bereinigt nach einem JTL-Update ausdrücklich den
-Backend-Templatecache. Dadurch erscheint der lokale Philosophie-Editor mit
-beiden Sprachkarten und den Modi **Visuell** und **HTML** auch dann zuverlässig,
-wenn das Backend im frühen Update-Lifecycle noch nicht vollständig
-initialisiert war. Andere Caches sowie Bilder, Kennzeichnungen, Einstellungen
-und Philosophie-Inhalte bleiben unverändert.
+Version 1.3.2 erzeugte ausdrücklich den Backend-Renderer. Im
+Smarty-4-Kompatibilitätsmodus erreichte der direkte Methodenaufruf jedoch die
+äußere statt die intern aktive Engine. Verwenden Sie deshalb Version 1.3.3 oder
+neuer.
 
 ## Release 1.3.1
 
 Version 1.3.1 führte die begrenzte Cache-Bereinigung ein. Im frühen
 Update-Lifecycle konnte die allgemeine Smarty-Instanz jedoch den
-Frontend-Compile-Ordner verwenden. Verwenden Sie deshalb Version 1.3.2 oder
+Frontend-Compile-Ordner verwenden. Verwenden Sie deshalb Version 1.3.3 oder
 neuer.
 
 Nach dem Dev-Update muss der Tab **AI-Philosophie** zwei untereinander stehende

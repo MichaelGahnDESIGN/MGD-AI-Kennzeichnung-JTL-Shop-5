@@ -59,8 +59,16 @@ final class CompiledTemplateCacheRefresher
         }
 
         sort($templates, SORT_STRING);
+        /*
+         * JTL kapselt bei aktivem Smarty-4-Kompatibilitätsmodus die echte
+         * Template-Engine innerhalb von JTLSmarty. Die Compile-Verzeichnisse
+         * werden dann ausschließlich auf dieser internen Engine gesetzt.
+         * Ein direkter Aufruf auf der äußeren Fassade würde wegen der von
+         * Smarty 5 geerbten Methode am falschen Compile-Ordner vorbeilaufen.
+         */
+        $smartyEngine = $this->smarty->getSmarty();
         foreach ($templates as $templatePath) {
-            $this->smarty->clearCompiledTemplate($templatePath);
+            $smartyEngine->clearCompiledTemplate($templatePath);
         }
 
         return count($templates);

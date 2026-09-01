@@ -1,5 +1,16 @@
 # Änderungsprotokoll
 
+## 1.3.3 – 2026-09-01
+
+- Cache-Bereinigung im Smarty-4-Kompatibilitätsmodus auf die von JTL
+  tatsächlich aktive, intern gekapselte Template-Engine umgestellt;
+- verhindert, dass die von Smarty 5 geerbte Methode der äußeren JTL-Fassade
+  einen nicht verwendeten Compile-Ordner prüft;
+- gezielte Löschung weiterhin ausschließlich auf `.tpl`-Dateien des eigenen
+  Pluginverzeichnisses begrenzt;
+- Regressionstest bildet die JTL-Fassade und ihre aktive Engine getrennt ab;
+- Paket, Updatehinweis, Dokumentation und Wiki auf Version 1.3.3 aktualisiert.
+
 ## 1.3.2 – 2026-09-01
 
 - Template-Cache des JTL-Backends im frühen Plugin-Update-Lifecycle nun

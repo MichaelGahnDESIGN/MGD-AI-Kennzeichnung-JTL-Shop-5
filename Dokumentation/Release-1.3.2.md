@@ -1,5 +1,10 @@
 # Release 1.3.2
 
+> **Historischer Hinweis:** Im Smarty-4-Kompatibilitätsmodus liegt die
+> tatsächlich aktive Template-Engine innerhalb der JTL-Fassade. Der direkte
+> Aufruf aus Version 1.3.2 erreichte deshalb nicht den verwendeten
+> Admin-Compile-Ordner. Verwenden Sie Version 1.3.3 oder neuer.
+
 Version 1.3.2 ist ein gezielter Hotfix für die Aktualisierung der
 Plugin-Oberfläche in JTL-Shop. Sie behebt den Fall, dass nach einem formal
 erfolgreichen Update weiterhin die alte, bereits kompilierte Ansicht des Tabs

@@ -1,20 +1,26 @@
 # Versionsübersicht
 
+## 1.3.3 – 1. September 2026
+
+Aktueller freigegebener Stand. Verwendet im JTL-Backend die tatsächlich aktive
+Smarty-Engine. Dies ist besonders im Smarty-4-Kompatibilitätsmodus wichtig, in
+dem JTL die echte Engine innerhalb seiner Fassade kapselt. Die gezielte
+Cache-Bereinigung erreicht dadurch den verwendeten Admin-Compile-Ordner.
+Andere Caches und gespeicherte Plugininhalte bleiben unverändert.
+
 ## 1.3.2 – 1. September 2026
 
-Aktueller freigegebener Stand. Erzeugt im frühen JTL-Update-Lifecycle
-ausdrücklich einen `BackendSmarty`-Renderer und bereinigt damit den richtigen
-Admin-Compile-Ordner. Dadurch werden die Sprachkarten und die lokale
-Formatierungsleiste der AI-Philosophie nach dem Update zuverlässig aus dem
-aktuellen Paket erzeugt. Andere Shop-Caches sowie Bild-, Kennzeichnungs- und
-Philosophie-Daten bleiben unverändert.
+Historischer Stand. Erzeugte im frühen JTL-Update-Lifecycle ausdrücklich einen
+`BackendSmarty`-Renderer. Im Smarty-4-Kompatibilitätsmodus landete der direkte
+Methodenaufruf jedoch auf der äußeren Smarty-5-Fassade statt auf der intern
+aktiven Engine. Diese Einschränkung wird durch Version 1.3.3 behoben.
 
 ## 1.3.1 – 31. August 2026
 
 Historischer Stand. Führte die gezielte Cache-Bereinigung ein. Im frühen
 JTL-Update-Lifecycle konnte die allgemeine Smarty-Instanz jedoch noch auf den
 Frontend- statt den Backend-Compile-Ordner zeigen; diese Einschränkung wird
-durch Version 1.3.2 behoben.
+durch Version 1.3.3 vollständig behoben.
 
 ## 1.3.0 – 30. August 2026
 

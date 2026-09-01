@@ -143,7 +143,7 @@ final class BootstrapTemplateCacheRefreshTest extends TestCase
             }
         };
 
-        $bootstrap->updated('1.3.1', '1.3.2');
+        $bootstrap->updated('1.3.2', '1.3.3');
 
         self::assertSame(
             [realpath($this->testverzeichnis . '/adminmenu/templates/philosophy.tpl')],

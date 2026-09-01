@@ -36,10 +36,11 @@ Das Plugin hilft Ihnen, lokale Shopbilder strukturiert zu prüfen und transparen
 
 ## Aktuelle Version
 
-Die aktuelle **Version 1.3.2** enthält die zwei großen Sprachkarten und den
+Die aktuelle **Version 1.3.3** enthält die zwei großen Sprachkarten und den
 lokalen Editor aus Version 1.3.0. Zusätzlich bereinigt sie nach einem
-Plugin-Update ausdrücklich den JTL-Backend-Templatecache, damit keine
-kompilierte Oberfläche der Vorversion weiterverwendet wird.
+Plugin-Update den JTL-Backend-Templatecache über die tatsächlich aktive
+Smarty-Engine, damit keine kompilierte Oberfläche der Vorversion
+weiterverwendet wird.
 Die Inhalte der AI-Philosophie lassen sich **Visuell** oder optional als
 bereinigtes **HTML** bearbeiten. Der Editor arbeitet vollständig lokal, lädt keine
 Drittinhalte und behält die Textfelder als No-JavaScript-Fallback bei. Die
