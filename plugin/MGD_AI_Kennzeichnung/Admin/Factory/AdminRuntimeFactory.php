@@ -35,6 +35,9 @@ use Plugin\MGD_AI_Kennzeichnung\Scanner\Adapter\BannerSourceAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\Adapter\CategorySourceAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\Adapter\ManufacturerSourceAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\Adapter\OpcSourceAdapter;
+use Plugin\MGD_AI_Kennzeichnung\Scanner\Adapter\OpcStorageSourceAdapter;
+use Plugin\MGD_AI_Kennzeichnung\Scanner\Filesystem\OpcStorageFileLister;
+use Plugin\MGD_AI_Kennzeichnung\Scanner\Filesystem\OpcStorageRoot;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\Adapter\ProductSourceAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\LocalPathNormalizer;
 use Plugin\MGD_AI_Kennzeichnung\Service\ImageScanService;
@@ -53,6 +56,7 @@ final class AdminRuntimeFactory
         array &$session,
         string $sessionId,
         int $adminMenuId,
+        string $shopRoot,
     ): AdminAssetController {
         $authorization = new JtlAuthorizationAdapter($account, $plugin->getID(), $sessionId);
         $csrf = new JtlCsrfAdapter($session);
@@ -70,6 +74,10 @@ final class AdminRuntimeFactory
                 new ManufacturerSourceAdapter($db, $pathNormalizer),
                 new BannerSourceAdapter($db, $pathNormalizer),
                 new OpcSourceAdapter($db, $pathNormalizer),
+                new OpcStorageSourceAdapter(
+                    new OpcStorageFileLister(new OpcStorageRoot($shopRoot), $pathNormalizer),
+                    $pathNormalizer,
+                ),
             ],
             $assets,
             $usages,

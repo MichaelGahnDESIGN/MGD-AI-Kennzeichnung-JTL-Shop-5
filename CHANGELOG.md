@@ -1,5 +1,19 @@
 # Änderungsprotokoll
 
+## Noch nicht veröffentlicht – OPC-Dateispeicherscan
+
+- Ergänzt den bisherigen OPC-Seitenscan um einen rekursiven Scan des lokalen
+  OPC-Uploadspeichers einschließlich Unterordnern und noch unbenutzter Bilder.
+- Nutzt weiterhin die vorhandenen Galerie-Filter und eine Karte pro Bildpfad.
+- Erhält Kennzeichnung, Position und Darstellung bestehender Bilder.
+- Führt OPC-Seiten- und Dateifundstellen gemeinsam atomar zusammen; bei
+  Lesefehlern oder überschrittenen Grenzen wird der gesamte Lauf zurückgerollt.
+- Begrenzt den Dateiscan auf 9.999 Rasterbilder, 20.000 Einträge und 32 Ebenen;
+  folgt keinen Symlinks und lädt weder Bildinhalte noch externe Ressourcen.
+- Ergänzt verständliche, pfadfreie Fehlerhinweise und eine gemeinsame
+  Galerie-/Detailhilfe zum Unterschied zwischen Speicher und Seitenverwendung.
+- Noch kein öffentliches Release und keine Installation auf Dev oder Live.
+
 ## 1.3.4 – 2026-09-01
 
 - vollständig lokalen AI-Philosophie-Editor auch in JTLs per AJAX

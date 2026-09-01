@@ -204,9 +204,9 @@ Bild-, Schrift-, Icon- oder Analysequellen sind ausgeschlossen.
 - [x] Ansätze verglichen und getrennten Dateisystemscanner freigegeben.
 - [x] Design schriftlich konkretisiert.
 - [x] Spezifikation auf Widersprüche, Platzhalter und Umfang geprüft.
-- [ ] Schriftliche Spezifikation von Michael geprüft.
-- [ ] Implementierungsplan erstellt.
-- [ ] Testgetrieben implementiert und vollständig verifiziert.
+- [x] Schriftliche Spezifikation von Michael mit „leg los“ freigegeben.
+- [x] Implementierungsplan erstellt.
+- [x] Testgetrieben implementiert und lokal verifiziert; echte Dev-Shop-Abnahme noch offen.
 
 Eine visuelle Entwurfsbegleitung ist nicht erforderlich: Das Galerielayout
 bleibt unverändert, und das Bildschirmfoto dient als konkretes Ordnerbeispiel.

@@ -7,6 +7,8 @@ namespace Plugin\MGD_AI_Kennzeichnung\Service;
 use Plugin\MGD_AI_Kennzeichnung\Domain\AssetSource;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\AssetRepository;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\UsageRepository;
+use Plugin\MGD_AI_Kennzeichnung\Scanner\Adapter\OpcSourceAdapter;
+use Plugin\MGD_AI_Kennzeichnung\Scanner\Adapter\OpcStorageSourceAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\LocalImageReference;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\SourceAdapterInterface;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\SourceAdapterPageInterface;
@@ -47,7 +49,7 @@ final class ImageScanService
 
                 foreach ($this->adapters as $adapter) {
                     if (!$adapter instanceof SourceAdapterPageInterface) {
-                        throw new RuntimeException('Der Quellenadapter meldet die Zahl gelesener Datenbankzeilen nicht.');
+                        throw new RuntimeException('Der Quellenadapter meldet die Zahl gelesener Quelldatensätze nicht.');
                     }
                     $offset = 0;
                     $previousFullPage = null;
@@ -69,7 +71,7 @@ final class ImageScanService
                         $previousFullPage = $page->rowsRead === self::PAGE_SIZE ? $fingerprint : null;
 
                         /*
-                         * Eine hundertste volle DB-Seite besitzt kein nachweisbares
+                         * Eine hundertste volle Quellseite besitzt kein nachweisbares
                          * natürliches Ende. Wir brechen vor ihrer Verarbeitung ab;
                          * der Repository-Callback rollt dadurch den gesamten Lauf
                          * zurück und markiert insbesondere keine alte Nutzung als
@@ -128,6 +130,9 @@ final class ImageScanService
             AssetSource::Opc,
         ];
         $sources = [];
+        /** @var array<string, list<class-string>> $contributions */
+        $contributions = [];
+        $opcContributions = [OpcSourceAdapter::class, OpcStorageSourceAdapter::class];
         foreach ($this->adapters as $adapter) {
             if (!$adapter instanceof SourceAdapterPageInterface) {
                 throw new RuntimeException('Der Quellenadapter erfüllt den sicheren Seitenvertrag nicht.');
@@ -137,8 +142,22 @@ final class ImageScanService
                 throw new RuntimeException('Der Quellenadapter verwendet keinen automatisch scanbaren Quellentyp.');
             }
             if (isset($sources[$source->value])) {
-                throw new RuntimeException('Ein Quellentyp wurde doppelt als Scanneradapter registriert.');
+                $previous = $contributions[$source->value];
+                /*
+                 * Nur die beiden bekannten, finalen OPC-Adapter dürfen einen
+                 * Quellentyp gemeinsam vervollständigen. Fremde Implementierungen
+                 * und ein zweites Exemplar desselben Beitrags bleiben gesperrt.
+                 * Der anschließende Abgleich erhält OPC dennoch nur einmal.
+                 */
+                if ($source !== AssetSource::Opc || count($previous) !== 1
+                    || !in_array($adapter::class, $opcContributions, true)
+                    || !in_array($previous[0], $opcContributions, true)
+                    || $previous[0] === $adapter::class
+                ) {
+                    throw new RuntimeException('Ein Quellentyp wurde doppelt als Scanneradapter registriert.');
+                }
             }
+            $contributions[$source->value][] = $adapter::class;
             $sources[$source->value] = $source;
         }
 

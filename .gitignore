@@ -8,6 +8,8 @@
 /.superpowers/
 /.secrets/
 /dist/
+# Lokal regenerierbarer AST-Wissensgraph samt Werkzeugcache, kein Pluginbestandteil.
+/graphify-out/
 .env*
 *.bak
 *.pem

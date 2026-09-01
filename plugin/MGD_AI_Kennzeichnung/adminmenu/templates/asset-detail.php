@@ -23,6 +23,7 @@ $escapedAdminMenuId = htmlspecialchars((string) $route->adminMenuId, ENT_QUOTES 
         <dt>Lokaler Pfad</dt><dd><?= $escapedPath ?></dd>
         <dt>Status</dt><dd><?= $escapedStatus ?></dd>
     </dl>
+    <?php require __DIR__ . '/partials/opc-scan-help.php'; ?>
     <form method="post" aria-label="Bildkennzeichnung speichern">
         <input type="hidden" name="kPlugin" value="<?= $escapedPluginId ?>">
         <input type="hidden" name="kPluginAdminMenu" value="<?= $escapedAdminMenuId ?>">

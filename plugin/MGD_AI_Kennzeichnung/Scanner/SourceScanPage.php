@@ -9,7 +9,8 @@ use InvalidArgumentException;
 /**
  * Unveränderliches Seitenergebnis mit getrennten Roh- und Trefferzahlen.
  *
- * `rowsRead` zählt Datenbankzeilen. Deshalb bleibt die Pagination korrekt,
+ * `rowsRead` zählt Quelldatensätze (Datenbankzeilen oder aufgelistete Dateien).
+ * Deshalb bleibt die Pagination korrekt,
  * selbst wenn der Sicherheitsfilter alle Referenzen einer Seite verwirft.
  */
 final class SourceScanPage

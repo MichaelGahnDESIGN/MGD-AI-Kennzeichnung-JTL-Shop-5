@@ -68,6 +68,27 @@ final class AdminActionsTest extends TestCase
     }
 
     #[Test]
+    public function dateiscangrenzen_werden_verstaendlich_aber_ohne_interne_daten_angezeigt(): void
+    {
+        $trace = [];
+        $logger = new RecordingLogger();
+        $scanner = new RecordingScanner($trace);
+        $failure = \Plugin\MGD_AI_Kennzeichnung\Scanner\Filesystem\OpcStorageScanFailure::ImageLimit;
+        $scanner->failure = new \Plugin\MGD_AI_Kennzeichnung\Scanner\Filesystem\OpcStorageScanException($failure);
+        $action = new ScanAction(
+            new RecordingAuthorization($trace, true),
+            new RecordingCsrf($trace, true),
+            $scanner,
+            $logger,
+        );
+
+        $result = $action->execute('csrf');
+        self::assertFalse($result->successful);
+        self::assertStringContainsString('9.999', $result->message);
+        self::assertSame([['admin_scan_failed', 0]], $logger->events);
+    }
+
+    #[Test]
     public function scan_fehler_bleibt_generisch_und_loggt_nur_code_und_anzahl(): void
     {
         $trace = [];

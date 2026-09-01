@@ -10,6 +10,19 @@ use PHPUnit\Framework\TestCase;
 final class AdminTemplateContractTest extends TestCase
 {
     #[Test]
+    public function galerie_und_details_erklaeren_den_opc_dateispeicher(): void
+    {
+        $root = dirname(__DIR__, 2) . '/plugin/MGD_AI_Kennzeichnung/adminmenu/templates';
+        $help = (string) file_get_contents($root . '/partials/opc-scan-help.php');
+        self::assertStringContainsString('Unterordner', $help);
+        self::assertStringContainsString('OPC-Dateispeicher', $help);
+        self::assertStringContainsString('noch nicht', $help);
+        foreach (['assets-list.php', 'asset-detail.php'] as $file) {
+            self::assertStringContainsString("partials/opc-scan-help.php", (string) file_get_contents($root . '/' . $file));
+        }
+    }
+
+    #[Test]
     public function bildverwaltung_besteht_aus_responsiver_barrierearmer_galerie(): void
     {
         $root = dirname(__DIR__, 2) . '/plugin/MGD_AI_Kennzeichnung';

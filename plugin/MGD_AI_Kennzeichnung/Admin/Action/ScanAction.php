@@ -9,6 +9,7 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\Port\CsrfPortInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Port\LogPortInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Port\ScanPortInterface;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Result\ScanActionResult;
+use Plugin\MGD_AI_Kennzeichnung\Scanner\Filesystem\OpcStorageScanException;
 use Throwable;
 
 /** Startet den Scanner erst nach beiden Sicherheitsprüfungen. */
@@ -29,6 +30,11 @@ final class ScanAction
             $result = $this->scanner->scan();
 
             return new ScanActionResult(true, 'Der Bildscan wurde abgeschlossen.', $result->createdAssets, $result->recordedUsages);
+        } catch (OpcStorageScanException $error) {
+            // Nur die geschlossene Liste eigener Hinweise ausgeben, niemals beliebige Ausnahmeinhalte.
+            $this->logger->event('admin_scan_failed', 0);
+
+            return new ScanActionResult(false, $error->failure->message() . ' Der Bildabgleich wurde nicht übernommen.');
         } catch (Throwable) {
             /* Ausnahme, Anfrage, Pfade und Benutzerbezug dürfen niemals in das Log gelangen. */
             $this->logger->event('admin_scan_failed', 0);

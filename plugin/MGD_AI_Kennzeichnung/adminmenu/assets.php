@@ -11,7 +11,7 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\Http\AdminTabScope;
 use Plugin\MGD_AI_Kennzeichnung\Admin\View\AdminTemplateRenderer;
 
 /* JTLs PluginController definiert PFAD_ROOT und stellt $oPlugin bereit. */
-if (!defined('PFAD_ROOT') || !isset($oPlugin) || !$oPlugin instanceof PluginInterface) {
+if (!defined('PFAD_ROOT') || !is_string(PFAD_ROOT) || !isset($oPlugin) || !$oPlugin instanceof PluginInterface) {
     http_response_code(403);
     echo 'Die Bildverwaltung ist nur im JTL-Administrationsbereich verfügbar.';
 
@@ -42,6 +42,7 @@ try {
         $session,
         $sessionId,
         $adminMenuId,
+        PFAD_ROOT,
     );
     $page = $controller->handle($request->method, $request->query, $request->post);
     (new AdminTemplateRenderer(__DIR__ . '/templates'))->render($page);

@@ -43,6 +43,7 @@ $nextUrl = htmlspecialchars($route->query(['page' => $nextPage] + $pagination), 
 
     <?php require __DIR__ . '/partials/asset-filter.php'; ?>
     <?php require __DIR__ . '/partials/gallery-toolbar.php'; ?>
+    <?php require __DIR__ . '/partials/opc-scan-help.php'; ?>
 
     <form class="mgd-gallery-form" method="post" aria-label="Ausgewählte Bilder bearbeiten">
         <input type="hidden" name="kPlugin" value="<?= $escapedPluginId ?>">

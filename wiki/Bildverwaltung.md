@@ -22,6 +22,35 @@ Er arbeitet seitenweise und mit festen Obergrenzen. Jeder Lauf gleicht Fundstell
 - nach umfangreichen OPC-Änderungen;
 - regelmäßig als Teil des redaktionellen Prüfprozesses.
 
+## OPC-Unterordner und unbenutzte Uploads (noch nicht veröffentlicht)
+
+Im aktuellen Entwicklungsstand ergänzt der Scan die gespeicherten OPC-Seiten
+um den vollständigen lokalen Uploadspeicher innerhalb fester Sicherheitsgrenzen.
+Damit erscheinen auch Bilder unter `opc/banner/2026` oder
+`opc/bilder/2026/weitere/Unterordner`, die Sie noch auf keiner Seite eingesetzt haben.
+
+1. Öffnen Sie die Bildverwaltung und wählen Sie **Sicheren Bildscan starten**.
+2. Warten Sie auf die Bestätigung des vollständigen Scans.
+3. Wählen Sie als Quelle **OnPage Composer** und klicken Sie auf **Galerie anzeigen**.
+4. Nutzen Sie bei Bedarf **Ungeprüft**, die Sortierung und die Seitennavigation.
+5. Öffnen Sie **Details**, wenn Sie Bilder mit gleichem Dateinamen anhand ihres Ordners unterscheiden möchten.
+
+Die Quelle bleibt OPC. Ein eigener Ordnerfilter wird nicht hinzugefügt.
+Eine Datei im Speicher und ihr Verweis auf einer OPC-Seite sind zwei Fundstellen,
+aber nur ein Bild in der Galerie. Ein Speicherfund beweist keine Veröffentlichung.
+Neue Bilder beginnen als **Ungeprüft**; bestehende Kennzeichnungen bleiben erhalten.
+
+Pro Scan sind 9.999 JPG-/JPEG-/PNG-/WebP-/GIF-/AVIF-Dateien, insgesamt 20.000
+Verzeichniseinträge und 32 Unterordnerebenen zugelassen. Symlinks werden nicht
+verfolgt, SVG und Videos nicht aufgenommen. Fehlt der Speicher, ist ein Ordner
+unlesbar oder wird eine Grenze überschritten, übernimmt das Plugin keine
+Scanänderungen. Nach Behebung können Sie erneut scannen. Keine Freigabe ganzer
+Ordner für jedermann (`777`) als pauschale Lösung!
+
+Verschieben oder Umbenennen erzeugt wegen des geänderten Pfads eine neue
+Bildzuordnung. Die alte Kennzeichnung wird nicht automatisch auf den neuen Pfad
+übertragen. Die Originaldateien werden durch den Scanner nicht verändert.
+
 ## Filter
 
 ### Status

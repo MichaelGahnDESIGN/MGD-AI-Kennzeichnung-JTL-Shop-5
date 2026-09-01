@@ -146,6 +146,21 @@ Die Galerie bietet:
 - erneuten Bildscan;
 - getrennte Prüfung veralteter Fundstellen.
 
+### OPC-Uploads aus Unterordnern – aktueller Entwicklungsstand
+
+Die nächste, noch nicht veröffentlichte Erweiterung findet zusätzlich alle
+unterstützten Uploads im OPC-Dateispeicher – auch ohne Verwendung auf einer Seite.
+Das schließt beispielsweise `opc/banner/2026`, `opc/bilder/2026` und tiefere
+Unterordner ein. Nach **Sicheren Bildscan starten** wählen Sie die Quelle
+**OnPage Composer** und klicken auf **Galerie anzeigen**. Die bisherigen
+Status-, Fundstellen- und Sortierfilter bleiben erhalten.
+
+Gleiche Dateinamen in verschiedenen Ordnern bleiben getrennte Bilder. Dieselbe
+Datei wird dagegen nur einmal angezeigt, auch wenn der Scan sie im Speicher
+und auf OPC-Seiten findet. Ihre bereits gespeicherten Kennzeichnungen bleiben
+unverändert. Grenzen, sichere Fehlerbehandlung und Hinweise zu Umbenennungen
+finden Sie unter [OPC-Dateispeicherscan](Dokumentation/OPC-Dateispeicherscan.md).
+
 ### Stapelbearbeitung
 
 Bei einer Stapelbearbeitung werden nur die ausdrücklich aktivierten Felder geändert. Vor der Ausführung zeigt das Plugin eine Zusammenfassung. Die Bestätigung ist an die aktuelle Admin-Sitzung gebunden, kurzlebig und nur einmal verwendbar.
