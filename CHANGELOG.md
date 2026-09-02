@@ -1,5 +1,21 @@
 # Änderungsprotokoll
 
+## Noch nicht veröffentlicht – Vorschau und Lesbarkeit
+
+- Ergänzt ein rein lokales Schachbrettmuster rund um das unveränderte
+  Schuh-Vorschaubild. So sind Transparenz und Hintergrundunschärfe direkt
+  hinter dem Label erkennbar.
+- Die Musterstreifen wachsen bei großen oder mehrzeiligen Labels mit.
+  Alle vier Vorschaupositionen behalten den eingestellten Außenabstand.
+- Gibt Überschrift und Einleitung eine eigene helle Fläche mit dunkler
+  Schrift, damit sie auch im dunklen JTL-Backend lesbar bleiben.
+- Keine neue Einstellung, keine externen Ressourcen und keine Änderungen
+  an Shopbildern, Bildkennzeichnungen oder dem Speicherablauf.
+- Lokal im Browser bei 360 Pixeln Breite und auf breiter Fläche geprüft;
+  sechs neue Strukturtests sichern die Einbindung ab.
+- Noch nicht auf Campingteile24, Onvis oder Dev übertragen. Kein neues ZIP
+  und kein GitHub-Release für diese Änderung erstellt.
+
 ## Noch nicht veröffentlicht – Darstellung speichern
 
 - Behebt die weiße Adminseite beim Speichern von Design-Einstellungen nach

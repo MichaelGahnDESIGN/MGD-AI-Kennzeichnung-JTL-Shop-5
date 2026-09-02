@@ -2,7 +2,7 @@
 
 ## Ziel und Freigabestand
 
-Michael hat dem Vorschlag zugestimmt, im Darstellungstab ein kontrastreiches Muster rund um den Schuh und hinter dem Vorschau-Label sowie bessere Schriftkontraste umzusetzen. Dieses Dokument konkretisiert ausschließlich diese beiden Änderungen. Die schriftliche Entwurfsprüfung steht noch aus; der Produktivcode bleibt bis dahin unverändert.
+Michael hat dem Vorschlag zugestimmt, im Darstellungstab ein kontrastreiches Muster rund um den Schuh und hinter dem Vorschau-Label sowie bessere Schriftkontraste umzusetzen. Dieses Dokument konkretisiert ausschließlich diese beiden Änderungen. Auch der schriftliche Entwurf wurde anschließend ausdrücklich mit „ja“ freigegeben; die Umsetzung erfolgt lokal, ohne automatische Shopübertragung.
 
 ## Vorschau
 

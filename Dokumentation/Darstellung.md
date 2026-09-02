@@ -51,6 +51,53 @@ Die Live-Vorschau arbeitet ausschließlich im Browser mit lokalen Plugin-Dateien
 Sie sendet weder das Beispielbild noch die eingegebenen Werte an Dritte. Ohne
 Klick auf **Speichern** wird kein Shopwert geändert.
 
+## Muster in der lokalen Vorschau – noch nicht veröffentlicht
+
+Das Schuhbild erhält in der nächsten vorbereiteten Fassung einen
+Schachbrett-Rand. Das Muster liegt auch hinter dem Label. Damit lässt sich
+die Wirkung besser beurteilen als auf einer einfarbigen Fläche:
+
+1. Transparenz beispielsweise auf **50 %** stellen: Das Muster scheint
+   durch den Labelhintergrund.
+2. Hintergrundunschärfe von **0 px** auf **12 px** ändern: Die Konturen des
+   Musters hinter dem Label werden weich. Der Labeltext bleibt scharf.
+3. Position und helles oder dunkles Farbschema in der Vorschau ausprobieren.
+
+Der Rand wächst bei mehrzeiligen Labels mit. Er ist eine reine Testfläche:
+Das vorhandene Schuhbild wird nicht bearbeitet, und deine tatsächlichen
+Shopbilder bekommen keinen Muster-Rand. Es werden weder weitere Dateien
+von fremden Servern geladen noch neue Werte gespeichert. Die Überschrift
+des Darstellungstabs steht außerdem auf einer eigenen hellen Fläche und
+bleibt dadurch auch im dunklen Backend gut lesbar.
+
+Die Browserabnahme am **3. September 2026** erfolgte lokal mit dem echten
+Plugin-Template, dessen bekannte Smarty-Testwerte durch eine begrenzte
+Testhülle ersetzt werden, sowie unveränderten Produktions-CSS-/JS-Dateien.
+Das ist eine Sichtprüfung ohne JTL-Server oder Shopanmeldung, kein erneuter
+Live-Speichertest. Alle vier Ecken hielten 8 px Abstand; die Musterwirkung
+bei 50 % Transparenz und 0/12 px Unschärfe war sichtbar. In einem echten
+360-px-Testviewport entstand auch bei Schriftgröße 48 px, Innenabstand 32 px
+und Außenabstand 64 px kein horizontaler Überlauf. Das Label blieb vollständig
+in der Vorschau und auf der Musterfläche.
+
+Der lokale Abschluss umfasst **565 PHP-Tests mit 14.900 Prüfungen**, **142
+JavaScript-Tests**, eine fehlerfreie PHPStan-Analyse und eine Formatprüfung
+ohne Änderungsbedarf. Die PHP-Prüfung lief mit PHP 8.5.6; ein vollständiger
+Lauf unter dem Projektminimum PHP 8.1 wurde nicht durchgeführt. Die
+Formatprüfung war ausschließlich lesend. Die getrennte Spezifikations-
+und Qualitätsprüfung ergab keine offenen Befunde.
+
+Zur Wiederholung dient `node tests/Browser/display-preview-server.mjs`.
+Die ausgegebene Adresse ist ausschließlich über `127.0.0.1` erreichbar.
+„Schmal“ erzeugt einen 360-px-Viewport; `?width=narrow&extreme=yes` prüft
+die oberen Wertebereiche. Speichern ist in dieser Testhülle gesperrt,
+POST-Anfragen werden abgelehnt und es gibt keine Verbindung zu einem Shop.
+
+**Bereitstellungsstand:** Diese Vorschauänderung ist nur lokal vorbereitet.
+Campingteile24 enthält weiterhin den separat abgenommenen Speicher-Hotfix;
+Onvis und Dev wurden durch die Vorschauarbeit nicht geändert. Es gibt dafür
+noch kein neues ZIP und kein GitHub-Release.
+
 ## Barrierefreiheit und sichere Grenzen
 
 Zahlenfeld und Schieberegler sind gekoppelt und per Tastatur bedienbar. Die
@@ -90,4 +137,5 @@ diesen Test nicht bearbeitet.
 Die installierte Versionsnummer bleibt 1.3.6 mit diesem dokumentierten
 Hotfix. Onvis und Dev enthalten ihn noch nicht; auch im bisherigen ZIP und
 auf GitHub ist er noch nicht veröffentlicht. Der Muster-Hintergrund der
-Vorschau gehört nicht zu diesem Fix und ist weiterhin offen.
+Vorschau gehört nicht zu diesem Fix; sein separater lokaler Stand ist oben
+beschrieben.
