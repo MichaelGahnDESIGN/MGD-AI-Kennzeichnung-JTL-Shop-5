@@ -10,8 +10,11 @@
   Fehlerfall werden keine Einstellungen geschrieben.
 - Rechteprüfung, Sicherheitstoken und strenge Prüfung der Formularfelder
   bleiben unverändert. Keine Datenbankmigration oder externen Ressourcen.
-- Durch lokale Regressionstests abgesichert. Noch kein neues ZIP, kein
-  GitHub-Release und keine Übertragung dieser Korrektur auf Dev oder Live.
+- Durch lokale Regressionstests abgesichert. Am 2. September auf ausdrücklichen
+  Wunsch als Zwei-Dateien-Hotfix (`1be0282`) auf Campingteile24 eingespielt und
+  aus der zuvor problematischen Galerieadresse erfolgreich gespeichert.
+  Alle sieben vorhandenen Designwerte blieben beim Test unverändert.
+- Noch kein neues ZIP oder GitHub-Release. Onvis und Dev wurden nicht verändert.
 
 ## 1.3.6 – 2026-09-02 (Testpaket)
 

@@ -6,6 +6,11 @@ Korrigiert den Abbruch des OPC-Dateiscans durch den internen `.tmb`-Cache.
 Normale Unterordner und bestehende Kennzeichnungen bleiben erhalten; keine
 neue Datenbankmigration. Siehe [Prüf- und Updatehinweise](Release-1.3.6.md).
 
+Campingteile24 enthält zusätzlich den gezielten Speicher-Hotfix `1be0282`.
+Er wurde nach Sicherung auf Nutzerwunsch direkt dort erfolgreich geprüft.
+Onvis, Dev, das ZIP und GitHub wurden dadurch nicht aktualisiert.
+Siehe [Abnahme des Darstellungstabs](Darstellung.md).
+
 ## 1.3.5 – 2. September 2026
 
 Eindeutig versioniertes lokales Testpaket, noch kein öffentliches Release.

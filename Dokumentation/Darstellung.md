@@ -65,3 +65,29 @@ Die optionale Footer-Nennung lautet **supported by: Michael Gahn DESIGN**. Nur
 „Michael Gahn DESIGN“ ist verlinkt; die Herstellerseite öffnet sicher in einem
 neuen Tab. Die Einstellung ist freiwillig und beeinflusst die
 KI-Kennzeichnungen nicht.
+
+## Abnahme des Speicher-Hotfixes am 2. September 2026
+
+Der Fix `1be0282` wurde auf ausdrücklichen Wunsch direkt auf Campingteile24
+geprüft. Vor der Übertragung wurden ausschließlich `adminmenu/display.php`
+und `adminmenu/templates/display.tpl` verschlüsselt lokal gesichert. Beide
+Serverdateien entsprachen vorab der erwarteten Vorversion und nach der
+Übertragung exakt dem geprüften Commit. Es wurden keine Datenbankmigrationen
+oder Änderungen an anderen Plugins durchgeführt.
+
+Der Test begann in der gefilterten Galerie mit Status „KI-generiert“. Nach
+dem Wechsel zu „Darstellung“ führte das Formular an seine eigene Adresse,
+ohne Galerieparameter zu übernehmen. Der echte Speichervorgang bestätigte:
+„Die Darstellung wurde sicher gespeichert.“ Eine weiße Seite trat nicht auf.
+
+Nach vollständigem Neuladen waren alle sieben Werte unverändert: Sprache
+automatisch, Schriftgröße 12 px, Außenabstand 8 px, Innenabstand 6 px,
+Eckenradius 4 px, Unschärfe 0 px und Transparenz 8 %. Es wurden bewusst keine
+anderen Designwerte im Kunden-Liveshop ausprobiert. Die fünf Startseitenlabels
+wurden weiterhin ausgegeben. Ihre bildbezogenen Entscheidungen wurden durch
+diesen Test nicht bearbeitet.
+
+Die installierte Versionsnummer bleibt 1.3.6 mit diesem dokumentierten
+Hotfix. Onvis und Dev enthalten ihn noch nicht; auch im bisherigen ZIP und
+auf GitHub ist er noch nicht veröffentlicht. Der Muster-Hintergrund der
+Vorschau gehört nicht zu diesem Fix und ist weiterhin offen.
