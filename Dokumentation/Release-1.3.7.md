@@ -49,10 +49,38 @@ SHA-256 des Installationspakets:
 GitHub Actions startet bei Push oder Pull Request nicht automatisch. Ein
 manueller Cloud-Test wird ohne gesonderte Kostenprüfung nicht angestoßen.
 
-**Installationsstatus:** Das Paketupdate auf den drei Zielshops ist noch nicht
-bestätigt. Vorabprüfung im JTL-Plugin-Manager am 3. September: Dev 1.3.6,
-Campingteile24 1.3.6, Onvis live 1.2.0. Vollständige Datei- und
-Datenbanksicherungen müssen vor dem jeweiligen Update nachgewiesen sein.
+**Release-Status:** Quellcode und Dokumentation sind auf GitHub `main`.
+Version 1.3.7 liegt mit ZIP und passender Prüfsumme als Release-Entwurf vor.
+Der von GitHub gemeldete SHA-256-Digest stimmt mit dem lokalen Paket überein.
+Öffentlicher Downloadstand bleibt bis zur Dev-Abnahme 1.3.4. Das separate
+GitHub-Wiki-Repository ist nicht erreichbar; das Handbuch liegt unter `wiki/`
+im Hauptrepository.
+
+**Installationsstatus am 3. September:** Noch kein Update übertragen.
+Der Datei-Auswahldialog wurde durch den gesperrten Arbeitsplatz unterbrochen.
+Die bestehende Installation wurde deshalb nicht durch einen alternativen
+Übertragungsweg ersetzt. Die erforderliche Browser-Abnahme bleibt offen.
+
+| Ziel | Im JTL-Plugin-Manager bestätigt | Nächster Schritt |
+| --- | --- | --- |
+| Dev | 1.3.6 | Arbeitsplatz entsperren, ZIP hochladen, aktualisieren und prüfen |
+| Onvis live | 1.2.0 | Erst nach erfolgreicher Dev-Abnahme aktualisieren |
+| Campingteile24 | 1.3.6 | Zusätzlich aktuelles vollständiges Backup nachweisen |
+
+Für Dev ist das vollständige Dateiarchiv mit 38.151 Einträgen und der
+abgeschlossene Dump mit 358 Tabellen lokal verschlüsselt gesichert und
+vollständig auf Lesbarkeit, Entschlüsselung und SHA-256 geprüft. Zusätzlich
+ist auch Onvis live vollständig gesichert: 38.038 lesbare Archiveinträge und
+358 vollständig exportierte Tabellen, ebenfalls verschlüsselt und hashgeprüft.
+Zusätzlich
+liegen separate Sicherungen der Plugin-Dateien, vier Plugin-Tabellen und
+zugehörigen JTL-Metadaten für Dev und Onvis vor. Die geschützten Zugangsdokumente
+blieben unverändert. Backups und Schlüssel sind ausschließlich lokal,
+nicht im Repository oder Webroot. Es wurden keine alten Backups gelöscht.
+
+Die bekannten Campingteile24-Sicherungen decken einzelne Plugin-/Theme-Dateien
+und Plugin-Daten ab, nicht nachweislich den vollständigen aktuellen Shop.
+Deshalb bleibt dieser Live-Schritt bis zum Backup-Nachweis gesperrt.
 
 ## Sicher aktualisieren und zurückkehren
 

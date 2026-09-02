@@ -3,6 +3,7 @@
 Transparente Kennzeichnungen für KI-generierte und KI-bearbeitete Bilder – direkt in JTL-Shop 5, ohne die Originalbilder zu verändern und ohne Bilddaten an externe KI-Dienste zu senden.
 
 > **Aktueller Paketstand:** 1.3.7 – OPC-Unterordner, sicheres Design-Speichern und gemusterte Vorschau
+> **Release-Status:** 1.3.7 liegt als Entwurf bereit. Öffentlicher Downloadstand bleibt bis zur Dev-Abnahme 1.3.4.
 > **Voraussetzungen:** JTL-Shop 5.7.2, PHP 8.1 oder neuer, NOVA oder ein kompatibles NOVA-basiertes Template
 > **Prüfstand:** Die lokalen Prüfungen und der gesonderte Installationsstand sind in [Release 1.3.7](Dokumentation/Release-1.3.7.md) dokumentiert. Eine Veröffentlichung aktualisiert bestehende Shops nicht automatisch.
 > **Wichtig:** Das Plugin erkennt KI-Inhalte nicht automatisch. Die fachliche Prüfung und Einstufung erfolgt bewusst durch einen berechtigten Menschen.
