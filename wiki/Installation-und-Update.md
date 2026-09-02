@@ -13,9 +13,12 @@ Die Bildausgabe wurde mit Version 1.1.1 unter NOVA und einem NOVA-basierten Onvi
 
 ## Das richtige ZIP verwenden
 
-Verwenden Sie aus dem GitHub-Release ausschließlich:
+Für den Dev-Test liegt dieses eindeutig versionierte lokale Paket bereit:
 
-`MGD_AI_Kennzeichnung-1.3.4.zip`
+`MGD_AI_Kennzeichnung-1.3.5.zip`
+
+Version 1.3.5 ist noch nicht öffentlich veröffentlicht. Nach einer Freigabe
+verwenden Sie aus dem GitHub-Release ausschließlich das angehängte Plugin-ZIP.
 
 Die automatisch angebotenen GitHub-Dateien **Source code (zip)** und **Source code (tar.gz)** sind keine installierbaren JTL-Pakete.
 

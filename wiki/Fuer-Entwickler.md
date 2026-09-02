@@ -37,8 +37,8 @@ composer style
 
 ```bash
 bash scripts/build-release.sh
-unzip -t dist/MGD_AI_Kennzeichnung-1.3.4.zip
-shasum -a 256 dist/MGD_AI_Kennzeichnung-1.3.4.zip
+unzip -t dist/MGD_AI_Kennzeichnung-1.3.5.zip
+shasum -a 256 dist/MGD_AI_Kennzeichnung-1.3.5.zip
 ```
 
 Das Buildskript erzeugt ein symlinkfreies JTL-Installationspaket. Abhängigkeiten und Entwicklungsartefakte gehören nicht in das Release-ZIP.

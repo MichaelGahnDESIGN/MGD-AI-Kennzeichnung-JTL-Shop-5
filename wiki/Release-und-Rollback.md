@@ -1,5 +1,18 @@
 # Release und Rollback
 
+## Testpaket 1.3.5
+
+Version 1.3.5 ist lokal für die Dev-Abnahme vorbereitet, noch nicht öffentlich
+veröffentlicht und nicht auf Live installiert. Der sichere Bildscan liest nun
+auch unbenutzte Bilder im OPC-Uploadspeicher und in verschachtelten Ordnern.
+Starten Sie nach dem Update einen neuen Scan, wählen Sie **OnPage Composer**
+und anschließend **Galerie anzeigen**. Bestehende Labels bleiben erhalten.
+
+Prüfen Sie auf Dev mindestens ein Bild im Hauptordner, eines in
+`banner/2026` und eines in einem noch tieferen Unterordner. Prüfen Sie außerdem
+Filter, Seitennavigation und eine vorhandene Kennzeichnung. Erst nach dieser
+Abnahme kann dasselbe geprüfte Paket für eine gesonderte Live-Freigabe dienen.
+
 ## Release 1.3.4
 
 Version 1.3.4 ergänzt für den Philosophie-Tab einen kleinen klassischen

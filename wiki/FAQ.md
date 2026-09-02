@@ -91,8 +91,8 @@ werden nicht übertragen.
 
 Nein.
 
-Version 1.3.4 wird per geprüftem, manuellem ZIP-Upload aus dem öffentlichen
-GitHub-Release installiert.
+Version 1.3.5 wird per geprüftem, manuellem ZIP-Upload installiert. Das aktuelle
+Testpaket liegt lokal vor; die öffentliche GitHub-Veröffentlichung steht noch aus.
 
 ## Was bedeutet Transparenz?
 

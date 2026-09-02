@@ -1,8 +1,17 @@
 # Versionsübersicht
 
+## 1.3.5 – 2. September 2026
+
+Eindeutig versioniertes lokales Testpaket, noch kein öffentliches Release.
+Ergänzt den sicheren OPC-Seitenscan um den offiziellen lokalen Uploadspeicher
+einschließlich Unterordnern und unbenutzter Bilder. Galerie-Filter und bestehende
+Kennzeichnungen bleiben erhalten. Lesefehler und überschrittene Schutzgrenzen
+rollen den gesamten Scan zurück. Die Abnahme im echten Dev-Shop steht noch aus;
+der Live-Shop wurde nicht verändert. Siehe [Prüf- und Updatehinweise](Release-1.3.5.md).
+
 ## 1.3.4 – 1. September 2026
 
-Aktueller freigegebener Stand. Startet den vollständig lokalen
+Zuletzt veröffentlichter Stand. Startet den vollständig lokalen
 AI-Philosophie-Editor über einen klassischen, JTL-kompatiblen AJAX-Starter.
 Dieser lädt nur das lokale Stylesheet und das lokale ES-Modul von derselben
 Shop-Domain. Die Textfelder bleiben bei einem Ladefehler als sicherer Fallback

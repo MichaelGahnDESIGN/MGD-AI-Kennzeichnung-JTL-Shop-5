@@ -22,9 +22,9 @@ Er arbeitet seitenweise und mit festen Obergrenzen. Jeder Lauf gleicht Fundstell
 - nach umfangreichen OPC-Änderungen;
 - regelmäßig als Teil des redaktionellen Prüfprozesses.
 
-## OPC-Unterordner und unbenutzte Uploads (noch nicht veröffentlicht)
+## OPC-Unterordner und unbenutzte Uploads (Testpaket 1.3.5)
 
-Im aktuellen Entwicklungsstand ergänzt der Scan die gespeicherten OPC-Seiten
+Im noch nicht öffentlich veröffentlichten Testpaket 1.3.5 ergänzt der Scan die gespeicherten OPC-Seiten
 um den vollständigen lokalen Uploadspeicher innerhalb fester Sicherheitsgrenzen.
 Damit erscheinen auch Bilder unter `opc/banner/2026` oder
 `opc/bilder/2026/weitere/Unterordner`, die Sie noch auf keiner Seite eingesetzt haben.

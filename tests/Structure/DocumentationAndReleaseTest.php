@@ -11,8 +11,8 @@ use ZipArchive;
 final class DocumentationAndReleaseTest extends TestCase
 {
     private const ROOT = __DIR__ . '/../..';
-    private const VERSION = '1.3.4';
-    private const ZIP = self::ROOT . '/dist/MGD_AI_Kennzeichnung-1.3.4.zip';
+    private const VERSION = '1.3.5';
+    private const ZIP = self::ROOT . '/dist/MGD_AI_Kennzeichnung-1.3.5.zip';
 
     #[Test]
     public function releaseziel_und_lokale_artefakte_sind_eindeutig_abgegrenzt(): void
@@ -30,11 +30,11 @@ final class DocumentationAndReleaseTest extends TestCase
         self::assertIsString($infoXml);
         self::assertIsString($gitignore);
 
-        self::assertStringContainsString('MGD_AI_Kennzeichnung-1.3.4.zip', $script);
+        self::assertStringContainsString('MGD_AI_Kennzeichnung-1.3.5.zip', $script);
         self::assertStringNotContainsString('MGD_AI_Kennzeichnung-1.2.1.zip', $script);
-        self::assertStringContainsString('<Version>1.3.4</Version>', $infoXml);
-        self::assertStringContainsString('MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.4', $checker);
-        self::assertStringContainsString("check(true, '1.3.4')", $display);
+        self::assertStringContainsString('<Version>1.3.5</Version>', $infoXml);
+        self::assertStringContainsString('MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.5', $checker);
+        self::assertStringContainsString("check(true, '1.3.5')", $display);
         self::assertStringNotContainsString('MGD-AI-Kennzeichnung-JTL-Shop-5/1.2.1', $checker);
         self::assertStringNotContainsString("check(true, '1.2.1')", $display);
         self::assertStringNotContainsString('cp -R "${quellordner}/."', $script);
@@ -109,6 +109,17 @@ BASH;
         );
         self::assertContains('MGD_AI_Kennzeichnung/Bootstrap.php', $eintraege);
         self::assertContains('MGD_AI_Kennzeichnung/info.xml', $eintraege);
+        // Der Unterordnerscan muss auch im ausgelieferten ZIP vollständig vorliegen.
+        foreach ([
+            'Scanner/Adapter/OpcStorageSourceAdapter.php',
+            'Scanner/Filesystem/OpcStorageRoot.php',
+            'Scanner/Filesystem/OpcStorageFileLister.php',
+            'Scanner/Filesystem/OpcStorageScanException.php',
+            'Scanner/Filesystem/OpcStorageScanFailure.php',
+            'adminmenu/templates/partials/opc-scan-help.php',
+        ] as $scanDatei) {
+            self::assertContains('MGD_AI_Kennzeichnung/' . $scanDatei, $eintraege);
+        }
         self::assertContains('MGD_AI_Kennzeichnung/Portlets/AIPhilosophie/AIPhilosophie.php', $eintraege);
         self::assertContains('MGD_AI_Kennzeichnung/adminmenu/impressum.php', $eintraege);
         self::assertContains('MGD_AI_Kennzeichnung/adminmenu/templates/impressum.tpl', $eintraege);
@@ -268,14 +279,14 @@ BASH;
     }
 
     #[Test]
-    public function version_1_3_4_ist_in_paket_ci_und_benutzerdokumentation_konsistent(): void
+    public function version_1_3_5_ist_in_paket_ci_und_benutzerdokumentation_konsistent(): void
     {
         $dateien = [
             'README' => self::ROOT . '/README.md',
             'CHANGELOG' => self::ROOT . '/CHANGELOG.md',
             'Sicherheit' => self::ROOT . '/SECURITY.md',
             'Darstellung' => self::ROOT . '/Dokumentation/Darstellung.md',
-            'Release' => self::ROOT . '/Dokumentation/Release-1.3.4.md',
+            'Release' => self::ROOT . '/Dokumentation/Release-1.3.5.md',
             'Datenschutz' => self::ROOT . '/Dokumentation/Datenschutz-und-Sicherheit.md',
             'Installation' => self::ROOT . '/Dokumentation/Installation-und-Livetest.md',
             'Wiki' => self::ROOT . '/wiki/Home.md',
@@ -298,7 +309,7 @@ BASH;
         }
 
         foreach ([
-            'Version 1.3.4',
+            'Version 1.3.5',
             'Live-Vorschau',
             'Transparenz',
             'Nur Vorschau',

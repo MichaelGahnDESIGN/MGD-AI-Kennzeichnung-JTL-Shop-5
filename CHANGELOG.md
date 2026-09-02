@@ -1,6 +1,6 @@
 # Änderungsprotokoll
 
-## Noch nicht veröffentlicht – OPC-Dateispeicherscan
+## 1.3.5 – 2026-09-02 (Testpaket, noch nicht veröffentlicht)
 
 - Ergänzt den bisherigen OPC-Seitenscan um einen rekursiven Scan des lokalen
   OPC-Uploadspeichers einschließlich Unterordnern und noch unbenutzter Bilder.

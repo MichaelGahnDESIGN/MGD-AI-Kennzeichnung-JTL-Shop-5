@@ -1,8 +1,8 @@
 # Rekursiver OPC-Dateispeicherscan
 
-Stand: Entwicklung vom 1. September 2026, noch nicht veröffentlicht oder in
-einem Shop installiert. Diese Anleitung beschreibt die neue Erweiterung, nicht
-das Verhalten des unveränderten Releases 1.3.4.
+Stand: lokales Testpaket 1.3.5 vom 2. September 2026, noch nicht öffentlich
+veröffentlicht oder in einem Shop installiert. Diese Anleitung beschreibt die
+neue Erweiterung, nicht das Verhalten des unveränderten Releases 1.3.4.
 
 ## Was sich verbessert
 
@@ -111,8 +111,8 @@ Datenlöschung. Dev-Abnahme und Live-Freigabe sind separate Schritte.
 
 ### Lokale Prüfergebnisse
 
-- Gesamtsuite: 555 PHP-Tests erfolgreich; ergänzende Filter-/Zählungsprüfung
-  ebenfalls erfolgreich.
+- Gesamtsuite für 1.3.5: 555 PHP-Tests mit 14.826 Assertions erfolgreich,
+  einschließlich Filter-/Zählungsprüfung und vollständigem Paketinhalt.
 - JavaScript: 142 Tests erfolgreich, keine Änderungen am JavaScript notwendig.
 - PHPStan: maximale Analysestufe ohne Fehler.
 - Formatprüfung und `git diff --check`: ohne Beanstandungen.
@@ -122,8 +122,7 @@ Datenlöschung. Dev-Abnahme und Live-Freigabe sind separate Schritte.
 - Wissensgraph lokal mit AST aktualisiert; keine LLM-/API-Extraktion.
 
 Die Tests liefen mit PHP 8.5.6. Eine zusätzliche Ausführung unter PHP 8.1 und
-die Abnahme in der echten JTL-Laufzeit stehen noch aus. Die bisherige
-Versionsnummer 1.3.4 wurde nicht geändert. Das beim Pakettest erzeugte ZIP ist
-ein Entwicklungsartefakt und kein Ersatz für das veröffentlichte 1.3.4-Release.
-Vor einem regulären Shopupdate ist eine neue, eindeutig versionierte
-Release-Datei erforderlich.
+die Abnahme in der echten JTL-Laufzeit stehen noch aus. Das eindeutig
+versionierte ZIP `MGD_AI_Kennzeichnung-1.3.5.zip` ist für diesen Dev-Test
+vorbereitet. Es ersetzt oder überschreibt das veröffentlichte 1.3.4-Release
+nicht. [Update und Prüfliste](Release-1.3.5.md) beschreiben den nächsten Schritt.
