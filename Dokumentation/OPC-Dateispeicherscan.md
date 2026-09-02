@@ -1,7 +1,7 @@
 # Rekursiver OPC-Dateispeicherscan
 
-Stand: lokales Testpaket 1.3.5 vom 2. September 2026, noch nicht öffentlich
-veröffentlicht oder in einem Shop installiert. Diese Anleitung beschreibt die
+Stand: lokales Testpaket 1.3.6 vom 2. September 2026, noch nicht öffentlich
+veröffentlicht. Diese Anleitung beschreibt die
 neue Erweiterung, nicht das Verhalten des unveränderten Releases 1.3.4.
 
 ## Was sich verbessert
@@ -10,6 +10,10 @@ Bisher las das Plugin Bildverweise aus gespeicherten OPC-Seiten. Ein Bild konnte
 im Uploader vorhanden sein, ohne in der Galerie aufzutauchen. Der zusätzliche
 Dateiscan erfasst nun auch unbenutzte Uploads im Hauptordner und in Unterordnern.
 Beispiele sind `opc/banner/2026`, `opc/bilder/2026` und weitere Verschachtelungen.
+
+Seit 1.3.6 wird elFinders interner Vorschaubildcache `.tmb` auf jeder Ebene
+ausgelassen. In 1.3.5 führte dieser Cache bei Campingteile24 zum vollständigen
+Abbruch. Die echten Bilder und die Sicherheitsprüfung bleiben unverändert.
 
 Nach Installation der Erweiterung:
 
@@ -111,7 +115,7 @@ Datenlöschung. Dev-Abnahme und Live-Freigabe sind separate Schritte.
 
 ### Lokale Prüfergebnisse
 
-- Gesamtsuite für 1.3.5: 555 PHP-Tests mit 14.826 Assertions erfolgreich,
+- Gesamtsuite für 1.3.6: 557 PHP-Tests mit 14.828 Assertions erfolgreich,
   einschließlich Filter-/Zählungsprüfung und vollständigem Paketinhalt.
 - JavaScript: 142 Tests erfolgreich, keine Änderungen am JavaScript notwendig.
 - PHPStan: maximale Analysestufe ohne Fehler.
@@ -123,6 +127,6 @@ Datenlöschung. Dev-Abnahme und Live-Freigabe sind separate Schritte.
 
 Die Tests liefen mit PHP 8.5.6. Eine zusätzliche Ausführung unter PHP 8.1 und
 die Abnahme in der echten JTL-Laufzeit stehen noch aus. Das eindeutig
-versionierte ZIP `MGD_AI_Kennzeichnung-1.3.5.zip` ist für diesen Dev-Test
+versionierte ZIP `MGD_AI_Kennzeichnung-1.3.6.zip` ist für diesen Dev-Test
 vorbereitet. Es ersetzt oder überschreibt das veröffentlichte 1.3.4-Release
-nicht. [Update und Prüfliste](Release-1.3.5.md) beschreiben den nächsten Schritt.
+nicht. [Update und Prüfliste](Release-1.3.6.md) beschreiben den nächsten Schritt.

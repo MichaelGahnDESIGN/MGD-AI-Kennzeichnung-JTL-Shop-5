@@ -1,9 +1,10 @@
 # Release und Rollback
 
-## Testpaket 1.3.5
+## Testpaket 1.3.6
 
-Version 1.3.5 ist lokal für die Dev-Abnahme vorbereitet, noch nicht öffentlich
-veröffentlicht und nicht auf Live installiert. Der sichere Bildscan liest nun
+Version 1.3.6 ist für die Dev-Abnahme vorbereitet und noch nicht öffentlich
+veröffentlicht. Interne `.tmb`-Vorschaubildordner werden vor dem Betreten
+ausgelassen und verhindern den Abgleich nicht mehr. Der sichere Bildscan liest nun
 auch unbenutzte Bilder im OPC-Uploadspeicher und in verschachtelten Ordnern.
 Starten Sie nach dem Update einen neuen Scan, wählen Sie **OnPage Composer**
 und anschließend **Galerie anzeigen**. Bestehende Labels bleiben erhalten.

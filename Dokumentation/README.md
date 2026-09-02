@@ -12,7 +12,7 @@ Die JTL-Mindestversion 5.7.2 steht im Element `MinShopVersion` der `info.xml`. J
 - [OPC-Kennzeichnung](OPC-Kennzeichnung.md): direkte Bildfelder und fehlertolerante Dateimanager-Kompatibilität.
 - [Plugin-Impressum](Impressum.md): geschützte Herstellerangaben ohne Datenbank, Formular oder öffentliche Shopänderung.
 - [Darstellung](Darstellung.md): globale Werte, lokale Live-Vorschau und Transparenz in Version 1.2.1.
-- [Testpaket 1.3.5](Release-1.3.5.md): rekursive OPC-Uploads, Dev-Prüfliste und Auslieferungsgrenzen.
+- [Testpaket 1.3.6](Release-1.3.6.md): rekursive OPC-Uploads, Dev-Prüfliste und Auslieferungsgrenzen.
 - [OPC-Dateispeicherscan](OPC-Dateispeicherscan.md): Ordnererkennung, Bildzuordnungen und Sicherheitsgrenzen.
 - [Release 1.3.4](Release-1.3.4.md): zuverlässiger lokaler Editorstart in JTLs AJAX-Plugin-Tab.
 - [Release 1.3.3](Release-1.3.3.md): Cache-Bereinigung über JTLs tatsächlich aktive Smarty-Engine.

@@ -1,5 +1,11 @@
 # Versionsübersicht
 
+## 1.3.6 – 2. September 2026
+
+Korrigiert den Abbruch des OPC-Dateiscans durch den internen `.tmb`-Cache.
+Normale Unterordner und bestehende Kennzeichnungen bleiben erhalten; keine
+neue Datenbankmigration. Siehe [Prüf- und Updatehinweise](Release-1.3.6.md).
+
 ## 1.3.5 – 2. September 2026
 
 Eindeutig versioniertes lokales Testpaket, noch kein öffentliches Release.

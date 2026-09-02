@@ -47,6 +47,9 @@ final class OpcStorageScanTest extends TestCase
     #[Test]
     public function seiten_und_dateifundstellen_ergeben_eine_karte_und_erhalten_kennzeichnungen(): void
     {
+        // Der interne Vorschaucache darf den gesamten atomaren Abgleich nicht verhindern.
+        $this->fixture->file('.tmb/vorschau.png');
+        $this->fixture->file('banner/2026/.tmb/vorschau.png');
         $this->fixture->file('banner/2026/bild.jpg');
         $this->fixture->file('bilder/2026/bild.jpg');
         $this->opcPage('banner/2026/bild.jpg');

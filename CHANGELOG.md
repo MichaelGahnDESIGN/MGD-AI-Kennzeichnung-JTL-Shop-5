@@ -1,5 +1,14 @@
 # Änderungsprotokoll
 
+## 1.3.6 – 2026-09-02 (Testpaket)
+
+- Schließt ausschließlich elFinders interne `.tmb`-Cacheordner auf jeder Ebene
+  vom rekursiven OPC-Dateiscan aus, ohne Dateien zu löschen oder umzubenennen.
+- Verhindert dadurch den vollständigen Scan-Abbruch durch Vorschaubilder.
+- Prüft verschachtelte Cacheordner, echte Unterordner, unveränderte
+  Pfadsicherheit und den Erhalt vorhandener Kennzeichnungen mit Regressionstests.
+- Keine neue Datenbankmigration und keine zusätzlichen externen Dienste.
+
 ## 1.3.5 – 2026-09-02 (Testpaket, noch nicht veröffentlicht)
 
 - Ergänzt den bisherigen OPC-Seitenscan um einen rekursiven Scan des lokalen

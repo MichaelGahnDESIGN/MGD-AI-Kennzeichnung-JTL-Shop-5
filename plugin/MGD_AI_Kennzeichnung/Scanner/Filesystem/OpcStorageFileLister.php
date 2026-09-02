@@ -76,6 +76,12 @@ final class OpcStorageFileLister
                 continue; // Auch defekte Links und Schleifen werden niemals verfolgt.
             }
             if ($type === 0040000) {
+                // elFinder speichert hier ausschließlich automatisch erzeugte Vorschauen.
+                // Den Cache vor dem Betreten auslassen, auch in Unterordnern. Echte
+                // Uploads und ihre strenge Pfadprüfung bleiben davon unberührt.
+                if ($name === '.tmb') {
+                    continue;
+                }
                 $this->walk($root, $path, $local, $depth + 1, $entries, $paths);
             } elseif ($type === 0100000 && preg_match('/\.(?:jpe?g|png|webp|gif|avif)$/iD', $name) === 1) {
                 $this->assertContained($root, $path);

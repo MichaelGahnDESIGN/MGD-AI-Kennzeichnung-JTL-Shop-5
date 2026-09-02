@@ -55,6 +55,33 @@ final class OpcStorageSourceAdapterTest extends TestCase
     }
 
     #[Test]
+    public function ignoriert_nur_interne_tmb_ordner_ohne_echte_unterordner_auszulassen(): void
+    {
+        // elFinder legt Vorschauen auch innerhalb verschachtelter Uploadordner ab.
+        $this->fixture->file('.tmb/vorschau.png');
+        $this->fixture->file('banner/2026/.tmb/bild%20eins.jpg');
+        $this->fixture->file('.tmb/' . str_repeat('cache/', 34) . 'vorschau.jpg');
+        $paths = ['banner/2026/kategorie.jpg', 'bilder/DEMO BILDER/tief/bild.png',
+            'tmb/original.jpg', 'original.tmb/bild.jpg'];
+        foreach ($paths as $path) {
+            $this->fixture->file($path);
+        }
+        sort($paths, SORT_STRING);
+        self::assertSame(
+            array_map(static fn(string $p): string => 'media/image/storage/opc/' . $p, $paths),
+            array_column($this->adapter()->scanPage(0, 100)->references, 'localPath'),
+        );
+    }
+
+    #[Test]
+    public function andere_versteckte_bildordner_bleiben_sicher_abgelehnt(): void
+    {
+        $this->fixture->file('.privat/bild.jpg');
+        $this->expectException(OpcStorageScanException::class);
+        $this->adapter()->scanPage(0, 100);
+    }
+
+    #[Test]
     public function paginiert_eine_auflistung_und_baut_sie_erst_beim_naechsten_scan_neu_auf(): void
     {
         for ($i = 0; $i < 205; ++$i) {
