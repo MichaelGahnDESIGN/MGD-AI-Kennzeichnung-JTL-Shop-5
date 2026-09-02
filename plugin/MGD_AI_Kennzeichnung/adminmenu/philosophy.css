@@ -21,6 +21,8 @@
 
 .mgd-philosophy-language h2 {
     margin-block: 0 0.75rem;
+    /* Die Karte ist weiß; die helle Überschrift des JTL-Dark-Modes passt hier nicht. */
+    color: #17202a;
 }
 
 .mgd-philosophy-language label,
@@ -69,18 +71,25 @@
 .mgd-philosophy-toolbar {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-block: 0.75rem;
+    gap: 0.25rem;
+    margin-block: 0.5rem;
 }
 
-/* Lokale Textsymbole bleiben ohne Symbolschrift, Bilddatei oder externe Quelle lesbar. */
+/*
+ * Kompakte Editor-Werkzeuge statt großer Formularaktionen: bei 16 px Basisschrift
+ * mindestens 32 × 32 px, mit natürlichem Umbruch und unverändertem Tastaturfokus.
+ * rem erhält die Skalierbarkeit. Der eigentliche Speichern-Button bleibt größer.
+ * Lokale Textsymbole benötigen weder Symbolschrift noch externe Dateien.
+ */
 .mgd-philosophy-toolbar button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 2.75rem;
-    min-height: 2.75rem;
-    padding: 0.5rem 0.75rem;
+    min-width: 2rem;
+    min-height: 2rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.25;
     color: #17202a;
     background: #f7f9fb;
     border-color: #52616f;

@@ -3,11 +3,13 @@
     <h1 id="mgd-ai-philosophy-heading">AI-Philosophie pflegen</h1>
     <p>Erlaubt sind Absätze, Überschriften, Listen, Hervorhebungen und sichere HTTPS-Links.</p>
     {if $message !== ''}<p role="status">{$message|escape:'html':'UTF-8'}</p>{/if}
+    {* Die CSS-Inhaltskennung verhindert alte Werkzeugleisten aus dem Browsercache.
+       Bei CSS-Änderungen aktualisieren; der Layout-Test prüft den SHA-256-Präfix. *}
     <form
         method="post"
         class="mgd-philosophy-form"
         data-philosophy-form
-        data-philosophy-stylesheet="{$adminUrl|escape:'html':'UTF-8'}philosophy.css"
+        data-philosophy-stylesheet="{$adminUrl|escape:'html':'UTF-8'}philosophy.css?v=1dcc59280deb"
         data-philosophy-module="{$adminUrl|escape:'html':'UTF-8'}js/philosophy-editor.mjs"
     >
         <input type="hidden" name="kPlugin" value="{$pluginId|escape:'html':'UTF-8'}">

@@ -1,5 +1,16 @@
 # Änderungsprotokoll
 
+## Noch nicht veröffentlicht – kompakte Editor-Werkzeugleiste
+
+- Verkleinert ausschließlich die Werkzeuge im AI-Philosophie-Editor auf
+  mindestens 32 × 32 px bei normaler Basisschrift und reduziert die Abstände.
+- Behält große Textflächen, den Speichern-Button, Tastaturfokus und Umbrüche bei.
+- Macht die Sprachüberschriften auf weißen Karten auch im dunklen Backend lesbar.
+- Eine lokale CSS-Inhaltskennung verhindert die Anzeige der alten Werkzeugleiste
+  aus dem Browsercache. Keine externen Ressourcen oder Datenbankänderungen.
+- Am 3. September auf Dev geprüft; noch nicht in den Live-Shops oder im
+  veröffentlichten Installationspaket 1.3.7 enthalten.
+
 ## 1.3.7 – 2026-09-03
 
 ### Vorschau und Lesbarkeit
