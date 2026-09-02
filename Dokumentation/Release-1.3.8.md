@@ -40,7 +40,21 @@ SHA-256 des Installationspakets:
 Installationsstand vor der Auslieferung: Dev 1.3.7 mit geprüftem Toolbar-Hotfix,
 Onvis 1.2.0 und Campingteile24 1.3.6. Auf den Live-Shops lagen bereits Dateien
 von 1.3.7, aber die abschließende JTL-Aktualisierung war noch offen.
-Der neue Update-Durchlauf und die abschließenden Abnahmen stehen noch aus.
+Das neue Paket wurde auf Dev erfolgreich hochgeladen; JTL bietet 1.3.7 → 1.3.8
+an. Die abschließende Bestätigung durch den Betreiber ist offen, weil der
+JTL-Bestätigungsdialog die verwendete Browsersteuerung blockiert. Deshalb
+werden die Live-Shops in diesem Durchlauf noch nicht verändert.
+
+GitHub `main` enthält die Releasevorbereitung (`e42eb7a`). Release 1.3.8 liegt
+als Entwurf vor; der GitHub-Digest des hochgeladenen ZIPs stimmt mit der
+lokalen Prüfsumme überein. Veröffentlichung erst nach paketbezogener Dev-Abnahme.
+
+Zusatzsicherungen vor 1.3.8 sind vollständig erstellt, verschlüsselt und durch
+Entschlüsselung/Bytevergleich geprüft: Dev 196 Plugin-Dateien und vier eigene
+Plugin-Tabellen; Onvis 194 Plugin-Dateien und vier eigene Plugin-Tabellen;
+Campingteile24 197 Plugin-Dateien. Dort beruht die Datenbanksicherung auf der
+ausdrücklichen Betreiberbestätigung. Alle Sicherungen bleiben ausschließlich
+lokal. Bestehende Sicherungen und frühere Rollback-Stände wurden nicht gelöscht.
 
 ## Sicherung und Rückweg
 
