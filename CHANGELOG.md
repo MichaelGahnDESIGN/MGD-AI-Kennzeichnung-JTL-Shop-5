@@ -1,5 +1,18 @@
 # Änderungsprotokoll
 
+## Noch nicht veröffentlicht – Darstellung speichern
+
+- Behebt die weiße Adminseite beim Speichern von Design-Einstellungen nach
+  einem Wechsel aus der gefilterten Bildergalerie: Das Formular sendet nun
+  ausdrücklich an den Darstellungstab und übernimmt keine Galerie-Filter.
+- Fängt widersprüchliche Formularadressen bereits vor der Verarbeitung ab.
+  Statt eines Seitenabbruchs erscheint ein verständlicher Hinweis; in diesem
+  Fehlerfall werden keine Einstellungen geschrieben.
+- Rechteprüfung, Sicherheitstoken und strenge Prüfung der Formularfelder
+  bleiben unverändert. Keine Datenbankmigration oder externen Ressourcen.
+- Durch lokale Regressionstests abgesichert. Noch kein neues ZIP, kein
+  GitHub-Release und keine Übertragung dieser Korrektur auf Dev oder Live.
+
 ## 1.3.6 – 2026-09-02 (Testpaket)
 
 - Schließt ausschließlich elFinders interne `.tmb`-Cacheordner auf jeder Ebene

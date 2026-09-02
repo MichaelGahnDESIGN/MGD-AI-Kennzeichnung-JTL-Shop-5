@@ -127,6 +127,55 @@ final class DisplayEntryPointTest extends TestCase
     }
 
     #[Test]
+    public function alter_galerie_query_beim_design_post_zeigt_hinweis_statt_ungefangener_ausnahme(): void
+    {
+        $db = new DisplayEntryDatabase();
+        $logger = new DisplayEntryLogger();
+        $this->bereiteKontextVor(new AdminAccount(['PLUGIN_DETAIL_VIEW_17']), $db, $logger);
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        // JTL wechselt Tabs ohne Navigation: Ein altes Formular konnte daher an die Galerieadresse senden.
+        $_GET = $this->aktiveGetRoute(7) + [
+            'view' => 'list', 'status' => 'generated', 'source' => '', 'present' => '',
+            'sort' => 'id', 'direction' => 'asc', 'page_size' => '25',
+        ];
+        $_POST = $this->gueltigerPost();
+
+        $puffertiefe = ob_get_level();
+        try {
+            $output = $this->fuehreEinstiegAus();
+        } catch (\Throwable $fehler) {
+            self::fail('Die Formularprüfung darf nicht aus dem Darstellungstab austreten: ' . $fehler::class);
+        } finally {
+            while (ob_get_level() > $puffertiefe) {
+                ob_end_clean();
+            }
+        }
+
+        self::assertStringContainsString('role="alert"', $output);
+        self::assertStringContainsString('Darstellung', $output);
+        self::assertSame([], $db->updates, 'Eine widersprüchliche Route darf keine Einstellungen schreiben.');
+        self::assertSame([], $logger->records);
+    }
+
+    #[Test]
+    public function explizites_darstellungsziel_speichert_auch_mit_passender_get_route(): void
+    {
+        $db = new DisplayEntryDatabase();
+        $logger = new DisplayEntryLogger();
+        $this->bereiteKontextVor(new AdminAccount(['PLUGIN_DETAIL_VIEW_17']), $db, $logger);
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        // Das neue Formularziel ersetzt die komplette Suchzeichenfolge durch genau diese beiden IDs.
+        $_GET = $this->aktiveGetRoute(9);
+        $_POST = $this->gueltigerPost();
+
+        $this->fuehreEinstiegAus();
+
+        self::assertCount(7, $db->updates);
+        self::assertSame('20', $db->values['transparency']);
+        self::assertSame([], $logger->records);
+    }
+
+    #[Test]
     public function unberechtigter_admin_erhaelt_im_jtl_zyklus_einen_inline_alert_bei_status_200(): void
     {
         $db = new DisplayEntryDatabase();
@@ -265,7 +314,8 @@ final class DisplayEntryPointTest extends TestCase
         $logger = new DisplayEntryLogger();
         $this->bereiteKontextVor(new AdminAccount(['PLUGIN_DETAIL_VIEW_17']), $db, $logger);
         $_SERVER['REQUEST_METHOD'] = 'POST';
-        $_GET = [];
+        // Die explizite Formularadresse muss auch im Zyklus aller JTL-Tabs genau einmal speichern.
+        $_GET = $this->aktiveGetRoute(9);
         $_POST = $this->gueltigerPost();
 
         \JTL\Smarty\JTLSmarty::$testFetchOutput = '<section>Neutraler Lesetab</section>';

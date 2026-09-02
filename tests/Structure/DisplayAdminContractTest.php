@@ -80,7 +80,11 @@ final class DisplayAdminContractTest extends TestCase
         self::assertFileExists($root . 'display.php');
         self::assertNotSame('', $template);
         self::assertNotSame('', $stylesheet);
-        self::assertStringContainsString('<form method="post" data-mgd-display-form>', $template);
+        self::assertStringContainsString(
+            '<form method="post" action="?kPlugin={$pluginId|escape:\'html\':\'UTF-8\'}&amp;kPluginAdminMenu={$adminMenuId|escape:\'html\':\'UTF-8\'}" data-mgd-display-form>',
+            $template,
+            'Das Formularziel muss alte Galerieparameter ersetzen und den Darstellungstab ausdrücklich adressieren.',
+        );
         self::assertStringContainsString('name="csrf_token"', $template);
         self::assertStringContainsString('name="kPlugin"', $template);
         self::assertStringContainsString('name="kPluginAdminMenu"', $template);

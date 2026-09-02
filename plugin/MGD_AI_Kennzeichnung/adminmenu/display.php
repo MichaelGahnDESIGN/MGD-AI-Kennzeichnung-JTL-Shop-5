@@ -29,7 +29,19 @@ if (!defined('PFAD_ROOT') || !isset($oPlugin) || !$oPlugin instanceof PluginInte
 }
 
 $adminMenuId = is_object($menu ?? null) ? ($menu->kPluginAdminMenu ?? null) : null;
-$scope = AdminTabScope::capture($oPlugin, $adminMenuId, 'display.php', true);
+try {
+    $scope = AdminTabScope::capture($oPlugin, $adminMenuId, 'display.php', true);
+} catch (ValidationException) {
+    /*
+     * Bereits geöffnete Formulare können noch die Adresse eines anderen Tabs
+     * mitsenden. Die Routenprüfung bleibt streng, darf aber nicht außerhalb
+     * der Fehlerbehandlung den gesamten JTL-Administrationsbereich abbrechen.
+     * Bis hierhin wurden weder Einstellungen geschrieben noch Tokens geloggt.
+     */
+    echo AdminTabScope::error('Die Darstellung konnte die Formularadresse nicht zuordnen. Bitte öffnen Sie den Plugin-Menüpunkt erneut und wechseln Sie zu Darstellung. Es wurde nichts gespeichert.');
+
+    return;
+}
 if (!$scope->shouldRender) {
     return;
 }

@@ -19,7 +19,8 @@
     </div>
 
     <div class="mgd-display-layout">
-        <form method="post" data-mgd-display-form>
+        {* Ein explizites Ziel ersetzt die Galerie-Filter, die JTL beim bloßen Tabwechsel in der URL stehen lässt. *}
+        <form method="post" action="?kPlugin={$pluginId|escape:'html':'UTF-8'}&amp;kPluginAdminMenu={$adminMenuId|escape:'html':'UTF-8'}" data-mgd-display-form>
             <div class="card-body">
                 <input type="hidden" name="kPlugin" value="{$pluginId|escape:'html':'UTF-8'}">
                 <input type="hidden" name="kPluginAdminMenu" value="{$adminMenuId|escape:'html':'UTF-8'}">
