@@ -56,14 +56,21 @@ Der von GitHub gemeldete SHA-256-Digest stimmt mit dem lokalen Paket überein.
 GitHub-Wiki-Repository ist nicht erreichbar; das Handbuch liegt unter `wiki/`
 im Hauptrepository.
 
-**Installationsstatus am 3. September:** Noch kein Update übertragen.
-Der Datei-Auswahldialog wurde durch den gesperrten Arbeitsplatz unterbrochen.
-Die bestehende Installation wurde deshalb nicht durch einen alternativen
-Übertragungsweg ersetzt. Die erforderliche Browser-Abnahme bleibt offen.
+**Installationsstatus am 3. September:** Das unveränderte Paket wurde nach
+Entsperren des Arbeitsplatzes auf Dev hochgeladen. JTL bestätigte den Upload
+und zeigte das verfügbare Update von 1.3.6 auf 1.3.7. Nach dem Klick auf
+**Aktualisieren** antwortete die Browsersteuerung nicht mehr. Deshalb wurden
+keine weiteren schreibenden Schritte ausgeführt.
+
+Der anschließende ausschließlich lesende Serververgleich bestätigt alle
+192 Paketdateien ohne Abweichung. Die JTL-Installationsmetadaten melden jedoch
+weiterhin **1.3.6, aktiviert**. Hochgeladene Dateien allein bedeuten noch keine
+abgeschlossene Aktualisierung. Die Bestätigung im Plugin-Manager und die
+Browser-Abnahme bleiben offen; Onvis live und Campingteile24 sind unverändert.
 
 | Ziel | Im JTL-Plugin-Manager bestätigt | Nächster Schritt |
 | --- | --- | --- |
-| Dev | 1.3.6 | Arbeitsplatz entsperren, ZIP hochladen, aktualisieren und prüfen |
+| Dev | 1.3.6; Paketdateien bereits 1.3.7 | Blockierenden Browserzustand klären, JTL-Aktualisierung abschließen und prüfen |
 | Onvis live | 1.2.0 | Erst nach erfolgreicher Dev-Abnahme aktualisieren |
 | Campingteile24 | 1.3.6 | Zusätzlich aktuelles vollständiges Backup nachweisen |
 
@@ -79,8 +86,9 @@ blieben unverändert. Backups und Schlüssel sind ausschließlich lokal,
 nicht im Repository oder Webroot. Es wurden keine alten Backups gelöscht.
 
 Die bekannten Campingteile24-Sicherungen decken einzelne Plugin-/Theme-Dateien
-und Plugin-Daten ab, nicht nachweislich den vollständigen aktuellen Shop.
-Deshalb bleibt dieser Live-Schritt bis zum Backup-Nachweis gesperrt.
+und Plugin-Daten ab. Ein zusätzliches neues Backup wurde vom Betreiber
+bestätigt; Ablageort, Umfang und unabhängige Lesbarkeitsprüfung stehen noch aus.
+Dieser Nachweis wird vor dem Campingteile24-Live-Schritt ergänzt.
 
 ## Sicher aktualisieren und zurückkehren
 
