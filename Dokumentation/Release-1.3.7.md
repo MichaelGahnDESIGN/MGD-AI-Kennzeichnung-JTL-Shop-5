@@ -50,29 +50,41 @@ GitHub Actions startet bei Push oder Pull Request nicht automatisch. Ein
 manueller Cloud-Test wird ohne gesonderte Kostenprüfung nicht angestoßen.
 
 **Release-Status:** Quellcode und Dokumentation sind auf GitHub `main`.
-Version 1.3.7 liegt mit ZIP und passender Prüfsumme als Release-Entwurf vor.
-Der von GitHub gemeldete SHA-256-Digest stimmt mit dem lokalen Paket überein.
-Öffentlicher Downloadstand bleibt bis zur Dev-Abnahme 1.3.4. Das separate
-GitHub-Wiki-Repository ist nicht erreichbar; das Handbuch liegt unter `wiki/`
-im Hauptrepository.
+Version 1.3.7 ist nach der Dev-Abnahme zur Veröffentlichung mit ZIP und
+passender Prüfsumme freigegeben. Der von GitHub gemeldete SHA-256-Digest stimmt
+mit dem lokalen Paket überein. Das separate GitHub-Wiki-Repository ist nicht
+erreichbar; das Handbuch liegt unter `wiki/` im Hauptrepository.
 
-**Installationsstatus am 3. September:** Das unveränderte Paket wurde nach
-Entsperren des Arbeitsplatzes auf Dev hochgeladen. JTL bestätigte den Upload
-und zeigte das verfügbare Update von 1.3.6 auf 1.3.7. Nach dem Klick auf
-**Aktualisieren** antwortete die Browsersteuerung nicht mehr. Deshalb wurden
-keine weiteren schreibenden Schritte ausgeführt.
+**Installationsstatus am 3. September:** Der Betreiber hat den abschließenden
+JTL-Update-Schritt auf Dev manuell bestätigt. Plugin-Manager und lesend
+kontrollierte Installationsmetadaten melden **1.3.7, aktiviert**. Alle 192
+Paketdateien stimmen im Serververgleich mit dem Installations-ZIP überein.
 
-Der anschließende ausschließlich lesende Serververgleich bestätigt alle
-192 Paketdateien ohne Abweichung. Die JTL-Installationsmetadaten melden jedoch
-weiterhin **1.3.6, aktiviert**. Hochgeladene Dateien allein bedeuten noch keine
-abgeschlossene Aktualisierung. Die Bestätigung im Plugin-Manager und die
-Browser-Abnahme bleiben offen; Onvis live und Campingteile24 sind unverändert.
+Die Browser-Abnahme auf Dev bestätigt:
+
+- 744 Galerieeinträge insgesamt und 37 Ergebnisse mit Quelle OnPage Composer;
+- vorhandene KI-Kennzeichnungen sind weiterhin sichtbar;
+- Wechsel aus der gefilterten Galerie in den Darstellungstab und erfolgreiches
+  Speichern mit der Meldung „Die Darstellung wurde sicher gespeichert.“;
+- unveränderte gespeicherte Designwerte, keine weiße Seite;
+- geladenes lokales Vorschaubild, sichtbares Schachbrettmuster und wirksame
+  Hintergrundunschärfe; Transparenz 50 Prozent verändert die Vorschau sofort,
+  danach wurde der Ausgangswert ohne weitere Speicherung wiederhergestellt;
+- beide lokalen Philosophie-Editoren einschließlich Werkzeugleisten erreichbar;
+- Startseite mit vorhandenen Kennzeichnungen erreichbar, Wartungsmodus bleibt aktiv.
+
+Anschließend wurde dieselbe geprüfte ZIP auf Onvis live und Campingteile24
+hochgeladen. Beide Shops bestätigten den Upload und bieten 1.3.7 als Update an.
+Der jeweilige JTL-Bestätigungsschritt und die anschließende Live-Abnahme sind
+noch offen. Die Bestätigungsdialoge werden manuell durch den Betreiber bedient,
+weil die Browsersteuerung bei diesem JTL-Schritt blockiert. Es wurden keine
+Bestellungen, Zahlungen, Deinstallationen oder OPC-Veröffentlichungen ausgeführt.
 
 | Ziel | Im JTL-Plugin-Manager bestätigt | Nächster Schritt |
 | --- | --- | --- |
-| Dev | 1.3.6; Paketdateien bereits 1.3.7 | Blockierenden Browserzustand klären, JTL-Aktualisierung abschließen und prüfen |
-| Onvis live | 1.2.0 | Erst nach erfolgreicher Dev-Abnahme aktualisieren |
-| Campingteile24 | 1.3.6 | Nach Dev-Abnahme aktualisieren; vollständige Sicherung durch Betreiber bestätigt |
+| Dev | 1.3.7, aktiviert | Aktualisierung und Browser-Abnahme abgeschlossen |
+| Onvis live | 1.2.0; 1.3.7 hochgeladen | JTL-Aktualisierung bestätigen, anschließend Live-Abnahme |
+| Campingteile24 | 1.3.6; 1.3.7 hochgeladen | JTL-Aktualisierung bestätigen, anschließend Live-Abnahme |
 
 Für Dev ist das vollständige Dateiarchiv mit 38.151 Einträgen und der
 abgeschlossene Dump mit 358 Tabellen lokal verschlüsselt gesichert und
