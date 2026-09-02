@@ -121,7 +121,10 @@ final class DisplayPreviewPatternContractTest extends TestCase
     /** Prüft den konkreten Selektor statt beliebiger Texttreffer in anderen Regeln oder Kommentaren. */
     private function leseRegel(string $stylesheet, string $selektor): string
     {
-        self::assertSame(1, preg_match('~' . preg_quote($selektor, '~') . '\s*\{([^}]+)\}~', $stylesheet, $treffer), 'Erwartete CSS-Regel fehlt: ' . $selektor);
+        // Nur ein erfolgreicher Treffer garantiert die Capture-Gruppe mit dem Regelinhalt.
+        if (preg_match('~' . preg_quote($selektor, '~') . '\s*\{([^}]+)\}~', $stylesheet, $treffer) !== 1) {
+            self::fail('Erwartete CSS-Regel fehlt: ' . $selektor);
+        }
 
         return $treffer[1];
     }
