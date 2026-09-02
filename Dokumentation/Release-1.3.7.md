@@ -72,7 +72,7 @@ Browser-Abnahme bleiben offen; Onvis live und Campingteile24 sind unverändert.
 | --- | --- | --- |
 | Dev | 1.3.6; Paketdateien bereits 1.3.7 | Blockierenden Browserzustand klären, JTL-Aktualisierung abschließen und prüfen |
 | Onvis live | 1.2.0 | Erst nach erfolgreicher Dev-Abnahme aktualisieren |
-| Campingteile24 | 1.3.6 | Zusätzlich aktuelles vollständiges Backup nachweisen |
+| Campingteile24 | 1.3.6 | Nach Dev-Abnahme aktualisieren; vollständige Sicherung durch Betreiber bestätigt |
 
 Für Dev ist das vollständige Dateiarchiv mit 38.151 Einträgen und der
 abgeschlossene Dump mit 358 Tabellen lokal verschlüsselt gesichert und
@@ -85,10 +85,14 @@ zugehörigen JTL-Metadaten für Dev und Onvis vor. Die geschützten Zugangsdokum
 blieben unverändert. Backups und Schlüssel sind ausschließlich lokal,
 nicht im Repository oder Webroot. Es wurden keine alten Backups gelöscht.
 
-Die bekannten Campingteile24-Sicherungen decken einzelne Plugin-/Theme-Dateien
-und Plugin-Daten ab. Ein zusätzliches neues Backup wurde vom Betreiber
-bestätigt; Ablageort, Umfang und unabhängige Lesbarkeitsprüfung stehen noch aus.
-Dieser Nachweis wird vor dem Campingteile24-Live-Schritt ergänzt.
+Der Betreiber hat für Campingteile24 eine zusätzliche aktuelle Sicherung
+der FTP-Dateien und einen Datenbank-Dump ausdrücklich bestätigt. Außerdem
+existiert nach seiner Auskunft ein Systembackup beim Hoster. Diese Sicherungen
+sind für die technische Assistenz nicht zugänglich und wurden deshalb nicht
+unabhängig auf Lesbarkeit oder Prüfsummen geprüft. Die Betreiberbestätigung
+wird als Grundlage für das autorisierte Update akzeptiert; Zugriff auf diese
+Backups wird nicht weiter vorausgesetzt. Eine gegebenenfalls erforderliche
+Wiederherstellung daraus muss der Betreiber beziehungsweise Hoster durchführen.
 
 ## Sicher aktualisieren und zurückkehren
 
