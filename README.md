@@ -2,9 +2,9 @@
 
 Transparente Kennzeichnungen für KI-generierte und KI-bearbeitete Bilder – direkt in JTL-Shop 5, ohne die Originalbilder zu verändern und ohne Bilddaten an externe KI-Dienste zu senden.
 
-> **Aktueller Paketstand:** 1.3.6 – für den Dev-Test vorbereitet, noch nicht öffentlich veröffentlicht
+> **Aktueller Paketstand:** 1.3.6 – auf Dev und Campingteile24 installiert, noch nicht öffentlich veröffentlicht
 > **Voraussetzungen:** JTL-Shop 5.7.2, PHP 8.1 oder neuer, NOVA oder ein kompatibles NOVA-basiertes Template
-> **Prüfstand:** Lokale Tests; die Abnahme von 1.3.6 im echten JTL-Shop steht noch aus.
+> **Prüfstand:** Lokale Tests und OPC-Bildscan auf Dev sowie Campingteile24 erfolgreich. Die gezielte Abnahme ist in [Release 1.3.6](Dokumentation/Release-1.3.6.md) dokumentiert.
 > **Wichtig:** Das Plugin erkennt KI-Inhalte nicht automatisch. Die fachliche Prüfung und Einstufung erfolgt bewusst durch einen berechtigten Menschen.
 
 Es gibt **keine automatische KI-Erkennung**. Dadurch bleibt jede veröffentlichte Einstufung eine nachvollziehbare redaktionelle Entscheidung.
@@ -93,7 +93,7 @@ Die sichtbaren Texte werden je nach Shop- oder Plugin-Sprache auf Deutsch oder E
 
 ### 1. Paket herunterladen
 
-Für den Dev-Test ist das lokale Installationspaket `dist/MGD_AI_Kennzeichnung-1.3.6.zip` vorgesehen. Es ist noch nicht öffentlich veröffentlicht. Freigegebene Pakete finden Sie unter [GitHub Releases](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases). Verwenden Sie immer das angehängte Plugin-ZIP, nicht den automatisch von GitHub erzeugten Quellcode-Download.
+Das geprüfte lokale Installationspaket liegt im Hauptprojekt unter `plugin/MGD_AI_Kennzeichnung-1.3.6.zip`. Version 1.3.6 ist noch nicht öffentlich veröffentlicht. Veröffentlichte Pakete finden Sie unter [GitHub Releases](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases). Verwenden Sie immer das angehängte Plugin-ZIP, nicht den automatisch von GitHub erzeugten Quellcode-Download.
 
 Das öffentlich zugängliche Repository stellt Release-Hinweise bereit, aber
 keinen Auto-Updater. Die Aktualisierung erfolgt als **manueller ZIP-Upload** im

@@ -32,7 +32,7 @@ er wird lediglich vom Scan ausgeschlossen.
 Die Regressionstests prüfen Cacheordner im Haupt- und Unterordner, tiefe
 Cacheinhalte, echte ähnlich benannte Ordner, bestehende Kennzeichnungen und
 die unveränderte Sicherheitsprüfung. Der konkrete Prüf- und Installationsstand
-wird im Abnahmebericht ergänzt; diese Datei allein bestätigt keine Installation.
+ist im folgenden Abnahmeabschnitt festgehalten.
 
 Vor einem Live-Update müssen die Dev-Abnahme und eine geprüfte Sicherung
 vorliegen. Bei Fehlern zum gesicherten Pluginstand zurückkehren; keine
@@ -44,7 +44,7 @@ Fertige ZIPs liegen im Hauptprojekt unter `plugin/`, nicht nur im internen
 Buildordner `dist/`. Den SHA-256-Wert aus der zugehörigen `.zip.sha256`-Datei
 und die ZIP-Integrität vor einer Installation prüfen.
 
-## Zwischenstand der Prüfung am 2. September 2026
+## Abnahme am 2. September 2026
 
 - Lokal: 557 PHP-Tests mit 14.828 Assertions, 142 JavaScript-Tests,
   maximale statische Analyse und Formatprüfung erfolgreich.
@@ -53,15 +53,31 @@ und die ZIP-Integrität vor einer Installation prüfen.
   `d745abd5776409a03ea270073107b307648fd8fb9f942bfa5e24e7380d5f061b`.
 - Dev: verschlüsselte, zurückgelesene Sicherung von 187 Plugin-Dateien,
   vier eigenen Tabellen und zugehörigen JTL-Plugin-Metadaten vorhanden.
-- Dev: ZIP-Upload erfolgreich. Der neue Scanner liest in der tatsächlichen
-  Server-CLI (PHP 8.5.3) 37 Originalbilder, davon 25 in Unterordnern; keine
-  `.tmb`-Bilder. Dieser Lesetest allein ersetzt nicht den noch ausstehenden
-  vollständigen Backend-Abgleich und die JTL-Update-Bestätigung.
-- Campingteile24: 194 Plugin-Dateien verschlüsselt gesichert und zurückgelesen.
-  Die Datenbanksicherung benötigt noch den Login in die Datenbankverwaltung.
-  Bis dahin keine Installation auf diesem Kunden-Liveshop.
-- Onvis-Live wird nicht aktualisiert. Kein GitHub-Release veröffentlicht.
+- Dev: JTL bestätigt die erfolgreiche Aktualisierung auf 1.3.6. Der anschließende
+  sichere Bildscan im Backend ist erfolgreich; die OPC-Galerie zeigt 37 Bilder.
+  Der ergänzende Lesetest auf dem Server (PHP 8.5.3) bestätigt 25 Bilder in
+  Unterordnern und keine `.tmb`-Bilder. Alle 714 bisherigen Bilddatensätze sind
+  abgesehen von Scan-Zeitstempeln unverändert; insgesamt gibt es danach 744.
+  Auch alle elf gespeicherten Plugin-Einstellungen stimmen mit der Sicherung
+  vor dem Update überein.
+- Campingteile24: 194 Plugin-Dateien, Struktur und Inhalt der vier eigenen
+  Plugin-Tabellen sowie neun Plugin-Einstellungen und die Versionsmetadaten
+  wurden verschlüsselt gesichert und durch Zurücklesen geprüft.
+- Campingteile24: Dasselbe geprüfte ZIP wurde nach erfolgreichem Dev-Test
+  installiert. JTL bestätigt Version 1.3.6 und den erfolgreichen Bildscan.
+  Die OPC-Galerie zeigt jetzt **371 statt 2 Bilder**. Diese Anzahl entspricht
+  dem unabhängig gelesenen Bestand an Originalbildern außerhalb des Caches.
+  Auch die drei zuvor vermissten Bilder für Campingbeleuchtung, Campingmöbel
+  und Druckwasserpumpen unter `opc/banner/2026/` sind vorhanden.
+- Campingteile24: Status, Position und Design aller 825 zuvor vorhandenen
+  Bilddatensätze sowie sämtliche neun gespeicherten Plugin-Einstellungen
+  stimmen vor und nach Update und Scan überein. Es wurden keine Originalbilder
+  geändert oder gelöscht und keine Einstufungen zu Testzwecken gesetzt.
+- Onvis-Live bleibt unverändert auf Version 1.2.0. Es wurde weder ein GitHub-Push
+  noch ein GitHub-Release für 1.3.6 durchgeführt.
 
 Die Tests mit künstlichem Cache scheiterten vor der Korrektur und bestanden
-danach. Die bestehenden Kennzeichnungen werden zusätzlich vor/nach dem echten
-Dev-Abgleich verglichen, sobald die Backend-Aktualisierung abgeschlossen ist.
+danach. Die Abnahme umfasst die Aktualisierung, den echten OPC-Bildscan,
+die filterbare Galerie und den Erhalt bestehender Kennzeichnungen. Sie ist
+keine erneute vollständige Prüfung aller Plugin-Funktionen, Endgeräte oder
+Shop-Konfigurationen. Ein Lauf unter PHP 8.1 wurde nicht durchgeführt.
