@@ -1,6 +1,8 @@
 # Änderungsprotokoll
 
-## Noch nicht veröffentlicht – Vorschau und Lesbarkeit
+## 1.3.7 – 2026-09-03
+
+### Vorschau und Lesbarkeit
 
 - Ergänzt ein rein lokales Schachbrettmuster rund um das unveränderte
   Schuh-Vorschaubild. So sind Transparenz und Hintergrundunschärfe direkt
@@ -13,10 +15,11 @@
   an Shopbildern, Bildkennzeichnungen oder dem Speicherablauf.
 - Lokal im Browser bei 360 Pixeln Breite und auf breiter Fläche geprüft;
   sechs neue Strukturtests sichern die Einbindung ab.
-- Noch nicht auf Campingteile24, Onvis oder Dev übertragen. Kein neues ZIP
-  und kein GitHub-Release für diese Änderung erstellt.
+- Enthält die OPC-Unterordner-Korrekturen aus den Testpaketen 1.3.5/1.3.6.
+- Automatische GitHub-Cloud-Läufe durch ausschließlich manuell startbare
+  Qualitätsprüfung ersetzt; Release-Prüfungen werden lokal ausgeführt.
 
-## Noch nicht veröffentlicht – Darstellung speichern
+### Darstellung speichern
 
 - Behebt die weiße Adminseite beim Speichern von Design-Einstellungen nach
   einem Wechsel aus der gefilterten Bildergalerie: Das Formular sendet nun
@@ -30,7 +33,8 @@
   Wunsch als Zwei-Dateien-Hotfix (`1be0282`) auf Campingteile24 eingespielt und
   aus der zuvor problematischen Galerieadresse erfolgreich gespeichert.
   Alle sieben vorhandenen Designwerte blieben beim Test unverändert.
-- Noch kein neues ZIP oder GitHub-Release. Onvis und Dev wurden nicht verändert.
+- Das versionierte Paket 1.3.7 enthält diesen Hotfix. Der tatsächliche
+  Installationsstand wird gesondert in den Release-Hinweisen dokumentiert.
 
 ## 1.3.6 – 2026-09-02 (Testpaket)
 

@@ -58,7 +58,7 @@ final class GitHubReleaseCheckerTest extends TestCase
         );
         self::assertSame([
             'Accept' => 'application/vnd.github+json',
-            'User-Agent' => 'MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.6',
+            'User-Agent' => 'MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.7',
         ], $http->lastRequest->headers);
         self::assertSame(2, $http->lastRequest->connectTimeoutSeconds);
         self::assertSame(5, $http->lastRequest->totalTimeoutSeconds);

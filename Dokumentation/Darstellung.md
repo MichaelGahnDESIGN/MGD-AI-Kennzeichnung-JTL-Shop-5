@@ -51,7 +51,7 @@ Die Live-Vorschau arbeitet ausschließlich im Browser mit lokalen Plugin-Dateien
 Sie sendet weder das Beispielbild noch die eingegebenen Werte an Dritte. Ohne
 Klick auf **Speichern** wird kein Shopwert geändert.
 
-## Muster in der lokalen Vorschau – noch nicht veröffentlicht
+## Muster in der lokalen Vorschau – Bestandteil von 1.3.7
 
 Das Schuhbild erhält in der nächsten vorbereiteten Fassung einen
 Schachbrett-Rand. Das Muster liegt auch hinter dem Label. Damit lässt sich
@@ -93,10 +93,9 @@ Die ausgegebene Adresse ist ausschließlich über `127.0.0.1` erreichbar.
 die oberen Wertebereiche. Speichern ist in dieser Testhülle gesperrt,
 POST-Anfragen werden abgelehnt und es gibt keine Verbindung zu einem Shop.
 
-**Bereitstellungsstand:** Diese Vorschauänderung ist nur lokal vorbereitet.
-Campingteile24 enthält weiterhin den separat abgenommenen Speicher-Hotfix;
-Onvis und Dev wurden durch die Vorschauarbeit nicht geändert. Es gibt dafür
-noch kein neues ZIP und kein GitHub-Release.
+**Bereitstellung:** Der oben beschriebene Entwicklungsstand ist Teil des
+Pakets 1.3.7. Der aktuelle, davon getrennte Installationsstand steht in den
+[Release-Hinweisen](Release-1.3.7.md).
 
 ## Barrierefreiheit und sichere Grenzen
 
@@ -134,8 +133,7 @@ anderen Designwerte im Kunden-Liveshop ausprobiert. Die fünf Startseitenlabels
 wurden weiterhin ausgegeben. Ihre bildbezogenen Entscheidungen wurden durch
 diesen Test nicht bearbeitet.
 
-Die installierte Versionsnummer bleibt 1.3.6 mit diesem dokumentierten
-Hotfix. Onvis und Dev enthalten ihn noch nicht; auch im bisherigen ZIP und
-auf GitHub ist er noch nicht veröffentlicht. Der Muster-Hintergrund der
-Vorschau gehört nicht zu diesem Fix; sein separater lokaler Stand ist oben
-beschrieben.
+Zum Zeitpunkt dieser Hotfix-Abnahme blieb die installierte Versionsnummer
+1.3.6. Onvis und Dev wurden damals nicht verändert. Das reguläre Paket 1.3.7
+vereint den Hotfix mit dem oben beschriebenen Muster-Hintergrund; der aktuelle
+Bereitstellungsstand ist separat in den Release-Hinweisen dokumentiert.

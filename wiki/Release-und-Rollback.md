@@ -1,9 +1,9 @@
 # Release und Rollback
 
-## Testpaket 1.3.6
+## Release 1.3.7
 
-Version 1.3.6 ist für die Dev-Abnahme vorbereitet und noch nicht öffentlich
-veröffentlicht. Interne `.tmb`-Vorschaubildordner werden vor dem Betreten
+Version 1.3.7 vereint die OPC-Korrekturen, das sichere Design-Speichern und
+die gemusterte lokale Live-Vorschau. Interne `.tmb`-Vorschaubildordner werden vor dem Betreten
 ausgelassen und verhindern den Abgleich nicht mehr. Der sichere Bildscan liest nun
 auch unbenutzte Bilder im OPC-Uploadspeicher und in verschachtelten Ordnern.
 Starten Sie nach dem Update einen neuen Scan, wählen Sie **OnPage Composer**

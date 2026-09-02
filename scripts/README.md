@@ -1,8 +1,12 @@
 # Hilfsskripte
 
+Die Release-Prüfungen laufen standardmäßig lokal. GitHub Actions ist nur noch
+manuell startbar; Push und Pull Request lösen keinen Cloud-Lauf aus. Vor einem
+manuellen Lauf müssen mögliche Kosten gesondert geprüft werden.
+
 `build-release.sh` erstellt aus einer ausdrücklich freigegebenen Top-Level-Liste
 unter `plugin/MGD_AI_Kennzeichnung/` das reproduzierbare Installationspaket
-`dist/MGD_AI_Kennzeichnung-1.3.6.zip`. Innerhalb dieser Pfade sind nur die für
+`dist/MGD_AI_Kennzeichnung-1.3.7.zip`. Innerhalb dieser Pfade sind nur die für
 das Plugin benötigten Dateiendungen erlaubt. Unbekannte Top-Level-Pfade,
 Symlinks, versteckte Dateien, Schlüssel, Zertifikate, Dumps und Backups brechen
 den Build sicher ab. Erst ein vollständig erzeugtes ZIP ersetzt ein vorhandenes
@@ -13,7 +17,7 @@ Das Paket wird zweimal gebaut und per SHA-256 auf Reproduzierbarkeit geprüft.
 Anschließend wird genau dieses geprüfte ZIP zuerst auf `dev.onvis-shop.de`
 abgenommen. Für `onvis-shop.de` wird dasselbe Artefakt verwendet; zwischen
 Dev-Abnahme und Live-Rollout findet kein neuer Build statt. Das öffentliche
-Repository stellt Releasehinweise bereit. Version 1.3.6 enthält bewusst keinen
+Repository stellt Releasehinweise bereit. Version 1.3.7 enthält bewusst keinen
 Auto-Updater; das Update erfolgt als manueller ZIP-Upload im JTL-Plugin-Manager.
 
 ## Fertige Pakete für Michael ablegen
@@ -28,7 +32,7 @@ Build- oder Worktree-Verzeichnissen erreichbar sind:
 - Nach den Prüfungen wird genau dieses ZIP unverändert in den genannten
   Hauptprojektordner übernommen – nicht in `plugin/` eines isolierten Worktrees.
 - Der Dateiname behält die Version, beispielsweise
-  `MGD_AI_Kennzeichnung-1.3.6.zip`; eine zugehörige Prüfsummendatei liegt bei Bedarf daneben.
+  `MGD_AI_Kennzeichnung-1.3.7.zip`; eine zugehörige Prüfsummendatei liegt bei Bedarf daneben.
 - Vorhandene gleichnamige Pakete erst per SHA-256 vergleichen. Identische
   Dateien bleiben liegen; abweichende Pakete nicht ungefragt überschreiben.
 - Zur Übergabe an Michael auf die Datei im Hauptprojektordner verlinken.

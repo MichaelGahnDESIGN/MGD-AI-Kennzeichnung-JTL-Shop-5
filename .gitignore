@@ -17,4 +17,15 @@
 *.bak
 *.pem
 *.sql
+*.key
+*.p12
+*.pfx
+*.dump
+**/BACKUPS/
+**/backups/
+**/PlayTest/
+**/playtest/
+**/PLAYTEST/
+**/credentials/
+**/server_access/
 .DS_Store

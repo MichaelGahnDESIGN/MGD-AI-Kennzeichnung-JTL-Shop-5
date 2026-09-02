@@ -1,5 +1,12 @@
 # Versionsübersicht
 
+## 1.3.7 – 3. September 2026
+
+Vereint den rekursiven OPC-Scan aus den Testpaketen 1.3.5/1.3.6 mit dem
+Speicher-Hotfix und der rein lokalen Muster-Vorschau. Keine neue Migration.
+Veröffentlichung und Installation sind getrennte Schritte; maßgeblich sind
+die [aktuellen Prüf- und Updatehinweise](Release-1.3.7.md).
+
 ## 1.3.6 – 2. September 2026
 
 Korrigiert den Abbruch des OPC-Dateiscans durch den internen `.tmb`-Cache.
@@ -22,7 +29,7 @@ der Live-Shop wurde nicht verändert. Siehe [Prüf- und Updatehinweise](Release-
 
 ## 1.3.4 – 1. September 2026
 
-Zuletzt veröffentlichter Stand. Startet den vollständig lokalen
+Historischer öffentlicher Stand. Startet den vollständig lokalen
 AI-Philosophie-Editor über einen klassischen, JTL-kompatiblen AJAX-Starter.
 Dieser lädt nur das lokale Stylesheet und das lokale ES-Modul von derselben
 Shop-Domain. Die Textfelder bleiben bei einem Ladefehler als sicherer Fallback
