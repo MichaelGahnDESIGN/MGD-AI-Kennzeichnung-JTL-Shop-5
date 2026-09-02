@@ -8,6 +8,9 @@
 /.superpowers/
 /.secrets/
 /dist/
+# Fertige Installationspakete liegen für die manuelle Shop-Aktualisierung neben dem Quellcode.
+/plugin/MGD_AI_Kennzeichnung-*.zip
+/plugin/MGD_AI_Kennzeichnung-*.zip.sha256
 # Lokal regenerierbarer AST-Wissensgraph samt Werkzeugcache, kein Pluginbestandteil.
 /graphify-out/
 .env*

@@ -1,5 +1,14 @@
 # Produkt- und Sicherheitsentscheidungen
 
+## Sichtbare Ablage fertiger Installationspakete
+
+Auf Michaels Wunsch werden fertig geprüfte ZIPs seit dem 2. September 2026 in
+`plugin/` des Hauptprojektordners abgelegt. `dist/` bleibt der interne Build-Ort.
+Dadurch sind die fertigen Dateien schnell erreichbar, während Quellcode und
+Paketbau getrennt bleiben. Die Übergabe erfolgt unverändert mit Versionsnummer
+und SHA-256-Vergleich. Einzelheiten stehen unter
+[Fertige Pakete ablegen](../scripts/README.md#fertige-pakete-für-michael-ablegen).
+
 ## Gezielte Template-Neukompilierung nach Updates
 
 Reproduzierbare Release-Archive behalten feste Datei-Zeitstempel. Deshalb
