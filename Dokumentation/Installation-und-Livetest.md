@@ -21,19 +21,19 @@ Die Installation darf nicht unmittelbar vor einer Kampagne, einem Import oder ei
 
 ## 3. Zuerst auf dev.onvis-shop.de testen
 
-Version 1.3.7 wird **vor** jeder Änderung an `onvis-shop.de` vollständig auf `dev.onvis-shop.de` geprüft. Der Dev-Shop muss im Wartungsmodus bleiben, eine eigene Datenbank verwenden und darf keine aktive Wawi-Anbindung besitzen.
+Version 1.3.8 wird **vor** jeder Änderung an `onvis-shop.de` vollständig auf `dev.onvis-shop.de` geprüft. Der Dev-Shop muss im Wartungsmodus bleiben, eine eigene Datenbank verwenden und darf keine aktive Wawi-Anbindung besitzen.
 
 Vor dem Dev-Update werden das vorhandene Pluginverzeichnis und die vier Plugin-Datenbanktabellen datiert gesichert. Anschließend wird exakt das später für Live vorgesehene ZIP verwendet. Galerie, Speichern, Stapelbearbeitung, OPC, Dateimanager-Fallback und Frontend-Ausgabe müssen fehlerfrei sein. Bei einem Fehler endet die Freigabe; Live bleibt unverändert.
 
 ## 4. Installation oder Update im Plugin-Manager
 
 1. Im JTL-Backend **Plugins → Plugin-Manager → Upload** öffnen.
-2. Das Releasepaket `MGD_AI_Kennzeichnung-1.3.7.zip` als **manuellen ZIP-Upload** auswählen. Nicht den automatisch erzeugten GitHub-Quellcode verwenden.
+2. Das Releasepaket `MGD_AI_Kennzeichnung-1.3.8.zip` als **manuellen ZIP-Upload** auswählen. Nicht den automatisch erzeugten GitHub-Quellcode verwenden.
 3. Bei einer bestehenden Version die von JTL angebotene Updatefunktion verwenden; sonst nach erfolgreicher Validierung installieren und aktivieren.
 4. Keine Dateien in JTL-Core, NOVA oder OnvisTheme manuell ersetzen.
 5. Die bei Neuinstallationen standardmäßig aktivierten Updatehinweise bewusst anhand der eigenen Datenschutz- und Netzwerkvorgaben prüfen; die Footer-Nennung bleibt freiwillig.
 
-Version 1.3.7 besitzt keinen Auto-Updater. Das öffentliche Repository stellt
+Version 1.3.8 besitzt keinen Auto-Updater. Das öffentliche Repository stellt
 Release-Hinweise bereit; eine Aktualisierung erfolgt trotzdem immer
 kontrolliert über das geprüfte ZIP im Plugin-Manager.
 

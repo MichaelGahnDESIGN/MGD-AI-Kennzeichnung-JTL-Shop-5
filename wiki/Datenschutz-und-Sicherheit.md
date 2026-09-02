@@ -75,7 +75,7 @@ GitHub-Release-API, prüft TLS, folgt keinen Weiterleitungen und begrenzt die
 Antwortgröße.
 
 GitHub kann technisch die **Server-IP**, den Zeitpunkt und den festen
-**User-Agent** `MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.7` erhalten. Bilder,
+**User-Agent** `MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.8` erhalten. Bilder,
 Tokens, Shop-, Kunden- und Formulardaten werden nicht übertragen. Ein Erfolg
 oder Fehler wird zwölf Stunden lokal zwischengespeichert. Das Plugin installiert
 keine Updates automatisch; erforderlich bleibt der manuelle ZIP-Upload des

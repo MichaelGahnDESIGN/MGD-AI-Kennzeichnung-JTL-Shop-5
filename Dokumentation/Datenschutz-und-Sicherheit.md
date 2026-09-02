@@ -17,7 +17,7 @@ lokal gespeichert. Dadurch führen auch eine Störung oder ein Rate-Limit nicht
 bei jedem Seitenaufruf zu einer neuen Anfrage.
 
 GitHub kann bei der HTTPS-Verbindung technisch **Server-IP**, Zeitpunkt und den
-festen **User-Agent** `MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.7` erhalten. Das
+festen **User-Agent** `MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.8` erhalten. Das
 Plugin überträgt keine Bilder, Shop-, Kunden- oder Formulardaten, Tokens oder
 Zugangsdaten. TLS-Prüfung ist verpflichtend, Weiterleitungen sind gesperrt und
 die Antwort ist auf 65.536 Byte begrenzt. Das Plugin installiert keine Updates

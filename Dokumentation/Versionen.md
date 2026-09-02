@@ -1,5 +1,11 @@
 # Versionsübersicht
 
+## 1.3.8 – 3. September 2026
+
+Kompakte Werkzeuge im AI-Philosophie-Editor, dunkle Sprachüberschriften auf
+weißen Karten und eine lokale CSS-Cachekennung. Große Textfelder bleiben
+unverändert. Keine neue Migration. Siehe [Prüf- und Updatehinweise](Release-1.3.8.md).
+
 ## 1.3.7 – 3. September 2026
 
 Vereint den rekursiven OPC-Scan aus den Testpaketen 1.3.5/1.3.6 mit dem

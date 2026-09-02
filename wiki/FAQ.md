@@ -91,7 +91,7 @@ werden nicht übertragen.
 
 Nein.
 
-Version 1.3.7 wird per geprüftem, manuellem ZIP-Upload installiert. Das aktuelle
+Version 1.3.8 wird per geprüftem, manuellem ZIP-Upload installiert. Das aktuelle
 Testpaket liegt lokal vor; die öffentliche GitHub-Veröffentlichung steht noch aus.
 
 ## Was bedeutet Transparenz?

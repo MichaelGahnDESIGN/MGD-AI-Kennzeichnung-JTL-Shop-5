@@ -1,5 +1,14 @@
 # Release und Rollback
 
+## Release 1.3.8
+
+Die Werkzeugleiste im AI-Philosophie-Editor wird kompakter. Alle Befehle,
+beide großen Textfelder sowie die Modi Visuell und HTML bleiben erhalten.
+Sprachüberschriften sind auch im dunklen JTL-Backend gut lesbar. Die lokale
+CSS-Cachekennung sorgt dafür, dass nach dem Update die neue Darstellung lädt.
+Es gibt keine neue Migration und keine Änderung vorhandener Kennzeichnungen.
+Verwenden Sie das Installationspaket `MGD_AI_Kennzeichnung-1.3.8.zip`.
+
 ## Release 1.3.7
 
 Version 1.3.7 vereint die OPC-Korrekturen, das sichere Design-Speichern und

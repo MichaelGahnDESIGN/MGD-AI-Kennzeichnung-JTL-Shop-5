@@ -91,7 +91,7 @@ Prüfen Sie, ob Status, Position und Darstellung vollständig ausgewählt sind. 
 
 Version 1.1.1 und neuer korrigiert normale, verlinkte und responsive Bilder sowie lokale OPC-Hintergründe. Prüfen Sie zuerst:
 
-- wirklich die aktuelle Version 1.3.7 aktiv?
+- wirklich die aktuelle Version 1.3.8 aktiv?
 - Plugin-CSS mit HTTP 200 erreichbar?
 - alter Browser- oder Template-Cache?
 - stark abweichendes eigenes HTML/CSS?
