@@ -11,7 +11,19 @@
     padding-bottom: 1.5rem;
 }
 
-.mgd-display__header { margin: 0 0 1.25rem; max-width: 48rem; }
+/* Eine eigene helle Fläche verhindert dunkle Schrift auf dem dunklen JTL-Admin-Hintergrund. */
+.mgd-display .mgd-display__header {
+    background: var(--mgd-display-surface);
+    border: 1px solid var(--mgd-display-border);
+    border-radius: .4rem;
+    color: var(--mgd-display-text);
+    margin: 0 0 1.25rem;
+    max-width: 48rem;
+    padding: 1.25rem;
+}
+
+/* Die Überschrift darf keine abweichende Textfarbe vom übergeordneten Admin-Theme übernehmen. */
+.mgd-display .mgd-display__header h1 { color: var(--mgd-display-text); }
 .mgd-display__eyebrow { color: var(--mgd-display-accent-dark); font-size: .78rem; font-weight: 700; letter-spacing: .08em; margin: 0 0 .3rem; text-transform: uppercase; }
 .mgd-display__intro, .mgd-display__help, .mgd-display small { color: var(--mgd-display-muted); }
 .mgd-display__intro { margin: .35rem 0 0; }

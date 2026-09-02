@@ -1,0 +1,73 @@
+/*
+ * Dieses Schachbrett entsteht ausschließlich in der lokalen Admin-Vorschau.
+ * Es liegt tatsächlich hinter dem Label, damit Transparenz und Unschärfe sichtbar
+ * werden. Weder die Bilddatei noch die Ausgabe im Shop werden dadurch verändert.
+ */
+.mgd-display .mgd-display__image-wrap {
+    --mgd-preview-pattern-space: calc(
+        var(--mgd-preview-outer-margin)
+        + var(--mgd-preview-inner-padding)
+        + var(--mgd-preview-inner-padding)
+        + var(--mgd-preview-font-size) * 1.2
+        + 1rem
+    );
+    background: repeating-conic-gradient(#e9eeeb 0% 25%, #74867b 0% 50%);
+    background-size: 24px 24px;
+    display: grid;
+    grid-template-columns: 1rem minmax(0, 1fr) 1rem;
+    /* Gleich hohe, mitwachsende Musterstreifen halten auch mehrzeilige Labels vom Bild fern. */
+    grid-template-rows:
+        minmax(var(--mgd-preview-pattern-space), 1fr)
+        auto
+        minmax(var(--mgd-preview-pattern-space), 1fr);
+}
+
+/* Das vorhandene Schuhbild bleibt vollständig sichtbar und proportional in der Mitte. */
+.mgd-display .mgd-display__image-wrap img {
+    grid-column: 2;
+    grid-row: 2;
+    place-self: center;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+/*
+ * Das Label nimmt am Grid teil: Seine tatsächliche Höhe bestimmt den Platzbedarf,
+ * auch bei großer Schrift und Zeilenumbruch. Die bisherigen absoluten Eckabstände
+ * werden zurückgesetzt; derselbe Außenabstand wirkt stattdessen als Randabstand.
+ * Farben, Transparenz, Radius und Unschärfe bleiben aus display.css erhalten.
+ */
+.mgd-display .mgd-display__label {
+    position: relative;
+    inset: auto;
+    grid-column: 1 / -1;
+    margin: var(--mgd-preview-outer-margin);
+    width: fit-content;
+    min-width: 0;
+}
+
+/* Alle vier Vorschaupositionen bleiben mit den vorhandenen Bedienelementen steuerbar. */
+.mgd-display .mgd-display-preview--top-right .mgd-display__label {
+    grid-row: 1;
+    align-self: start;
+    justify-self: end;
+}
+
+.mgd-display .mgd-display-preview--top-left .mgd-display__label {
+    grid-row: 1;
+    align-self: start;
+    justify-self: start;
+}
+
+.mgd-display .mgd-display-preview--bottom-right .mgd-display__label {
+    grid-row: 3;
+    align-self: end;
+    justify-self: end;
+}
+
+.mgd-display .mgd-display-preview--bottom-left .mgd-display__label {
+    grid-row: 3;
+    align-self: end;
+    justify-self: start;
+}
