@@ -45,25 +45,30 @@ Die lokale Funktionsabnahme der Detail-Lupe ist im
 
 Die lokale PHP-Laufzeit war 8.5.6; es erfolgte kein zusätzlicher Lauf unter
 PHP 8.1. Die Pakettests prüfen erlaubte Inhalte und identische Ergebnisse
-wiederholter Builds. Die ergänzende Backend-Abnahme im echten JTL-Shop steht
-noch aus; sie ist Voraussetzung für die anschließenden Live-Shop-Updates.
+wiederholter Builds. Die ergänzende Backend-Abnahme im echten JTL-Dev-Shop
+ist bestanden und gibt dasselbe unveränderte Paket für die Live-Shop-Updates frei.
 
 SHA-256 des Installationspakets:
 `7afde24a22f354c79fd962a32a28e607d43dfdae57a4a3f76aecf97bed9bcf0a`
 
 | Shop | Stand für 1.3.9 |
 |---|---|
-| dev.onvis-shop.de | 1.3.9 hochgeladen, alle 194 Paketdateien identisch; JTL meldet noch 1.3.8 aktiv. Updateabschluss und Backend-Abnahme ausstehend. |
+| dev.onvis-shop.de | 1.3.9 aktiv; alle 194 Paketdateien identisch. Detail-Lupe, Regler und Speichern geprüft. |
 | onvis-shop.de | JTL meldet 1.3.7 aktiv; alle 192 Dateien des zuvor hochgeladenen 1.3.8-Pakets identisch. In diesem Rollout nicht geändert. |
 | campingteile24.de | Alle 192 Dateien des zuvor hochgeladenen 1.3.8-Pakets identisch; aktiver JTL-Versionsstand noch nicht neu geprüft. In diesem Rollout nicht geändert. |
 
-Zwischenstand am 3. September 2026: Der Dev-Plugin-Manager bestätigte den
-Upload und zeigte den Wechsel 1.3.8 → 1.3.9 an. Nach dem Updateklick war der
-Browser nicht mehr steuerbar. Eine nachfolgende rein lesende Serverprüfung
-bestätigte den vollständigen Dateiupload, aber noch keinen JTL-Updateabschluss.
-Die manuelle Kontrolle des offenen Dev-Tabs ist deshalb erforderlich.
-Der GitHub-Release bleibt bis zur Dev-Abnahme ein Entwurf; die Live-Shops
-werden vorher nicht auf 1.3.9 aktualisiert.
+Dev-Abnahme am 3. September 2026: Nach der manuellen Bestätigung durch den
+Betreiber meldete JTL „Plugin wurde erfolgreich aktualisiert“ und 1.3.9 aktiv.
+Die unabhängige Serverprüfung bestätigte Version, Aktivstatus und alle 194
+Paketdateien bytegenau. Die Galerie enthält weiterhin 744 Einträge.
+
+Der Darstellungstab rendert Schuhbild und separate Detail-Lupe im echten
+JTL-Backend. Die Probe ist zweifach vergrößert. Ein nur vorübergehender Test
+mit 50 % Transparenz und 12 px Unschärfe aktualisierte Zahlenfeld, Regler und
+beide Vorschauen korrekt. Danach wurden die Originalwerte wiederhergestellt
+und einmal unverändert gespeichert. Die Erfolgsmeldung erschien ohne weiße
+Seite; alle sieben Werte waren danach identisch. Keine Browser-Konsolenfehler
+während der Abnahme. Die öffentliche Freigabe folgt dieser bestandenen Prüfung.
 
 Veröffentlichung, Dateiupload und abgeschlossene JTL-Aktualisierung sind
 getrennte Schritte. Ein Update erfolgt im Plugin-Manager ohne Deinstallation.
