@@ -1,5 +1,20 @@
 # Änderungsprotokoll
 
+## 1.3.9 – 2026-09-03
+
+- Zeigt das unveränderte Schuh-Beispielbild wieder ohne Schachbrettrand.
+- Ergänzt darunter eine eigene zweifach vergrößerte Detail-Lupe mit bunten
+  Flächen, feinen Linien und einem Kreis, vollständig lokal per CSS.
+- Synchronisiert beide Vorschauen mit denselben geprüften Designwerten.
+  Transparenz und Unschärfe werden zusätzlich als Prozent- und Pixelwerte angezeigt.
+- Erklärt den verdeckten Unschärfe-Effekt bei 0 % Transparenz und weist auf
+  fehlende Browserunterstützung hin. Große Labels lassen die Lupenbox mitwachsen.
+- Behält Position und Außenabstand am Produktbeispiel; die Detailprobe bleibt
+  mittig. Vorhandene Werte, Bilder und Kennzeichnungen bleiben unverändert.
+- Keine neue Datenbankmigration, kein externer Dienst und keine automatische
+  Speicherung. Lokale Tests und tatsächliche Shop-Updates sind getrennt in
+  den [Release-Hinweisen](Dokumentation/Release-1.3.9.md) dokumentiert.
+
 ## 1.3.8 – 2026-09-03
 
 - Verkleinert ausschließlich die Werkzeuge im AI-Philosophie-Editor auf

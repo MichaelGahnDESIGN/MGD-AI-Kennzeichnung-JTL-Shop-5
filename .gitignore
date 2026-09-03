@@ -17,11 +17,13 @@
 *.bak
 *.pem
 *.sql
+*.sql.gz
 *.key
 *.p12
 *.pfx
 *.dump
 **/BACKUPS/
+**/BACKUP*/
 **/backups/
 **/PlayTest/
 **/playtest/

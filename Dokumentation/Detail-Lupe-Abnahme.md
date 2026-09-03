@@ -1,6 +1,9 @@
 # Detail-Lupe: lokaler Einbau und Abnahme
 
-Stand: 3. September 2026. Entwicklungszweig: `codex/detail-lupe`.
+Stand der ursprünglichen lokalen Abnahme: 3. September 2026, Entwicklungszweig
+`codex/detail-lupe`. Der folgende Bericht hält diesen damaligen Stand fest.
+Die anschließende Integration auf `main`, Versionierung und Shop-Abnahme werden
+getrennt in [Release 1.3.9](Release-1.3.9.md) fortgeschrieben.
 
 ## Ergebnis und Abgrenzung
 

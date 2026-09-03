@@ -1,5 +1,15 @@
 # Release und Rollback
 
+## Release 1.3.9
+
+Das Schuhbild ist wieder neutral. Darunter zeigt eine separate Detail-Lupe
+Transparenz und Hintergrundunschärfe zweifach vergrößert auf bunten Flächen.
+Beide Vorschauen verwenden dieselben Einstellwerte; Shopbilder, gespeicherte
+Labels und Einstellungen bleiben erhalten. Es gibt keine neue Migration.
+Verwenden Sie `MGD_AI_Kennzeichnung-1.3.9.zip` und die zugehörige SHA-256-Datei.
+Der tatsächliche Prüf- und Installationsstand steht in den
+[Release-Hinweisen](../Dokumentation/Release-1.3.9.md).
+
 ## Release 1.3.8
 
 Die Werkzeugleiste im AI-Philosophie-Editor wird kompakter. Alle Befehle,

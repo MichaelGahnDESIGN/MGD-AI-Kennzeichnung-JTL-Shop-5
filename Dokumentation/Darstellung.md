@@ -51,11 +51,11 @@ Die Live-Vorschau arbeitet ausschließlich im Browser mit lokalen Plugin-Dateien
 Sie sendet weder das Beispielbild noch die eingegebenen Werte an Dritte. Ohne
 Klick auf **Speichern** wird kein Shopwert geändert.
 
-## Neue Detail-Lupe – noch nicht veröffentlicht
+## Detail-Lupe ab Version 1.3.9
 
-Der Entwicklungszweig `codex/detail-lupe` ersetzt den Schachbrettrand durch
-eine eigene Effektprobe direkt unter dem unveränderten Schuhbild. Das ist
-noch kein neues Release und wurde nicht auf einen Shop übertragen.
+Version 1.3.9 ersetzt den Schachbrettrand durch eine eigene Effektprobe direkt
+unter dem unveränderten Schuhbild. Den tatsächlichen Installationsstand und
+die Prüfungen dokumentieren die [Release-Hinweise](Release-1.3.9.md).
 
 Die **Detail-Lupe** zeigt das Label **zweifach vergrößert** auf bunten Flächen,
 feinen Linien und einer Kreisform. Damit können Sie genauer unterscheiden:

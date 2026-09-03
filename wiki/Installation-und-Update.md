@@ -15,7 +15,7 @@ Die Bildausgabe wurde mit Version 1.1.1 unter NOVA und einem NOVA-basierten Onvi
 
 Verwenden Sie dieses eindeutig versionierte Installationspaket:
 
-`MGD_AI_Kennzeichnung-1.3.8.zip`
+`MGD_AI_Kennzeichnung-1.3.9.zip`
 
 Verwenden Sie aus dem GitHub-Release ausschließlich das angehängte Plugin-ZIP.
 Testen Sie es zuerst auf einer gesicherten Dev-Installation.

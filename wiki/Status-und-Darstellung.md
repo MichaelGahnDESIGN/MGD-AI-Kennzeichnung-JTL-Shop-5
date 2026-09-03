@@ -117,11 +117,10 @@ nicht gespeichert. Für eine echte Bildkennzeichnung bearbeiten Sie das Bild in
 der Galerie, im OnPage Composer oder per Stapelbearbeitung. Erst der
 **Speichern**-Knopf im Darstellungstab ändert die globalen Werte.
 
-### Vorschau auf die nächste Verbesserung: Detail-Lupe
+### Detail-Lupe ab Version 1.3.9
 
-Im Entwicklungszweig `codex/detail-lupe` ist eine separate **Detail-Lupe**
-vorbereitet. Sie ist noch nicht Bestandteil eines neuen veröffentlichten
-Releases. Das Schuhbild hat wieder seinen neutralen Hintergrund; darunter
+Version 1.3.9 enthält eine separate **Detail-Lupe**.
+Das Schuhbild hat wieder seinen neutralen Hintergrund; darunter
 erscheint eine zweifach vergrößerte Labelprobe auf bunten Flächen mit feinen
 Linien. So erkennen Sie Transparenz und Hintergrundunschärfe deutlicher.
 

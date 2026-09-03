@@ -1,5 +1,12 @@
 # Versionsübersicht
 
+## 1.3.9 – 3. September 2026
+
+Neutrales Schuhbild und separate zweifach vergrößerte Detail-Lupe für
+Transparenz, Unschärfe und Labelgestaltung. Vollständig lokale CSS-Flächen,
+keine neuen Einstellungen oder Migrationen. Siehe
+[Prüf- und Updatehinweise](Release-1.3.9.md).
+
 ## 1.3.8 – 3. September 2026
 
 Kompakte Werkzeuge im AI-Philosophie-Editor, dunkle Sprachüberschriften auf
