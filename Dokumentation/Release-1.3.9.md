@@ -54,8 +54,8 @@ SHA-256 des Installationspakets:
 | Shop | Stand für 1.3.9 |
 |---|---|
 | dev.onvis-shop.de | 1.3.9 aktiv; alle 194 Paketdateien identisch. Detail-Lupe, Regler und Speichern geprüft. |
-| onvis-shop.de | JTL meldet 1.3.7 aktiv; alle 192 Dateien des zuvor hochgeladenen 1.3.8-Pakets identisch. In diesem Rollout nicht geändert. |
-| campingteile24.de | Alle 192 Dateien des zuvor hochgeladenen 1.3.8-Pakets identisch; aktiver JTL-Versionsstand noch nicht neu geprüft. In diesem Rollout nicht geändert. |
+| onvis-shop.de | 1.3.9 aktiv; alle 194 Paketdateien identisch. Detail-Lupe und Speichern unveränderter Werte geprüft. |
+| campingteile24.de | 1.3.9 aktiv; alle 194 Paketdateien identisch. Detail-Lupe und Speichern unveränderter Werte geprüft. |
 
 Dev-Abnahme am 3. September 2026: Nach der manuellen Bestätigung durch den
 Betreiber meldete JTL „Plugin wurde erfolgreich aktualisiert“ und 1.3.9 aktiv.
@@ -68,7 +68,29 @@ mit 50 % Transparenz und 12 px Unschärfe aktualisierte Zahlenfeld, Regler und
 beide Vorschauen korrekt. Danach wurden die Originalwerte wiederhergestellt
 und einmal unverändert gespeichert. Die Erfolgsmeldung erschien ohne weiße
 Seite; alle sieben Werte waren danach identisch. Keine Browser-Konsolenfehler
-während der Abnahme. Die öffentliche Freigabe folgt dieser bestandenen Prüfung.
+während der Abnahme. Nach dieser bestandenen Prüfung wurde das Release
+am 3. September 2026 um 06:26 Uhr (Europe/Berlin) öffentlich freigegeben.
+
+Anschließend wurde dasselbe unveränderte Paket über den jeweiligen
+JTL-Plugin-Manager auf Onvis und Campingteile24 hochgeladen und aktualisiert.
+Beide Backends zeigen 1.3.9 unter den aktivierten Plugins. Auf Onvis wurde
+der aktive Versionsstand zusätzlich direkt und nur lesend aus der Datenbank
+bestätigt. Auf Campingteile24 beruht die Bestätigung der aktiven Version auf
+der Backend-Anzeige; die Dateiprüfung erfolgte unabhängig per FTPS.
+
+In beiden Live-Shops laden das lokale Schuhbild und die separate bunte
+Detail-Lupe. Alle sieben bisherigen Designwerte wurden vor dem Speichertest
+gelesen und einmal unverändert gespeichert. Danach erschien jeweils
+„Die Darstellung wurde sicher gespeichert.“; die Werte blieben identisch,
+es gab keine weiße Seite und keine Konsolenfehler während der Prüfung.
+Die Bildgalerien laden mit 723 Ergebnissen auf Onvis beziehungsweise 1.194
+auf Campingteile24. Es wurde kein neuer Bildscan gestartet und keine
+Kennzeichnung verändert. Bestellungen, Zahlungsarten und andere Plugins
+blieben unberührt.
+
+Der GitHub-Anhang wurde abschließend erneut geprüft: Das Release ist
+öffentlich und kein Vorabrelease; der von GitHub gemeldete SHA-256-Digest
+entspricht dem oben genannten, in allen drei Shops geprüften Paket.
 
 Veröffentlichung, Dateiupload und abgeschlossene JTL-Aktualisierung sind
 getrennte Schritte. Ein Update erfolgt im Plugin-Manager ohne Deinstallation.
@@ -82,6 +104,11 @@ verschlüsselt und durch Entschlüsselung/Bytevergleich geprüft: Dev 197 Dateie
 und vier eigene Plugin-Tabellen; Onvis 195 Dateien und vier eigene Tabellen;
 Campingteile24 198 Dateien. Alle Sicherungen und Schlüssel bleiben lokal
 außerhalb von Repository, Installationspaket und Webroot.
+
+Unmittelbar vor den Live-Uploads wurden die zusätzlichen Sicherungen von
+Onvis und Campingteile24 um 06:25 Uhr nochmals frisch erstellt und
+erfolgreich geprüft, mit demselben Umfang wie oben beschrieben. Es wurde
+keine ältere Sicherung gelöscht oder überschrieben.
 
 Vollständige Datei- und Datenbanksicherungen sowie Hoster-Backups wurden
 zusätzlich vom Betreiber bestätigt. Bei Campingteile24 ist die vollständige
