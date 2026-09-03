@@ -1,7 +1,7 @@
 {* Lokaler, CSRF-geschützter Darstellungstab ohne externe Ressourcen oder persistente Vorschauoptionen. *}
-<link rel="stylesheet" href="{$adminUrl|escape:'html':'UTF-8'}display.css">
-<link rel="stylesheet" href="{$adminUrl|escape:'html':'UTF-8'}display-preview-pattern.css">
-<script type="module" src="{$adminUrl|escape:'html':'UTF-8'}js/display-controls.mjs"></script>
+<link rel="stylesheet" href="{$adminUrl|escape:'html':'UTF-8'}display.css?v=f504cb923700">
+<link rel="stylesheet" href="{$adminUrl|escape:'html':'UTF-8'}display-detail-preview.css?v=9709f247d723">
+<script type="module" src="{$adminUrl|escape:'html':'UTF-8'}js/display-controls.mjs?v=711642bffb02"></script>
 <section class="mgd-display container-fluid" aria-labelledby="mgd-display-heading" data-mgd-display-root>
     <header class="mgd-display__header">
         <p class="mgd-display__eyebrow">MGD AI Kennzeichnung</p>
@@ -90,11 +90,11 @@
             <div class="card-body">
                 <p class="mgd-display__eyebrow">Lokale Vorschau</p>
                 <h2 id="mgd-display-preview-heading" class="h4">Kennzeichnung am Beispielbild</h2>
-                <div class="mgd-display__image-wrap mgd-display-preview--bottom-right mgd-display-preview--theme-auto" data-mgd-display-preview aria-describedby="mgd-display-preview-pattern-help">
+                <div class="mgd-display__image-wrap mgd-display-preview--bottom-right mgd-display-preview--theme-auto" data-mgd-display-preview>
                     <img src="{$adminUrl|escape:'html':'UTF-8'}images/michael-gahn-design-schuh.png" alt="Fiktiver Michael Gahn DESIGN Schuh">
                     <span class="mgd-display__label" data-mgd-display-label aria-live="polite">KI-GENERIERT</span>
                 </div>
-                <p class="mgd-display__help" id="mgd-display-preview-pattern-help">Muster nur zur Vorschau: So erkennst du Transparenz und Hintergrundunschärfe. Deine Shopbilder bleiben unverändert.</p>
+                {include file='./display-detail-preview.tpl'}
                 <p class="mgd-display__help">Die folgenden Optionen ändern nur diese Vorschau und werden nicht gespeichert.</p>
                 <div class="mgd-display__preview-controls">
                     <label for="mgd-display-preview-position">Position <span>Nur Vorschau</span></label>

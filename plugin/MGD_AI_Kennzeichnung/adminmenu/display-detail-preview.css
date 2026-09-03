@@ -1,0 +1,63 @@
+/* Lokale Effektprobe unter dem unveränderten Schuhbild. Die Farben werden
+   ausschließlich mit CSS erzeugt; es werden keine Bilder oder Fonts geladen. */
+.mgd-display .mgd-detail {
+    --mgd-preview-font-size: 12px;
+    --mgd-preview-outer-margin: 8px;
+    --mgd-preview-inner-padding: 6px;
+    --mgd-preview-border-radius: 4px;
+    --mgd-preview-blur: 0px;
+    --mgd-preview-background-opacity: .92;
+    border-top: 1px solid var(--mgd-display-border);
+    color: var(--mgd-display-text);
+    margin: 1.25rem 0;
+    padding-top: 1rem;
+    min-width: 0;
+}
+.mgd-detail__heading { align-items: center; display: flex; flex-wrap: wrap; gap: .5rem; justify-content: space-between; }
+.mgd-display .mgd-detail h3 { color: var(--mgd-display-text); font-size: 1rem; font-weight: 700; margin: 0; }
+.mgd-detail__scale { background: var(--mgd-display-soft); border: 1px solid var(--mgd-display-border); border-radius: 1rem; color: var(--mgd-display-muted); font-size: .75rem; padding: .2rem .5rem; }
+.mgd-detail__intro { color: var(--mgd-display-muted); font-size: .84rem; line-height: 1.5; margin: .5rem 0 .75rem; }
+.mgd-detail__surface { border: 1px solid var(--mgd-display-border); border-radius: .6rem; overflow: hidden; }
+
+/* Zoom vergrößert Text, Innenabstand, Radius und Filter gemeinsam und bleibt
+   im Layoutfluss. Im Gegensatz zu transform: scale() wächst die Box mit einem
+   großen, mehrzeiligen Label und schneidet es auf schmalen Geräten nicht ab. */
+.mgd-detail__scene {
+    display: grid;
+    min-height: 90px;
+    min-width: 0;
+    padding: 8px;
+    place-items: center;
+    position: relative;
+    zoom: 2;
+}
+.mgd-detail__background {
+    background:
+        repeating-linear-gradient(115deg, transparent 0 9px, rgba(255, 255, 255, .65) 9px 10px, transparent 10px 19px, rgba(36, 53, 84, .45) 19px 20px),
+        linear-gradient(135deg, #faac71 0 25%, #f4ce62 25% 43%, #68d2c3 43% 61%, #7c9bea 61% 79%, #d889c2 79% 100%);
+    inset: 0;
+    position: absolute;
+}
+/* Ein Ring ergänzt die feinen Linien um eine gut erkennbare breite Kontur. */
+.mgd-detail__background::after { aspect-ratio: 1; border: 7px solid rgba(255, 255, 255, .75); border-radius: 50%; content: ''; position: absolute; right: 12%; top: 12%; width: 68px; }
+.mgd-display .mgd-detail .mgd-display__label {
+    inset: auto;
+    margin: 0;
+    max-width: 100%;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    position: relative;
+    text-align: center;
+    width: fit-content;
+}
+.mgd-detail__values { display: flex; flex-wrap: wrap; gap: .5rem 1rem; margin: .65rem 0; }
+.mgd-detail__values > div { align-items: baseline; display: flex; flex-wrap: wrap; gap: .35rem; }
+.mgd-detail__values dt { color: var(--mgd-display-muted); font-size: .8rem; font-weight: 400; }
+.mgd-detail__values dd { color: var(--mgd-display-text); font-size: .8rem; font-variant-numeric: tabular-nums; font-weight: 700; margin: 0; }
+.mgd-detail__hint, .mgd-detail__unsupported { background: var(--mgd-display-soft); border-left: 3px solid var(--mgd-display-accent); color: var(--mgd-display-text); font-size: .82rem; line-height: 1.5; margin: .6rem 0; padding: .5rem .65rem; }
+.mgd-detail__footnote { color: var(--mgd-display-muted); font-size: .78rem; line-height: 1.5; margin: .6rem 0 0; }
+.mgd-detail [hidden] { display: none !important; }
+.mgd-detail__unsupported { display: none; }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .mgd-detail__unsupported { display: block; }
+}

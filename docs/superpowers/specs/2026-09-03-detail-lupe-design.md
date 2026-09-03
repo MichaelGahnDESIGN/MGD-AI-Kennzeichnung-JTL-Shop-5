@@ -4,7 +4,9 @@
 
 Michael hat die lokale, bedienbare Vorschau am 03.09.2026 mit „top!“ bestätigt.
 Diese Spezifikation hält den Entwurf für den anschließenden Einbau fest.
-Die Umsetzung im Plugin, ein neues Release und Shop-Updates sind noch nicht erfolgt.
+Die Umsetzung wurde anschließend mit „go“ freigegeben und lokal im Zweig
+`codex/detail-lupe` eingebaut. Ein neues Release und Shop-Updates sind noch
+nicht erfolgt. Nachweise stehen in `Dokumentation/Detail-Lupe-Abnahme.md`.
 
 ## Darstellung
 

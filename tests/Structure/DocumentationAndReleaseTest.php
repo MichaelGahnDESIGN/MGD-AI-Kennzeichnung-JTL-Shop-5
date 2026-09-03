@@ -126,8 +126,11 @@ BASH;
         self::assertContains('MGD_AI_Kennzeichnung/adminmenu/display.php', $eintraege);
         self::assertContains('MGD_AI_Kennzeichnung/adminmenu/templates/display.tpl', $eintraege);
         self::assertContains('MGD_AI_Kennzeichnung/adminmenu/display.css', $eintraege);
-        // Das Muster muss auch im installierbaren Paket vorhanden sein.
-        self::assertContains('MGD_AI_Kennzeichnung/adminmenu/display-preview-pattern.css', $eintraege);
+        // Nur die separate Detail-Lupe, nicht mehr der Schachbrettrand, gehört in neue Builds.
+        self::assertContains('MGD_AI_Kennzeichnung/adminmenu/display-detail-preview.css', $eintraege);
+        self::assertContains('MGD_AI_Kennzeichnung/adminmenu/templates/display-detail-preview.tpl', $eintraege);
+        self::assertContains('MGD_AI_Kennzeichnung/adminmenu/js/display-detail-preview.mjs', $eintraege);
+        self::assertNotContains('MGD_AI_Kennzeichnung/adminmenu/display-preview-pattern.css', $eintraege);
         self::assertContains('MGD_AI_Kennzeichnung/adminmenu/js/display-range-sync.mjs', $eintraege);
         self::assertContains('MGD_AI_Kennzeichnung/adminmenu/js/display-preview.mjs', $eintraege);
         self::assertContains('MGD_AI_Kennzeichnung/adminmenu/js/display-controls.mjs', $eintraege);

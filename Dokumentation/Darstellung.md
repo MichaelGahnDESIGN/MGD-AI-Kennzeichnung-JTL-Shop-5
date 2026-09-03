@@ -51,9 +51,39 @@ Die Live-Vorschau arbeitet ausschließlich im Browser mit lokalen Plugin-Dateien
 Sie sendet weder das Beispielbild noch die eingegebenen Werte an Dritte. Ohne
 Klick auf **Speichern** wird kein Shopwert geändert.
 
-## Muster in der lokalen Vorschau – Bestandteil von 1.3.7
+## Neue Detail-Lupe – noch nicht veröffentlicht
 
-Das Schuhbild erhält in der nächsten vorbereiteten Fassung einen
+Der Entwicklungszweig `codex/detail-lupe` ersetzt den Schachbrettrand durch
+eine eigene Effektprobe direkt unter dem unveränderten Schuhbild. Das ist
+noch kein neues Release und wurde nicht auf einen Shop übertragen.
+
+Die **Detail-Lupe** zeigt das Label **zweifach vergrößert** auf bunten Flächen,
+feinen Linien und einer Kreisform. Damit können Sie genauer unterscheiden:
+
+- **Transparenz:** Der Hintergrund scheint durch das Label.
+- **Unschärfe:** Nur die Konturen hinter dem Label werden weicher; die Schrift
+  bleibt scharf. Probieren Sie beispielsweise 50 % Transparenz und 0/12 px
+  Unschärfe aus.
+- **Eckenradius, Schriftgröße und Innenabstand:** Beide Vorschauen ändern sich
+  gemeinsam. In der Lupe wird die ganze Effektprobe vergrößert.
+
+Prozent- und Pixelwert stehen unter der Lupe. Bei 0 % Transparenz erläutert
+ein Hinweis, dass ein undurchsichtiger Hintergrund den Unschärfe-Effekt verdeckt.
+Die Lupenbox wächst bei einem großen, umgebrochenen Label mit. Die Lupe bleibt
+mittig; die Positionswahl und der Außenabstand wirken am Produktbeispiel.
+
+Die Effektprobe ist **kein echter Ausschnitt des Schuhbilds**. Sie ändert weder
+Shopbilder noch deren Kennzeichnungen. Es gibt keine neuen Einstellungen,
+keine extern geladenen Ressourcen und keine automatische Speicherung.
+Vorhandene Shopwerte bleiben die Ausgangswerte; die Vorführwerte werden nicht
+als neue Standards übernommen. Ein Browser ohne Unterstützung für
+Hintergrundunschärfe zeigt einen entsprechenden Hinweis.
+
+Prüfumfang und Grenzen stehen im [Abnahmeprotokoll der Detail-Lupe](Detail-Lupe-Abnahme.md).
+
+## Frühere Muster-Vorschau – Bestandteil von 1.3.7 und 1.3.8
+
+In diesen veröffentlichten Fassungen erhielt das Schuhbild einen
 Schachbrett-Rand. Das Muster liegt auch hinter dem Label. Damit lässt sich
 die Wirkung besser beurteilen als auf einer einfarbigen Fläche:
 

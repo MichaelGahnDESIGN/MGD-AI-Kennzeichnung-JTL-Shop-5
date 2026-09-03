@@ -12,7 +12,8 @@ import { fileURLToPath } from 'node:url';
 const admin = new URL('../../plugin/MGD_AI_Kennzeichnung/adminmenu/', import.meta.url);
 const assets = new Map([
     ['display.css', 'text/css'],
-    ['display-preview-pattern.css', 'text/css'],
+    ['display-detail-preview.css', 'text/css'],
+    ['js/display-detail-preview.mjs', 'text/javascript'],
     ['js/display-controls.mjs', 'text/javascript'],
     ['js/display-preview.mjs', 'text/javascript'],
     ['js/display-range-sync.mjs', 'text/javascript'],
@@ -35,6 +36,9 @@ async function renderFixture(url) {
         ? { ...values, fontSize: '48', outerMargin: '64', innerPadding: '32', borderRadius: '32', blur: '24', transparency: '90' }
         : values;
     let template = await readFile(new URL('templates/display.tpl', admin), 'utf8');
+    // Ausschließlich diese bekannte Teilansicht auflösen, keine frei wählbaren Dateipfade.
+    template = template.replace("{include file='./display-detail-preview.tpl'}",
+        await readFile(new URL('templates/display-detail-preview.tpl', admin), 'utf8'));
     template = template.replace(/\{\*[\s\S]*?\*\}/g, '');
     template = template.replace(/\{if \$message !== ''\}[\s\S]*?\{\/if\}/g, '');
     template = template.replace(/\{if \$updateNotice !== null\}[\s\S]*?\{\/if\}/g, '');

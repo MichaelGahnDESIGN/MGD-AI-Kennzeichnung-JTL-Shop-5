@@ -116,3 +116,23 @@ Position und Farbschema am Beispielbild sind **Nur Vorschau** und werden dort
 nicht gespeichert. Für eine echte Bildkennzeichnung bearbeiten Sie das Bild in
 der Galerie, im OnPage Composer oder per Stapelbearbeitung. Erst der
 **Speichern**-Knopf im Darstellungstab ändert die globalen Werte.
+
+### Vorschau auf die nächste Verbesserung: Detail-Lupe
+
+Im Entwicklungszweig `codex/detail-lupe` ist eine separate **Detail-Lupe**
+vorbereitet. Sie ist noch nicht Bestandteil eines neuen veröffentlichten
+Releases. Das Schuhbild hat wieder seinen neutralen Hintergrund; darunter
+erscheint eine zweifach vergrößerte Labelprobe auf bunten Flächen mit feinen
+Linien. So erkennen Sie Transparenz und Hintergrundunschärfe deutlicher.
+
+Bewegen Sie die vorhandenen Regler: Produkt und Lupe ändern sich gemeinsam.
+Bei 50 % Transparenz lässt sich der Unterschied zwischen 0 und 12 px Unschärfe
+gut vergleichen. Bei 0 % Transparenz ist das Label vollständig deckend; ein
+Hinweis erklärt, weshalb die Unschärfe dann nicht sichtbar wird.
+
+Die Lupe bleibt mittig und wächst bei großen Schriftgrößen mit. Position und
+Außenabstand beurteilen Sie am Produktbild. Die Zahlen unter der Lupe nennen
+die tatsächlichen Einstellwerte, nicht ihre vergrößerten Bildschirmmaße.
+Alle Flächen entstehen lokal per CSS. Ihre Shopbilder und gespeicherten
+Kennzeichnungen bleiben unverändert. Die Effektprobe ist kein Ausschnitt
+des Produktbilds und hat keine eigene Speicherfunktion.

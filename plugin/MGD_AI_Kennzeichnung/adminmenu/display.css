@@ -37,8 +37,9 @@
     align-items: start;
 }
 
-.mgd-display-layout form, .mgd-display__preview { background: var(--mgd-display-surface); border: 1px solid var(--mgd-display-border); border-radius: .25rem; box-shadow: 0 .35rem 1.25rem rgba(17, 33, 23, .08); }
+.mgd-display-layout form, .mgd-display__preview { background: var(--mgd-display-surface); border: 1px solid var(--mgd-display-border); border-radius: .25rem; box-shadow: 0 .35rem 1.25rem rgba(17, 33, 23, .08); min-width: 0; }
 .mgd-display-layout form .card-body { padding: 1.25rem; }
+.mgd-display__preview > .card-body { padding: 1.25rem; }
 .mgd-display__fieldset { border: 0; margin: 0; padding: 0; }
 .mgd-display__fieldset legend { font-size: 1.15rem; font-weight: 700; margin-bottom: .2rem; }
 .mgd-display__help { font-size: .92rem; margin: 0 0 1rem; }
@@ -70,11 +71,12 @@
     --mgd-preview-background-opacity: 0.92;
     background: var(--mgd-display-soft);
     border-radius: .6rem;
+    display: grid;
     min-height: 18rem;
     overflow: hidden;
     position: relative;
 }
-.mgd-display__image-wrap img { display: block; height: 100%; object-fit: contain; width: 100%; }
+.mgd-display__image-wrap img { align-self: center; display: block; grid-area: 1 / 1; height: auto; min-width: 0; object-fit: contain; width: 100%; }
 .mgd-display__label {
     backdrop-filter: blur(var(--mgd-preview-blur));
     background: rgba(18, 25, 20, var(--mgd-preview-background-opacity));
@@ -99,6 +101,22 @@
 .mgd-display-preview--bottom-left .mgd-display__label { bottom: var(--mgd-preview-outer-margin); left: var(--mgd-preview-outer-margin); right: auto; top: auto; }
 .mgd-display-preview--theme-auto .mgd-display__label, .mgd-display-preview--theme-dark .mgd-display__label { background: rgba(18, 25, 20, var(--mgd-preview-background-opacity)); color: #fff; }
 .mgd-display-preview--theme-light .mgd-display__label { background: rgba(255, 255, 255, var(--mgd-preview-background-opacity)); border-color: rgba(23, 33, 27, .4); color: #17211b; }
+
+/* Bild und Label teilen eine Grid-Zelle. Auch ein großer, umgebrochener Text
+   beteiligt sich dadurch an der Höhe, statt aus einem absolut positionierten
+   Rahmen herauszuragen. Die Position wirkt nur auf das Produktbeispiel. */
+.mgd-display .mgd-display__image-wrap .mgd-display__label {
+    grid-area: 1 / 1;
+    inset: auto;
+    margin: var(--mgd-preview-outer-margin);
+    min-width: 0;
+    position: relative;
+    width: fit-content;
+}
+.mgd-display .mgd-display__image-wrap.mgd-display-preview--top-right .mgd-display__label { align-self: start; justify-self: end; }
+.mgd-display .mgd-display__image-wrap.mgd-display-preview--bottom-right .mgd-display__label { align-self: end; justify-self: end; }
+.mgd-display .mgd-display__image-wrap.mgd-display-preview--top-left .mgd-display__label { align-self: start; justify-self: start; }
+.mgd-display .mgd-display__image-wrap.mgd-display-preview--bottom-left .mgd-display__label { align-self: end; justify-self: start; }
 
 @media (prefers-color-scheme: light) {
     .mgd-display-preview--theme-auto .mgd-display__label { background: rgba(255, 255, 255, var(--mgd-preview-background-opacity)); border-color: rgba(23, 33, 27, .4); color: #17211b; }
