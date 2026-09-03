@@ -37,17 +37,33 @@ Pakettests kontrollieren Inhalt und reproduzierbare Builds.
 SHA-256 des Installationspakets:
 `aeaf351046009666f4017438d0c81ab9305d58e01c2c13ae4ada0c19188a679e`
 
-Installationsstand vor der Auslieferung: Dev 1.3.7 mit geprüftem Toolbar-Hotfix,
-Onvis 1.2.0 und Campingteile24 1.3.6. Auf den Live-Shops lagen bereits Dateien
-von 1.3.7, aber die abschließende JTL-Aktualisierung war noch offen.
-Das neue Paket wurde auf Dev erfolgreich hochgeladen; JTL bietet 1.3.7 → 1.3.8
-an. Die abschließende Bestätigung durch den Betreiber ist offen, weil der
-JTL-Bestätigungsdialog die verwendete Browsersteuerung blockiert. Deshalb
-werden die Live-Shops in diesem Durchlauf noch nicht verändert.
+Nach der Bestätigung durch den Betreiber wurde Dev erneut geprüft:
+Version **1.3.8 aktiviert**, alle 192 Paketdateien stimmen bytegenau mit dem
+Release-ZIP überein. Beide Editorleisten haben jeweils 13 Werkzeuge mit
+32 px Höhe; Sprachüberschriften sind dunkel. Visuell/HTML-Umschaltung und
+Design-Speichern funktionieren. Die Erfolgsmeldung erscheint ohne weiße Seite;
+alle sieben gespeicherten Designwerte bleiben unverändert. Die Galerie zeigt
+744 Einträge. Damit ist die paketbezogene Dev-Abnahme bestanden.
 
-GitHub `main` enthält die Releasevorbereitung (`e42eb7a`). Release 1.3.8 liegt
-als Entwurf vor; der GitHub-Digest des hochgeladenen ZIPs stimmt mit der
-lokalen Prüfsumme überein. Veröffentlichung erst nach paketbezogener Dev-Abnahme.
+Die beiden Live-Shops haben zunächst das vorher vorbereitete Update auf
+**1.3.7** abgeschlossen. Nach erneuter Plugin-Sicherung wurde dieselbe geprüfte
+1.3.8-ZIP auf Onvis und Campingteile24 erfolgreich hochgeladen. Beide
+Plugin-Manager zeigen jetzt **1.3.7 → 1.3.8** an. Der abschließende
+JTL-Updateklick durch den Betreiber und die anschließende Live-Abnahme sind
+noch offen. Dateiupload allein gilt ausdrücklich nicht als abgeschlossenes
+JTL-Update. Keine Deinstallation durchführen.
+
+Die OPC-Galerie von Campingteile24 wurde vor dem 1.3.8-Upload mit allen Status
+geprüft: **371 Ergebnisse**. Die drei zuvor vermissten Startseitenbilder für
+Campingbeleuchtung, Campingmöbel und Druckwasserpumpen sind unter
+`media/image/storage/opc/banner/2026/` vorhanden. Es wurde dabei kein erneuter
+Scan und keine Änderung von Bildkennzeichnungen ausgelöst.
+
+GitHub `main` enthält die Releasevorbereitung (`e42eb7a`) und diese Abnahme.
+Der GitHub-Digest des hochgeladenen ZIPs stimmt mit der lokalen Prüfsumme
+überein. Die öffentliche Freigabe folgt auf die bestandene Dev-Abnahme;
+ein vollständiger Installationsgleichstand aller drei Shops wird damit
+noch nicht behauptet.
 
 Zusatzsicherungen vor 1.3.8 sind vollständig erstellt, verschlüsselt und durch
 Entschlüsselung/Bytevergleich geprüft: Dev 196 Plugin-Dateien und vier eigene
@@ -55,6 +71,9 @@ Plugin-Tabellen; Onvis 194 Plugin-Dateien und vier eigene Plugin-Tabellen;
 Campingteile24 197 Plugin-Dateien. Dort beruht die Datenbanksicherung auf der
 ausdrücklichen Betreiberbestätigung. Alle Sicherungen bleiben ausschließlich
 lokal. Bestehende Sicherungen und frühere Rollback-Stände wurden nicht gelöscht.
+Unmittelbar vor dem erneuten Live-Upload wurden Onvis (194 Dateien und vier
+eigene Plugin-Tabellen) sowie Campingteile24 (197 Dateien) zusätzlich erneut
+verschlüsselt gesichert und durch Entschlüsselung/Bytevergleich geprüft.
 
 ## Sicherung und Rückweg
 
