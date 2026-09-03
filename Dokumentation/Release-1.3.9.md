@@ -53,9 +53,17 @@ SHA-256 des Installationspakets:
 
 | Shop | Stand für 1.3.9 |
 |---|---|
-| dev.onvis-shop.de | Installation und Backend-Abnahme noch ausstehend |
-| onvis-shop.de | Update erst nach bestandener Dev-Abnahme |
-| campingteile24.de | Update erst nach bestandener Dev-Abnahme |
+| dev.onvis-shop.de | 1.3.9 hochgeladen, alle 194 Paketdateien identisch; JTL meldet noch 1.3.8 aktiv. Updateabschluss und Backend-Abnahme ausstehend. |
+| onvis-shop.de | JTL meldet 1.3.7 aktiv; alle 192 Dateien des zuvor hochgeladenen 1.3.8-Pakets identisch. In diesem Rollout nicht geändert. |
+| campingteile24.de | Alle 192 Dateien des zuvor hochgeladenen 1.3.8-Pakets identisch; aktiver JTL-Versionsstand noch nicht neu geprüft. In diesem Rollout nicht geändert. |
+
+Zwischenstand am 3. September 2026: Der Dev-Plugin-Manager bestätigte den
+Upload und zeigte den Wechsel 1.3.8 → 1.3.9 an. Nach dem Updateklick war der
+Browser nicht mehr steuerbar. Eine nachfolgende rein lesende Serverprüfung
+bestätigte den vollständigen Dateiupload, aber noch keinen JTL-Updateabschluss.
+Die manuelle Kontrolle des offenen Dev-Tabs ist deshalb erforderlich.
+Der GitHub-Release bleibt bis zur Dev-Abnahme ein Entwurf; die Live-Shops
+werden vorher nicht auf 1.3.9 aktualisiert.
 
 Veröffentlichung, Dateiupload und abgeschlossene JTL-Aktualisierung sind
 getrennte Schritte. Ein Update erfolgt im Plugin-Manager ohne Deinstallation.
