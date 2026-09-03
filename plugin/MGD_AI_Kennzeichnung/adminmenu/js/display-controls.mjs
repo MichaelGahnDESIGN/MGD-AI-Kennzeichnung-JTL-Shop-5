@@ -1,5 +1,6 @@
 import { createPreviewModel, PREVIEW_POSITION_CLASSES, PREVIEW_THEME_CLASSES } from './display-preview.mjs';
 import { bindNumberAndRange } from './display-range-sync.mjs';
+import { updateDetailPreview } from './display-detail-preview.mjs';
 
 /** Stabile, voneinander unabhängige Schlüssel der drei gekoppelten Eingabepaare. */
 const RANGE_PAIR_CONFIGURATIONS = Object.freeze({
@@ -89,6 +90,8 @@ export function initializeDisplayControls(root) {
         for (const property of PREVIEW_STYLE_PROPERTIES) {
             preview.style.setProperty(property, model.styles[property]);
         }
+
+        updateDetailPreview(root, model);
     };
     const observedControls = [
         controls.language,

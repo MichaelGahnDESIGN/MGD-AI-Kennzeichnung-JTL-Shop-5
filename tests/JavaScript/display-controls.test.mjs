@@ -42,6 +42,7 @@ class TestElement {
         this._textContent = '';
         this.textContentWrites = 0;
         this.innerHTMLWrites = 0;
+        this.hidden = false;
         this.listeners = new Map();
         this.children = new Map();
         this.classList = new TestClassList();
@@ -108,6 +109,18 @@ function createDisplayRoot() {
     const transparencyRange = new TestElement('8');
     const position = new TestElement('top-right');
     const theme = new TestElement('auto');
+    const detailPreview = new TestElement();
+    const detailLabel = new TestElement();
+    const detailTransparency = new TestElement();
+    const detailBlur = new TestElement();
+    const detailOpaque = new TestElement();
+
+    /* Das Detail-Label liegt in seiner eigenen Bühne, Kennwerte liegen daneben. */
+    detailPreview.children.set('[data-mgd-detail-label]', detailLabel);
+    root.children.set('[data-mgd-detail-preview]', detailPreview);
+    root.children.set('[data-mgd-detail-transparency]', detailTransparency);
+    root.children.set('[data-mgd-detail-blur]', detailBlur);
+    root.children.set('[data-mgd-detail-opaque]', detailOpaque);
 
     root.children.set('[data-mgd-display-form]', form);
     root.children.set('[data-mgd-display-preview]', preview);
@@ -134,6 +147,20 @@ function createDisplayRoot() {
         theme,
         borderRadiusNumber,
         borderRadiusRange,
+        language,
+        fontSize,
+        outerMargin,
+        innerPadding,
+        blurNumber,
+        blurRange,
+        transparencyNumber,
+        transparencyRange,
+        position,
+        detailPreview,
+        detailLabel,
+        detailTransparency,
+        detailBlur,
+        detailOpaque,
     };
 }
 
@@ -204,11 +231,13 @@ test('Designänderungen kündigen keinen unveränderten Text an und verwenden ke
         throw new Error('fetch darf nicht aufgerufen werden.');
     });
     const restoreStorage = replaceGlobalProperty('localStorage', storageSpy);
-    const { root, label, theme } = createDisplayRoot();
+    const { root, label, theme, detailLabel, detailTransparency, detailBlur } = createDisplayRoot();
 
     try {
         initializeDisplayControls(root);
         const textWritesAfterInitialization = label.textContentWrites;
+        const detailWritesAfterInitialization = [detailLabel, detailTransparency, detailBlur]
+            .map((element) => element.textContentWrites);
 
         theme.value = 'dark';
         theme.dispatch('input');
@@ -216,6 +245,10 @@ test('Designänderungen kündigen keinen unveränderten Text an und verwenden ke
         assert.equal(label.textContent, 'KI-GENERIERT');
         assert.equal(label.textContentWrites, textWritesAfterInitialization);
         assert.equal(label.innerHTMLWrites, 0);
+        assert.equal(detailLabel.textContent, 'KI-GENERIERT');
+        assert.deepEqual([detailLabel, detailTransparency, detailBlur].map((element) => element.textContentWrites),
+            detailWritesAfterInitialization);
+        assert.equal(detailLabel.innerHTMLWrites, 0);
         assert.equal(fetchCalls.count, 0);
         assert.deepEqual(storageCalls, { get: 0, set: 0, setItem: 0 });
     } finally {
@@ -242,9 +275,12 @@ test('fehlende Strukturen bleiben ohne Crash, Submit oder globale Nebenwirkungen
 });
 
 test('Cleanup entfernt alle lokalen Listener der Paar- und Vorschau-Steuerung', () => {
-    const { root, preview, borderRadiusNumber, borderRadiusRange, theme } = createDisplayRoot();
+    const { root, preview, borderRadiusNumber, borderRadiusRange, theme, detailPreview, detailLabel } = createDisplayRoot();
     const removeListeners = initializeDisplayControls(root);
     const writesBeforeCleanup = preview.style.writeCount;
+    const detailWritesBeforeCleanup = detailPreview.style.writeCount;
+    const detailTextWritesBeforeCleanup = detailLabel.textContentWrites;
+    assert.equal(detailWritesBeforeCleanup, 6);
 
     removeListeners();
     borderRadiusRange.value = '12';
@@ -254,6 +290,172 @@ test('Cleanup entfernt alle lokalen Listener der Paar- und Vorschau-Steuerung', 
 
     assert.equal(borderRadiusNumber.value, '4');
     assert.equal(preview.style.writeCount, writesBeforeCleanup);
+    assert.equal(detailPreview.style.writeCount, detailWritesBeforeCleanup);
+    assert.equal(detailLabel.textContentWrites, detailTextWritesBeforeCleanup);
+});
+
+test('Detail-Vorschau übernimmt beim Start genau sechs sichere CSS-Werte ohne Positionsklasse', () => {
+    const { root, preview, detailPreview, detailLabel, detailTransparency, detailBlur, detailOpaque } = createDisplayRoot();
+    detailPreview.classList.add('mgd-detail-preview', 'mgd-display-preview--theme-dark');
+
+    initializeDisplayControls(root);
+
+    assert.deepEqual(Object.fromEntries(detailPreview.style.values), {
+        '--mgd-preview-font-size': '12px',
+        '--mgd-preview-outer-margin': '8px',
+        '--mgd-preview-inner-padding': '6px',
+        '--mgd-preview-border-radius': '4px',
+        '--mgd-preview-blur': '0px',
+        '--mgd-preview-background-opacity': '0.92',
+    });
+    assert.deepEqual(detailPreview.style.values, preview.style.values);
+    assert.equal(detailPreview.style.writeCount, 6);
+    assert.deepEqual([...detailPreview.classList.values].sort(), ['mgd-detail-preview', 'mgd-display-preview--theme-auto']);
+    assert.equal(detailLabel.textContent, 'KI-GENERIERT');
+    assert.equal(detailTransparency.textContent, '8 %');
+    assert.equal(detailBlur.textContent, '0 px');
+    assert.equal(detailOpaque.hidden, true);
+});
+
+test('Detail-Vorschau übernimmt alle sechs CSS-Werte auch nach tatsächlichen Formularevents', () => {
+    const fixture = createDisplayRoot();
+    initializeDisplayControls(fixture.root);
+
+    for (const [name, value] of Object.entries({
+        fontSize: '48', outerMargin: '64', innerPadding: '32', borderRadiusRange: '32',
+        blurRange: '12', transparencyRange: '35',
+    })) {
+        fixture[name].value = value;
+        fixture[name].dispatch('input');
+    }
+
+    assert.deepEqual(Object.fromEntries(fixture.detailPreview.style.values), {
+        '--mgd-preview-font-size': '48px',
+        '--mgd-preview-outer-margin': '64px',
+        '--mgd-preview-inner-padding': '32px',
+        '--mgd-preview-border-radius': '32px',
+        '--mgd-preview-blur': '12px',
+        '--mgd-preview-background-opacity': '0.65',
+    });
+    assert.deepEqual(fixture.detailPreview.style.values, fixture.preview.style.values);
+    assert.equal(fixture.detailPreview.style.writeCount, 42);
+    assert.equal(fixture.detailTransparency.textContent, '35 %');
+    assert.equal(fixture.detailBlur.textContent, '12 px');
+    assert.equal(fixture.form.submitCalls, 0);
+});
+
+test('Transparenz synchronisiert beide Eingaberichtungen an 0 und 90 Prozent samt Deckkraft-Hinweis', () => {
+    const { root, preview, detailPreview, transparencyNumber, transparencyRange, detailTransparency, detailOpaque } = createDisplayRoot();
+    initializeDisplayControls(root);
+
+    for (const [input, value, alpha, hidden] of [
+        [transparencyNumber, '0', '1.00', false],
+        [transparencyRange, '90', '0.10', true],
+        [transparencyRange, '0', '1.00', false],
+        [transparencyNumber, '90', '0.10', true],
+    ]) {
+        input.value = value;
+        input.dispatch(input === transparencyNumber ? 'change' : 'input');
+        assert.equal(transparencyNumber.value, value);
+        assert.equal(transparencyRange.value, value);
+        assert.equal(detailTransparency.textContent, `${value} %`);
+        assert.equal(detailOpaque.hidden, hidden);
+        assert.equal(detailPreview.style.values.get('--mgd-preview-background-opacity'), alpha);
+        assert.deepEqual(detailPreview.style.values, preview.style.values);
+    }
+});
+
+test('Weichzeichnung synchronisiert beide Eingaberichtungen an 0 und 24 Pixeln', () => {
+    const { root, preview, detailPreview, blurNumber, blurRange, detailBlur } = createDisplayRoot();
+    initializeDisplayControls(root);
+
+    for (const [input, value] of [[blurRange, '24'], [blurNumber, '0'], [blurNumber, '24'], [blurRange, '0']]) {
+        input.value = value;
+        input.dispatch(input === blurNumber ? 'input' : 'change');
+        assert.equal(blurNumber.value, value);
+        assert.equal(blurRange.value, value);
+        assert.equal(detailBlur.textContent, `${value} px`);
+        assert.equal(detailPreview.style.values.get('--mgd-preview-blur'), `${value}px`);
+        assert.deepEqual(detailPreview.style.values, preview.style.values);
+    }
+});
+
+test('Detail-Text wechselt mit der Sprache zwischen Deutsch und Englisch', () => {
+    const { root, label, language, detailLabel } = createDisplayRoot();
+    initializeDisplayControls(root);
+
+    for (const [value, text] of [['en', 'AI-GENERATED'], ['de', 'KI-GENERIERT']]) {
+        language.value = value;
+        language.dispatch('change');
+        assert.equal(detailLabel.textContent, text);
+        assert.equal(detailLabel.textContent, label.textContent);
+    }
+
+    assert.equal(detailLabel.textContentWrites, 3);
+    assert.equal(detailLabel.innerHTMLWrites, 0);
+});
+
+test('Detail-Vorschau wechselt ausschließlich erlaubte Themes und bleibt unabhängig von der Position', () => {
+    const { root, theme, position, detailPreview } = createDisplayRoot();
+    detailPreview.classList.add('mgd-detail-preview');
+    initializeDisplayControls(root);
+
+    for (const value of ['light', 'dark', 'auto']) {
+        theme.value = value;
+        theme.dispatch('change');
+        position.value = 'bottom-left';
+        position.dispatch('input');
+        assert.deepEqual([...detailPreview.classList.values].sort(), ['mgd-detail-preview', `mgd-display-preview--theme-${value}`]);
+    }
+});
+
+test('Manipulierte Detail-Eingaben verwenden nur das validierte gemeinsame Modell', () => {
+    const fixture = createDisplayRoot();
+    initializeDisplayControls(fixture.root);
+
+    for (const name of ['language', 'theme', 'position', 'fontSize', 'outerMargin', 'innerPadding',
+        'borderRadiusNumber', 'blurNumber', 'transparencyNumber']) {
+        fixture[name].value = '<img src=x onerror=alert(1)>;background:url(https://invalid.example)';
+        fixture[name].dispatch('change');
+    }
+
+    assert.equal(fixture.detailLabel.textContent, 'KI-GENERIERT');
+    assert.equal(fixture.detailLabel.innerHTMLWrites, 0);
+    assert.deepEqual([...fixture.detailPreview.classList.values], ['mgd-display-preview--theme-auto']);
+    assert.deepEqual(Object.fromEntries(fixture.detailPreview.style.values), {
+        '--mgd-preview-font-size': '12px',
+        '--mgd-preview-outer-margin': '8px',
+        '--mgd-preview-inner-padding': '6px',
+        '--mgd-preview-border-radius': '4px',
+        '--mgd-preview-blur': '0px',
+        '--mgd-preview-background-opacity': '0.92',
+    });
+    assert.deepEqual(fixture.detailPreview.style.values, fixture.preview.style.values);
+    assert.equal(fixture.detailTransparency.textContent, '8 %');
+    assert.equal(fixture.detailBlur.textContent, '0 px');
+    assert.equal(fixture.detailOpaque.hidden, true);
+    assert.equal(fixture.form.submitCalls, 0);
+});
+
+test('Fehlende optionale Detail-Elemente unterbrechen weder Initialisierung noch Produkt-Updates', () => {
+    for (const missingSelector of ['[data-mgd-detail-preview]', '[data-mgd-detail-label]',
+        '[data-mgd-detail-transparency]', '[data-mgd-detail-blur]', '[data-mgd-detail-opaque]']) {
+        const fixture = createDisplayRoot();
+        fixture.root.children.delete(missingSelector);
+        fixture.detailPreview.children.delete(missingSelector);
+
+        assert.doesNotThrow(() => initializeDisplayControls(fixture.root));
+        fixture.blurRange.value = '24';
+        assert.doesNotThrow(() => fixture.blurRange.dispatch('input'));
+        assert.equal(fixture.preview.style.values.get('--mgd-preview-blur'), '24px');
+        assert.equal(fixture.label.textContent, 'KI-GENERIERT');
+        assert.equal(fixture.form.submitCalls, 0);
+
+        if (!['[data-mgd-detail-preview]', '[data-mgd-detail-label]'].includes(missingSelector)) {
+            assert.equal(fixture.detailPreview.style.values.get('--mgd-preview-blur'), '24px');
+            assert.equal(fixture.detailLabel.textContent, 'KI-GENERIERT');
+        }
+    }
 });
 
 test('Modul startet lokale Wurzeln erst nach DOMContentLoaded', async () => {
