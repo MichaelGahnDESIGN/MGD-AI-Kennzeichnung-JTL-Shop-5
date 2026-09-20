@@ -11,7 +11,7 @@ permissions:
 jobs:
   pruefen:
     name: PHP ${{ matrix.php }}
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux]
     strategy:
       fail-fast: false
       matrix:
