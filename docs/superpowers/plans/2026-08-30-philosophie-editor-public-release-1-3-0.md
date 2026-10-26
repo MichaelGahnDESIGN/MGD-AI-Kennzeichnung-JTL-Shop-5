@@ -548,7 +548,7 @@ git commit -m "build: bereitet Release 1.3.0 vor"
 
 **Files:**
 - Inspect only: all commits, trees and blobs reachable from every local ref
-- Do not modify: `/Users/michaelgahn/AKTUELLE PROJEKTE/Onvis-Shop.de/ZoAnUvBiEsRsWhOoRpT/ZoAnUvBiEsRsWhOoRpT.md`
+- Do not modify: `<PROJEKTORDNER>/<SHOP>/<ZUGANGSDATEN-DATEI>.md`
 
 - [ ] **Step 1: Sichtbarkeit und vollständigen Ref-Umfang erfassen**
 
@@ -705,5 +705,5 @@ Berichte knapp:
 - ZIP-Name und SHA-256-Prüfsumme;
 - bestandene PHP-, JavaScript-, Analyse-, Style-, Build- und Historienprüfungen;
 - keine extern geladenen Editorbestandteile;
-- keine Installation auf `dev.onvis-shop.de` oder `onvis-shop.de` in diesem Auftrag;
+- keine Installation auf `<DEV-SHOP-DOMAIN>` oder `<SHOP-DOMAIN>` in diesem Auftrag;
 - Update im Shop kann anschließend bewusst separat getestet werden.

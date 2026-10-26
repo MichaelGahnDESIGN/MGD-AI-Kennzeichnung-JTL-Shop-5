@@ -14,8 +14,8 @@ Artefakt. Rechte und Zeitstempel werden vereinheitlicht; geschrieben wird nur
 nach `dist/`.
 
 Das Paket wird zweimal gebaut und per SHA-256 auf Reproduzierbarkeit geprüft.
-Anschließend wird genau dieses geprüfte ZIP zuerst auf `dev.onvis-shop.de`
-abgenommen. Für `onvis-shop.de` wird dasselbe Artefakt verwendet; zwischen
+Anschließend wird genau dieses geprüfte ZIP zuerst auf `<DEV-SHOP-DOMAIN>`
+abgenommen. Für `<SHOP-DOMAIN>` wird dasselbe Artefakt verwendet; zwischen
 Dev-Abnahme und Live-Rollout findet kein neuer Build statt. Das öffentliche
 Repository stellt Releasehinweise bereit. Version 1.3.9 enthält bewusst keinen
 Auto-Updater; das Update erfolgt als manueller ZIP-Upload im JTL-Plugin-Manager.
@@ -26,7 +26,7 @@ Seit dem 2. September 2026 liegen die fertig geprüften Installations-ZIPs im
 Ordner `plugin/` des Hauptprojektordners, damit sie ohne Suche in internen
 Build- oder Worktree-Verzeichnissen erreichbar sind:
 
-`/Users/michaelgahn/AKTUELLE PROJEKTE/MGD_AI_Kennzeichnung-1.0.0/plugin/`
+`<PROJEKTORDNER>/plugin/`
 
 - Der interne, reproduzierbare Build bleibt in `dist/`.
 - Nach den Prüfungen wird genau dieses ZIP unverändert in den genannten

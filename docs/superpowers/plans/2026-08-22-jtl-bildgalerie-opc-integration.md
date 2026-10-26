@@ -16,7 +16,7 @@
 - Der vorhandene unversionierte Stammordner `MGD_AI_Kennzeichnung-1.0.0.zip` wird weder überschrieben noch gelöscht.
 - `.superpowers/`, Zugangsdaten, Dumps, Backups und temporäre Dateien gelangen nicht in Git oder das Release-ZIP.
 - Das Dev-System wird vor dem Live-System aktualisiert. Ohne vollständig bestandene Dev-Abnahme gibt es keinen Live-Rollout.
-- Die Zugangsdaten-Datei im Onvis-Projekt wird ausschließlich gelesen und niemals verändert.
+- Die Zugangsdaten-Datei im <SHOP>-Projekt wird ausschließlich gelesen und niemals verändert.
 - Es werden keine JTL-Core-Dateien verändert und keine Bilder oder Pfade an externe Dienste übertragen.
 
 ### Aufgabe 1: Releaseziel 1.1.0 und saubere Artefaktgrenzen
@@ -501,11 +501,11 @@ git diff --check
 - [ ] Falls eine Prüfung fehlschlägt: kleinsten verantwortlichen Fehler korrigieren, fokussierten Test und danach die vollständige Prüfgruppe erneut ausführen.
 - [ ] Abschlusscommit nur dann erstellen, wenn nach den vorherigen Commits noch notwendige Korrekturen vorhanden sind. Dafür jede korrigierte Datei einzeln anhand von `git status --short` auswählen, erneut prüfen und anschließend mit der Meldung `fix: schließt Qualitätsprüfung für Version 1.1.0 ab` committen. Unversionierte oder sachfremde Dateien bleiben unberührt.
 
-### Aufgabe 14: Gesicherte Installation und Abnahme auf dev.onvis-shop.de
+### Aufgabe 14: Gesicherte Installation und Abnahme auf <DEV-SHOP-DOMAIN>
 
 **Dateien/Systeme:**
 - Paket: `dist/MGD_AI_Kennzeichnung-1.1.0.zip`
-- Ziel: ausschließlich `dev.onvis-shop.de`
+- Ziel: ausschließlich `<DEV-SHOP-DOMAIN>`
 - Ablage: serverseitiges Backup außerhalb des aktiven Pluginverzeichnisses und außerhalb des Webroots, soweit der Hoster dies erlaubt
 
 - [ ] SSH-Ziel und beide Shop-Pfade aus der unveränderten Zugangsdaten-Datei nur lesend ermitteln. Vor jeder Mutation mit `pwd`, `realpath` und JTL-`config.JTL-Shop.ini.php` bestätigen, dass Dev eine eigene Datenbank verwendet und der Wartungsmodus aktiv ist. Secrets nicht ausgeben.

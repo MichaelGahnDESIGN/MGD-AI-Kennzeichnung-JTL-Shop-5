@@ -315,19 +315,19 @@ git commit -m "chore: bereitet Dev-Abnahme von Version 1.1.1 vor"
 
 ### Aufgabe 5: Kontrolliertes Deployment und visuelle Dev-Abnahme
 
-**Ziel:** ausschließlich `dev.onvis-shop.de`
+**Ziel:** ausschließlich `<DEV-SHOP-DOMAIN>`
 
 - [ ] **Schritt 1: Dev-Zustand und Trennung von Live erneut prüfen**
 
 Per SSH werden Shopwurzel, eigene Dev-Datenbank, Wartungsmodus, Pluginversion
 und fehlende Wawi-Anbindung geprüft. Es werden keine Zugangsdaten ausgegeben.
 
-Erwartung: Dev ist weiterhin isoliert; `onvis-shop.de` wird nicht verändert.
+Erwartung: Dev ist weiterhin isoliert; `<SHOP-DOMAIN>` wird nicht verändert.
 
 - [ ] **Schritt 2: Rückfallkopie der Dev-Plugin-Dateien und Tabellen erstellen**
 
 Die Sicherung erhält einen datierten Namen unter
-`dev.onvis-shop.de/BACKUPS/`. Gesichert werden ausschließlich
+`<DEV-SHOP-DOMAIN>/BACKUPS/`. Gesichert werden ausschließlich
 `plugins/MGD_AI_Kennzeichnung` und die vier `xplugin_mgd_ai_*`-Tabellen.
 
 - [ ] **Schritt 3: Exakt das geprüfte ZIP über den JTL-Updateweg einspielen**
@@ -376,5 +376,5 @@ git log --oneline --decorate -6
 
 Erwartung: Arbeitsbaum sauber, alle beschriebenen Änderungen nachvollziehbar.
 Ein Push oder Merge nach `main` erfolgt erst nach erfolgreicher Dev-Abnahme;
-eine Installation auf `onvis-shop.de` ist ausdrücklich nicht Bestandteil
+eine Installation auf `<SHOP-DOMAIN>` ist ausdrücklich nicht Bestandteil
 dieses Plans.

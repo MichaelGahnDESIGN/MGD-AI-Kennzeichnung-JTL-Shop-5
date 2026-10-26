@@ -1016,7 +1016,7 @@ Berichte:
 - exakte SHA-256-Prüfsumme;
 - erfolgreiche Testbefehle;
 - klare Grenze: kein Auto-Updater, privates Repository, Updateprüfung anonym nicht funktionsfähig;
-- nächster Schritt: Backup und manueller Upload des 1.2.1-ZIPs zuerst auf `dev.onvis-shop.de`, danach Funktionstest und erst nach separater Freigabe Live-Update.
+- nächster Schritt: Backup und manueller Upload des 1.2.1-ZIPs zuerst auf `<DEV-SHOP-DOMAIN>`, danach Funktionstest und erst nach separater Freigabe Live-Update.
 
 ---
 

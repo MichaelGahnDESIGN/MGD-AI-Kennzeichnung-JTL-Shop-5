@@ -248,5 +248,5 @@ Das ZIP muss genau einen Stammordner `MGD_AI_Kennzeichnung/` enthalten, darunter
 
 - [ ] **Step 3: Integrate on main and publish**
 
-Nach erfolgreicher Prüfung werden die Commits ohne Force-Push auf `main` übernommen, `main` gepusht, Tag `v1.2.0` erstellt und ein GitHub-Release mit ZIP und SHA-256-Datei veröffentlicht. Eine Installation auf `dev.onvis-shop.de` erfolgt nur als getrennte, nachvollziehbare Dev-Aktualisierung; `onvis-shop.de` bleibt unangetastet.
+Nach erfolgreicher Prüfung werden die Commits ohne Force-Push auf `main` übernommen, `main` gepusht, Tag `v1.2.0` erstellt und ein GitHub-Release mit ZIP und SHA-256-Datei veröffentlicht. Eine Installation auf `<DEV-SHOP-DOMAIN>` erfolgt nur als getrennte, nachvollziehbare Dev-Aktualisierung; `<SHOP-DOMAIN>` bleibt unangetastet.
 
