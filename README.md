@@ -269,6 +269,53 @@ weiterhin pro Bild im Kennzeichnungsdialog oder in der Stapelbearbeitung
 festgelegt. Die Vorschau bleibt vollständig lokal; erst **Speichern** ändert
 globale Shopwerte.
 
+## Updates
+
+Das Plugin hat im Backend den Menüpunkt **Updates**. Er ist neu und noch
+nicht ausgeliefert. Er erscheint erst, wenn eine neue Plugin-Version
+installiert ist, die ihn enthält.
+
+**Was der Bereich macht:**
+
+1. Er prüft, ob es eine neuere Version gibt.
+2. Er lädt das Paket nur nach Ihrer Bestätigung herunter.
+3. Er prüft das Paket (Signatur, Prüfsumme und Inhalt).
+4. Er zeigt Ihnen die Schritte für die JTL-Pluginverwaltung.
+
+**Was der Bereich nicht macht:**
+
+- Er installiert nichts. Die Installation machen Sie selbst in der JTL-Pluginverwaltung.
+- Er tauscht keine Dateien im Plugin-Ordner aus.
+- Er aktiviert nichts automatisch.
+- Er läuft nicht im Hintergrund.
+
+**So gehen Sie vor:**
+
+1. Öffnen Sie im Backend **Plugins → MGD AI Kennzeichnung → Updates**.
+2. Klicken Sie **Jetzt nach Updates suchen**. Erst dieser Klick ruft den Update-Server ab.
+3. Wollen Sie das regelmäßig, setzen Sie das Häkchen **Update-Prüfung einschalten** und klicken **Speichern**. Standard ist aus.
+4. Gibt es ein Update: Häkchen setzen und **Paket herunterladen und prüfen** klicken.
+5. Klicken Sie **Geprüftes Paket als ZIP speichern**.
+6. Machen Sie eine Datensicherung des Shops.
+7. Laden Sie die ZIP-Datei in der JTL-Pluginverwaltung hoch.
+
+**Datenschutz:** Beim Prüfen sieht der Update-Server die IP-Adresse Ihres
+Servers. Es werden keine Besucher-, Kunden- oder Bestelldaten gesendet. Das
+Plugin ist kostenlos und sendet deshalb auch keinen Lizenz-Token.
+
+**Wo liegen die Daten?** Der Bereich speichert seinen Zustand und das geprüfte
+Paket unter `templates_c/mgd-update-client/MGD_AI_Kennzeichnung/` im Shop-Ordner.
+Dort sperrt eine `.htaccess` den Webzugriff. Bei Nginx muss der Ordner
+in der Serverkonfiguration gesperrt werden.
+
+**Noch nicht nutzbar (Stand 09.11.2026):**
+
+- **B1:** Die Update-Schlüssel sind noch nicht erzeugt. Die Datei `update/root-keys.json` ist leer. Der Bereich zeigt „Update-Kanal noch nicht eingerichtet“ und ruft nichts ab.
+- **B2:** Der Update-Server kennt das Produkt `mgd-ai-kennzeichnung` noch nicht. Bis dahin kann es keine Updates über diesen Weg geben.
+
+Die bisherigen **Updatehinweise über GitHub** (Einstellung oben) bleiben
+unverändert bestehen.
+
 ## Datenschutz und Sicherheit
 
 Das Plugin wurde nach dem Prinzip der Datenminimierung entwickelt:

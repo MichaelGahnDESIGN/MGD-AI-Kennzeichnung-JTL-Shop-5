@@ -225,6 +225,11 @@ class Form
     {
         return $token === self::$validToken;
     }
+
+    public static function getTokenInput(): string
+    {
+        return '<input type="hidden" class="jtl_token" name="jtl_token" value="' . self::$validToken . '">';
+    }
 }
 
 namespace JTL\Services;

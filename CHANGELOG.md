@@ -1,5 +1,16 @@
 # Änderungsprotokoll
 
+## Unveröffentlicht
+
+- Neuer Backend-Menüpunkt **Updates** mit dem gemeinsamen MGD Update Client.
+  Er prüft Updates signiert, lädt ein Paket nur nach Bestätigung herunter und
+  prüft es. Installiert wird nur von Hand in der JTL-Pluginverwaltung.
+- Kein Abruf ohne Ihren Klick oder Ihr Einschalten. Kein Hintergrund-Job.
+- Noch ohne Wirkung: Die Update-Schlüssel fehlen (Blocker B1) und der
+  Update-Server kennt das Produkt noch nicht (Blocker B2).
+- Der Menüpunkt erscheint erst mit der nächsten Plugin-Version.
+- Die Version wurde nicht erhöht.
+
 ## 1.3.9 – 2026-09-03
 
 - Zeigt das unveränderte Schuh-Beispielbild wieder ohne Schachbrettrand.

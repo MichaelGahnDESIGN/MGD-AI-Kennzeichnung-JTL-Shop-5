@@ -31,14 +31,16 @@ freigegebene_top_level_pfade=(
     "Scanner"
     "Service"
     "Setup"
+    "UpdateClient"
     "adminmenu"
     "frontend"
     "info.xml"
+    "update"
 )
 
 # Innerhalb der freigegebenen Verzeichnisse bleiben nur die tatsächlich vom
 # Plugin benötigten Quell-, Template- und Bildformate zulässig.
-freigegebene_endungen=("css" "js" "mjs" "php" "png" "svg" "tpl" "xml")
+freigegebene_endungen=("css" "js" "json" "mjs" "php" "png" "svg" "tpl" "xml")
 
 aufraeumen() {
     rm -rf "${arbeitsordner}" "${temporaerer_ausgabeordner}"

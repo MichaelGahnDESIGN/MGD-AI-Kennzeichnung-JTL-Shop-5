@@ -13,7 +13,9 @@ $finder = Finder::create()
     ->in([
         __DIR__ . '/plugin',
         __DIR__ . '/tests',
-    ]);
+    ])
+    // erzeugter MGD Update Client, nicht von Hand ändern
+    ->exclude('MGD_AI_Kennzeichnung/UpdateClient');
 
 return (new Config())
     ->setRiskyAllowed(false)

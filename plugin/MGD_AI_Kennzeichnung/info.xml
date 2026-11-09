@@ -91,6 +91,10 @@
                 <ValueName>transparency</ValueName>
             </Setting>
         </Settingslink>
+        <Customlink sort="6">
+            <Name>Updates</Name>
+            <Filename>updates.php</Filename>
+        </Customlink>
         </Adminmenu>
     </Install>
 </jtlshopplugin>
