@@ -3,11 +3,10 @@
 ## Unveröffentlicht
 
 - Neuer Backend-Menüpunkt **Updates** mit dem gemeinsamen MGD Update Client.
-  Er prüft Updates signiert, lädt ein Paket nur nach Bestätigung herunter und
-  prüft es. Installiert wird nur von Hand in der JTL-Pluginverwaltung.
+  Er lädt ein Paket nur nach Bestätigung herunter und prüft es. Installiert
+  wird nur von Hand in der JTL-Pluginverwaltung.
 - Kein Abruf ohne Ihren Klick oder Ihr Einschalten. Kein Hintergrund-Job.
-- Noch ohne Wirkung: Die Update-Schlüssel fehlen (Blocker B1) und der
-  Update-Server kennt das Produkt noch nicht (Blocker B2).
+- Der Update-Kanal arbeitet im einfachen Modus: Eine kleine Textdatei auf theme.michael-gahn.de (`plugin-updates/mgd-ai-kennzeichnung.json`) nennt Version und SHA-256-Prüfsumme, das ZIP kommt von GitHub, die Prüfsumme wird beim Download nachgerechnet. Das ist eine Prüfsumme, keine Signatur. Solange die Textdatei noch nicht auf dem Server liegt, meldet der Bereich nur einen Fehler beim Abruf. Sonst passiert nichts.
 - Der Menüpunkt erscheint erst mit der nächsten Plugin-Version.
 - Die alte GitHub-Abfrage (Einstellung „Updatehinweise über GitHub“) entfällt.
   Der Update Client ersetzt sie. Der Darstellungstab ruft nichts mehr bei

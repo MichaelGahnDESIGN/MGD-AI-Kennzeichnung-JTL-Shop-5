@@ -307,10 +307,10 @@ Paket unter `templates_c/mgd-update-client/MGD_AI_Kennzeichnung/` im Shop-Ordner
 Dort sperrt eine `.htaccess` den Webzugriff. Bei Nginx muss der Ordner
 in der Serverkonfiguration gesperrt werden.
 
-**Noch nicht nutzbar (Stand 09.11.2026):**
+**So arbeitet der Update-Kanal (Stand 10.11.2026):**
 
-- **B1:** Die Update-Schlüssel sind noch nicht erzeugt. Die Datei `update/root-keys.json` ist leer. Der Bereich zeigt „Update-Kanal noch nicht eingerichtet“ und ruft nichts ab.
-- **B2:** Der Update-Server kennt das Produkt `mgd-ai-kennzeichnung` noch nicht. Bis dahin kann es keine Updates über diesen Weg geben.
+- ⚠️ Der Update-Kanal arbeitet im einfachen Modus: Eine kleine Textdatei auf theme.michael-gahn.de (`plugin-updates/mgd-ai-kennzeichnung.json`) nennt Version und SHA-256-Prüfsumme, das ZIP kommt von GitHub, die Prüfsumme wird beim Download nachgerechnet. Das ist eine Prüfsumme, keine Signatur. Solange die Textdatei noch nicht auf dem Server liegt, meldet der Bereich nur einen Fehler beim Abruf. Sonst passiert nichts.
+- Die signierte Variante (mit Schlüsseln in `update/root-keys.json`) ist vorbereitet, aber noch nicht aktiv.
 
 Die frühere GitHub-Abfrage (Einstellung „Updatehinweise über GitHub“) gibt es
 nicht mehr. Der Reiter **Updates** ersetzt sie.

@@ -176,8 +176,14 @@ $real = UpdatesPageFactory::create(
     static fn(): bool => true,
     static fn(): bool => true,
 );
-$r = $real->handle('POST', ['mgd_update_action' => 'check_now']);
-check('Verdrahtung: nicht eingerichtet (B1)', str_contains($r['html'], 'noch nicht eingerichtet'));
+// direkt über die Factory ohne Prüfsummen-Adresse, sonst ginge der Test ins Netz
+$bare = \Plugin\MGD_AI_Kennzeichnung\UpdateClient\Factory::page($pluginDir . '/update/root-keys.json', $dataDir, UpdatesPageFactory::PRODUCT, UpdatesPageFactory::EDITION, UpdatesPageFactory::PLUGIN_NAME, $infoVersion, 'shop.example.test', '5.7.2', static fn(): bool => true, static fn(): bool => true, '');
+$r = $bare->handle('POST', ['mgd_update_action' => 'check_now']);
+check('ohne Schlüssel und ohne Prüfsummen-Adresse: nicht eingerichtet (B1)', str_contains($r['html'], 'noch nicht eingerichtet'));
+// einfacher Modus verdrahtet, nur statisch geprüft
+check('einfacher Modus: Adresse der Prüfsummen-Datei', UpdatesPageFactory::SIMPLE_URL === 'https://theme.michael-gahn.de/plugin-updates/mgd-ai-kennzeichnung.json');
+check('einfacher Modus: Factory gibt die Adresse weiter', str_contains((string) file_get_contents($pluginDir . '/Admin/Update/UpdatesPageFactory.php'), "['info.xml'],\n            self::SIMPLE_URL"));
+// GET ohne Einschalten ruft nichts ab
 $r = $real->handle('GET', []);
 check('Verdrahtung: zeigt Plugin Version', str_contains($r['html'], '<strong>' . $infoVersion . '</strong>'));
 

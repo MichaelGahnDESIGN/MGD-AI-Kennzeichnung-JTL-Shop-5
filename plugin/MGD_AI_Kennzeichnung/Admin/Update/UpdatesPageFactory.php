@@ -11,10 +11,12 @@ use RuntimeException;
 // Verdrahtung Updates Menue > MGD Update Client
 final class UpdatesPageFactory
 {
-    // Produktname laut Update-API (Blocker B2: Server kennt das Produkt noch nicht)
+    // Produktname laut Update-API
     public const PRODUCT = 'mgd-ai-kennzeichnung';
     public const EDITION = 'free';
     public const PLUGIN_NAME = 'MGD AI Kennzeichnung';
+    // einfacher Modus: Prüfsummen-Datei auf All-Inkl, ZIP kommt von GitHub
+    public const SIMPLE_URL = 'https://theme.michael-gahn.de/plugin-updates/mgd-ai-kennzeichnung.json';
 
     /**
      * @param callable():bool $csrfValid
@@ -48,6 +50,9 @@ final class UpdatesPageFactory
             $csrfValid,
             $canManage,
             $csrfField,
+            null,
+            ['info.xml'],
+            self::SIMPLE_URL,
         );
     }
 }
