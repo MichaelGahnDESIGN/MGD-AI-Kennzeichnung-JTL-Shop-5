@@ -3,6 +3,9 @@ parameters:
     paths:
         - plugin
         - tests
+    excludePaths:
+        # erzeugter MGD Update Client (Generator, nicht von Hand ändern)
+        - plugin/MGD_AI_Kennzeichnung/UpdateClient
     scanFiles:
         - tests/Stubs/JtlPluginStubs.php
     tmpDir: .phpstan.cache

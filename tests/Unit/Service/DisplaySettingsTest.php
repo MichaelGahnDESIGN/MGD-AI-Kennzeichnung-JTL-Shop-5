@@ -31,7 +31,7 @@ final class DisplaySettingsTest extends TestCase
         }
 
         self::assertFalse($einstellungen->showCredit);
-        self::assertFalse($einstellungen->updateNoticesEnabled);
+        self::assertFalse(property_exists($einstellungen, 'updateNoticesEnabled'));
         self::assertSame(LabelLanguage::Auto, $einstellungen->language);
         self::assertSame([12, 8, 6, 4, 0, 8], $this->zahlen($einstellungen));
         self::assertFalse(property_exists($einstellungen, 'position'));
@@ -45,7 +45,6 @@ final class DisplaySettingsTest extends TestCase
 
         $gueltig = DisplaySettings::fromInput([
             'showCredit' => true,
-            'updateNoticesEnabled' => true,
             'language' => 'de',
             'fontSize' => 48,
             'outerMargin' => 64,
@@ -57,14 +56,12 @@ final class DisplaySettingsTest extends TestCase
         ]);
 
         self::assertTrue($gueltig->showCredit);
-        self::assertTrue($gueltig->updateNoticesEnabled);
         self::assertSame(LabelLanguage::De, $gueltig->language);
         self::assertSame([48, 64, 32, 32, 24, 90], $this->zahlen($gueltig));
         self::assertFalse(property_exists($gueltig, 'cssClass'));
 
         $manipuliert = DisplaySettings::fromInput([
             'showCredit' => 'Y',
-            'updateNoticesEnabled' => 1,
             'language' => ' DE ',
             'fontSize' => '48',
             'outerMargin' => 1.5,
@@ -75,7 +72,6 @@ final class DisplaySettingsTest extends TestCase
         ]);
 
         self::assertFalse($manipuliert->showCredit);
-        self::assertFalse($manipuliert->updateNoticesEnabled);
         self::assertSame(LabelLanguage::Auto, $manipuliert->language);
         self::assertSame([12, 8, 6, 4, 0, 8], $this->zahlen($manipuliert));
     }
@@ -113,7 +109,6 @@ final class DisplaySettingsTest extends TestCase
 
         $gueltig = DisplaySettings::fromJtlConfig([
             'show_credit' => 'Y',
-            'update_notices' => 'Y',
             'language' => 'en',
             'font_size' => '18',
             'outer_margin' => '14',
@@ -124,13 +119,11 @@ final class DisplaySettingsTest extends TestCase
         ]);
 
         self::assertTrue($gueltig->showCredit);
-        self::assertTrue($gueltig->updateNoticesEnabled);
         self::assertSame(LabelLanguage::En, $gueltig->language);
         self::assertSame([18, 14, 10, 7, 5, 8], $this->zahlen($gueltig));
 
         $manipuliert = DisplaySettings::fromJtlConfig([
             'show_credit' => 'yes',
-            'update_notices' => '1',
             'font_size' => '12px',
             'outer_margin' => '1.5',
             'inner_padding' => 'NaN',
@@ -140,7 +133,6 @@ final class DisplaySettingsTest extends TestCase
         ]);
 
         self::assertFalse($manipuliert->showCredit);
-        self::assertFalse($manipuliert->updateNoticesEnabled);
         self::assertSame([12, 8, 6, 4, 0, 8], $this->zahlen($manipuliert));
     }
 
@@ -167,7 +159,6 @@ final class DisplaySettingsTest extends TestCase
 
         $erwarteteDefaults = [
             'show_credit' => 'N',
-            'update_notices' => 'Y',
             'language' => 'auto',
             'font_size' => '12',
             'outer_margin' => '8',
@@ -201,7 +192,7 @@ final class DisplaySettingsTest extends TestCase
             self::assertSame('none', $element->getAttribute('type'));
             self::assertSame('Y', $element->getAttribute('conf'));
         }
-        foreach (['show_credit', 'update_notices'] as $name) {
+        foreach (['show_credit'] as $name) {
             $nodes = $xpath->query(sprintf('/jtlshopplugin/Install/Adminmenu/Settingslink/Setting[ValueName="%s"]', $name));
             if ($nodes === false) {
                 self::fail(sprintf('Die XML-Abfrage für %s konnte nicht ausgeführt werden.', $name));
@@ -210,13 +201,8 @@ final class DisplaySettingsTest extends TestCase
             self::assertInstanceOf(DOMElement::class, $element);
             self::assertSame('selectbox', $element->getAttribute('type'));
         }
-        $updateDescription = $xpath->evaluate('string(/jtlshopplugin/Install/Adminmenu/Settingslink/Setting[ValueName="update_notices"]/Description)');
-        self::assertIsString($updateDescription);
-        foreach (['Standardmäßig aktiviert', 'Server-zu-GitHub', 'Server-IP', 'Zeitpunkt', 'User-Agent', 'keine Tokens', 'keine Shop-, Kunden- oder Formulardaten', 'öffentlichen GitHub-Repository'] as $phrase) {
-            self::assertStringContainsString($phrase, $updateDescription);
-        }
-        self::assertStringNotContainsString('privates Repository', $updateDescription);
-        self::assertStringNotContainsString('anonym', strtolower($updateDescription));
+        self::assertCount(0, $xpath->query('/jtlshopplugin/Install/Adminmenu/Settingslink/Setting[ValueName="update_notices"]'));
+        self::assertStringNotContainsString('GitHub', (string) file_get_contents(self::INFO_XML));
         self::assertSame('', $xpath->evaluate('string(/jtlshopplugin/Install/Adminmenu/Settingslink/Setting[ValueName="position"])'));
         self::assertSame('', $xpath->evaluate('string(/jtlshopplugin/Install/Adminmenu/Settingslink/Setting[ValueName="theme"])'));
 
@@ -224,7 +210,7 @@ final class DisplaySettingsTest extends TestCase
         $dateiname = $xpath->evaluate('string(/jtlshopplugin/Install/Adminmenu/Customlink[Name="Darstellung"]/Filename)');
         self::assertIsString($version);
         self::assertIsString($dateiname);
-        self::assertSame('1.3.9', trim($version));
+        self::assertSame('1.3.10', trim($version));
         self::assertSame('display.php', trim($dateiname));
     }
 

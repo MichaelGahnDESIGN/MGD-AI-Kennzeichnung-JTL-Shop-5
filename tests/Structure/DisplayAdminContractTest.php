@@ -220,23 +220,23 @@ final class DisplayAdminContractTest extends TestCase
     }
 
     #[Test]
-    public function updatehinweis_ist_auf_den_adressierten_darstellungstab_und_einen_sicheren_releaselink_begrenzt(): void
+    public function alte_github_abfrage_ist_aus_darstellungstab_und_einstellungen_entfernt(): void
     {
-        $root = self::ROOT . '/plugin/MGD_AI_Kennzeichnung/adminmenu/';
-        $entryPoint = (string) file_get_contents($root . 'display.php');
-        $template = (string) file_get_contents($root . 'templates/display.tpl');
+        $root = self::ROOT . '/plugin/MGD_AI_Kennzeichnung/';
+        $entryPoint = (string) file_get_contents($root . 'adminmenu/display.php');
+        $template = (string) file_get_contents($root . 'adminmenu/templates/display.tpl');
+        $infoXml = (string) file_get_contents($root . 'info.xml');
+        $bootstrap = (string) file_get_contents($root . 'Bootstrap.php');
 
-        self::assertStringContainsString('GitHubReleaseChecker', $entryPoint);
-        self::assertStringContainsString('FileReleaseCache', $entryPoint);
-        self::assertStringContainsString('$scope->isAddressed', $entryPoint);
-        self::assertStringContainsString("'update_notices'", $entryPoint);
-        self::assertStringContainsString('$updateNotice', $entryPoint);
-        self::assertStringContainsString('{if $updateNotice !== null}', $template);
-        self::assertStringContainsString('{$updateNotice->tag|escape:', $template);
-        self::assertStringContainsString('{$updateNotice->url|escape:', $template);
-        self::assertStringContainsString('target="_blank" rel="noopener noreferrer"', $template);
-        self::assertStringContainsString('aria-label=', $template);
-        self::assertStringNotContainsString('javascript:', strtolower($template));
+        foreach ([$entryPoint, $template, $infoXml, $bootstrap] as $inhalt) {
+            self::assertStringNotContainsString('update_notices', $inhalt);
+            self::assertStringNotContainsString('updateNotice', $inhalt);
+            self::assertStringNotContainsString('GitHubReleaseChecker', $inhalt);
+        }
+        self::assertStringNotContainsString('api.github.com', strtolower($entryPoint));
+        self::assertStringNotContainsString('github', strtolower($template));
+        self::assertDirectoryDoesNotExist($root . 'Infrastructure/Update');
+        self::assertFileDoesNotExist($root . 'Admin/Port/UpdateCheckerProviderInterface.php');
     }
 
     /**

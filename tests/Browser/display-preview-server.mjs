@@ -41,7 +41,6 @@ async function renderFixture(url) {
         await readFile(new URL('templates/display-detail-preview.tpl', admin), 'utf8'));
     template = template.replace(/\{\*[\s\S]*?\*\}/g, '');
     template = template.replace(/\{if \$message !== ''\}[\s\S]*?\{\/if\}/g, '');
-    template = template.replace(/\{if \$updateNotice !== null\}[\s\S]*?\{\/if\}/g, '');
     template = template.replace(/\{if \$language === '(auto|de|en)'\} selected\{\/if\}/g,
         (_, language) => language === 'auto' ? ' selected' : '');
     template = template.replace(/\{\$(\w+)\|escape:'html':'UTF-8'\}/g, (_, name) => {

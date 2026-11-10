@@ -15,7 +15,7 @@ Die Bildausgabe wurde mit Version 1.1.1 unter NOVA und einem NOVA-basierten Onvi
 
 Verwenden Sie dieses eindeutig versionierte Installationspaket:
 
-`MGD_AI_Kennzeichnung-1.3.9.zip`
+`MGD_AI_Kennzeichnung-1.3.10.zip`
 
 Verwenden Sie aus dem GitHub-Release ausschließlich das angehängte Plugin-ZIP.
 Testen Sie es zuerst auf einer gesicherten Dev-Installation.
@@ -45,7 +45,7 @@ Prüfen Sie nicht nur, ob eine Backupdatei existiert, sondern ob sie lesbar und 
 5. Plugin installieren.
 6. Plugin aktivieren.
 7. **Bildverwaltung** öffnen und den ersten Scan starten.
-8. Einstellungen prüfen und bei Bedarf die standardmäßig aktivierten Updatehinweise ausschalten.
+8. Einstellungen prüfen.
 9. ein unkritisches Bild testweise kennzeichnen.
 10. Frontend und Serverprotokoll kontrollieren.
 

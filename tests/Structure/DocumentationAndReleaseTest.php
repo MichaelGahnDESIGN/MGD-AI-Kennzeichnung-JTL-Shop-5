@@ -11,32 +11,28 @@ use ZipArchive;
 final class DocumentationAndReleaseTest extends TestCase
 {
     private const ROOT = __DIR__ . '/../..';
-    private const VERSION = '1.3.9';
-    private const ZIP = self::ROOT . '/dist/MGD_AI_Kennzeichnung-1.3.9.zip';
+    private const VERSION = '1.3.10';
+    private const ZIP = self::ROOT . '/dist/MGD_AI_Kennzeichnung-1.3.10.zip';
 
     #[Test]
     public function releaseziel_und_lokale_artefakte_sind_eindeutig_abgegrenzt(): void
     {
         $script = file_get_contents(self::ROOT . '/scripts/build-release.sh');
-        $checker = file_get_contents(
-            self::ROOT . '/plugin/MGD_AI_Kennzeichnung/Infrastructure/Update/GitHubReleaseChecker.php',
-        );
         $display = file_get_contents(self::ROOT . '/plugin/MGD_AI_Kennzeichnung/adminmenu/display.php');
         $infoXml = file_get_contents(self::ROOT . '/plugin/MGD_AI_Kennzeichnung/info.xml');
         $gitignore = file_get_contents(self::ROOT . '/.gitignore');
         self::assertIsString($script);
-        self::assertIsString($checker);
         self::assertIsString($display);
         self::assertIsString($infoXml);
         self::assertIsString($gitignore);
 
-        self::assertStringContainsString('MGD_AI_Kennzeichnung-1.3.9.zip', $script);
+        self::assertStringContainsString('MGD_AI_Kennzeichnung-1.3.10.zip', $script);
         self::assertStringNotContainsString('MGD_AI_Kennzeichnung-1.2.1.zip', $script);
-        self::assertStringContainsString('<Version>1.3.9</Version>', $infoXml);
-        self::assertStringContainsString('MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.9', $checker);
-        self::assertStringContainsString("check(true, '1.3.9')", $display);
-        self::assertStringNotContainsString('MGD-AI-Kennzeichnung-JTL-Shop-5/1.2.1', $checker);
-        self::assertStringNotContainsString("check(true, '1.2.1')", $display);
+        self::assertStringContainsString('<Version>1.3.10</Version>', $infoXml);
+        // Gegenprobe: keine GitHub-Abfrage mehr im Darstellungstab
+        self::assertStringNotContainsString('check(true,', $display);
+        self::assertStringNotContainsString('github', strtolower($display));
+        self::assertStringNotContainsString('update_notices', $infoXml);
         self::assertStringNotContainsString('cp -R "${quellordner}/."', $script);
         self::assertStringContainsString('mktemp -d "${ausgabeordner}/', $script);
         self::assertStringContainsString('unzip -tq "${temporaeres_zip}"', $script);
@@ -225,9 +221,11 @@ BASH;
         foreach (['Pflichtbackup', 'Wartungsfenster', 'Plugin-Manager', 'Rollback', 'https://onvis-shop.de'] as $begriff) {
             self::assertStringContainsStringIgnoringCase($begriff, $installation);
         }
-        foreach (['Datenminimierung', 'api.github.com', 'Server-IP', 'keine Bilder'] as $begriff) {
+        foreach (['Datenminimierung', 'Update Client', 'theme.michael-gahn.de', 'Server-IP', 'keine Bilder'] as $begriff) {
             self::assertStringContainsStringIgnoringCase($begriff, $datenschutz);
         }
+        // Gegenprobe - alter GitHub Endpunkt darf nicht mehr drinstehen
+        self::assertStringNotContainsStringIgnoringCase('api.github.com', $datenschutz);
         self::assertStringContainsStringIgnoringCase('Plugin-Tabellen für Bildzuordnungen', $readme);
         self::assertStringContainsStringIgnoringCase('JTL-Plugin-Konfiguration für Darstellungswerte', $readme);
     }
@@ -284,14 +282,14 @@ BASH;
     }
 
     #[Test]
-    public function version_1_3_9_ist_in_paket_ci_und_benutzerdokumentation_konsistent(): void
+    public function version_1_3_10_ist_in_paket_ci_und_benutzerdokumentation_konsistent(): void
     {
         $dateien = [
             'README' => self::ROOT . '/README.md',
             'CHANGELOG' => self::ROOT . '/CHANGELOG.md',
             'Sicherheit' => self::ROOT . '/SECURITY.md',
             'Darstellung' => self::ROOT . '/Dokumentation/Darstellung.md',
-            'Release' => self::ROOT . '/Dokumentation/Release-1.3.9.md',
+            'Release' => self::ROOT . '/Dokumentation/Release-1.3.10.md',
             'Datenschutz' => self::ROOT . '/Dokumentation/Datenschutz-und-Sicherheit.md',
             'Installation' => self::ROOT . '/Dokumentation/Installation-und-Livetest.md',
             'Wiki' => self::ROOT . '/wiki/Home.md',
@@ -314,7 +312,7 @@ BASH;
         }
 
         foreach ([
-            'Version 1.3.9',
+            'Version 1.3.10',
             'Live-Vorschau',
             'Transparenz',
             'Nur Vorschau',

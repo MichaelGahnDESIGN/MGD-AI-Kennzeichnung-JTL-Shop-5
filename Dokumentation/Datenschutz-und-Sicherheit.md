@@ -8,20 +8,12 @@ Es findet keine automatische KI-Erkennung statt. Das Plugin sendet **keine Bilde
 
 ## Netzwerkzugriffe
 
-Bei Neuinstallationen sind Updatehinweise standardmäßig aktiviert. Die Funktion
-kann in den Plugin-Einstellungen jederzeit ausgeschaltet werden. Nur beim
-Öffnen des adressierten Darstellungstabs ruft der Server höchstens alle zwölf
-Stunden am festen Endpunkt `api.github.com` öffentliche Metadaten des neuesten
-Releases ab. Erfolgreiche und erfolglose Versuche werden für zwölf Stunden
-lokal gespeichert. Dadurch führen auch eine Störung oder ein Rate-Limit nicht
-bei jedem Seitenaufruf zu einer neuen Anfrage.
-
-GitHub kann bei der HTTPS-Verbindung technisch **Server-IP**, Zeitpunkt und den
-festen **User-Agent** `MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.9` erhalten. Das
-Plugin überträgt keine Bilder, Shop-, Kunden- oder Formulardaten, Tokens oder
-Zugangsdaten. TLS-Prüfung ist verpflichtend, Weiterleitungen sind gesperrt und
-die Antwort ist auf 65.536 Byte begrenzt. Das Plugin installiert keine Updates
-automatisch. Updates erfolgen weiterhin per geprüftem, manuellem ZIP-Upload.
+Die frühere GitHub-Abfrage für Updatehinweise wurde entfernt. Das Plugin ruft
+im Hintergrund nichts ab. Updates werden nur über den Backend-Reiter
+**Updates** (MGD Update Client) auf Ihren Klick geprüft. Dabei kann der
+Update-Server `theme.michael-gahn.de` technisch **Server-IP** und Zeitpunkt
+der Anfrage erhalten. Updates erfolgen weiterhin per geprüftem, manuellem
+ZIP-Upload.
 
 ## Lokaler Editor der AI-Philosophie
 

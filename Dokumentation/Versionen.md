@@ -1,5 +1,12 @@
 # Versionsübersicht
 
+## 1.3.10 – 10. November 2026
+
+Neuer Backend-Menüpunkt **Updates** mit dem MGD Update Client. Prüfen und
+Herunterladen nur auf Klick, SHA-256-Prüfsumme wird nachgerechnet,
+Installation weiterhin von Hand. Die alte GitHub-Abfrage entfällt. Keine
+Migration. Siehe [Prüf- und Updatehinweise](Release-1.3.10.md).
+
 ## 1.3.9 – 3. September 2026
 
 Neutrales Schuhbild und separate zweifach vergrößerte Detail-Lupe für

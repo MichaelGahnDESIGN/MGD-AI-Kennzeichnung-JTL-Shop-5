@@ -6,14 +6,14 @@ set -euo pipefail
 projekt_wurzel="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 quellordner="${projekt_wurzel}/plugin/MGD_AI_Kennzeichnung"
 ausgabeordner="${projekt_wurzel}/dist"
-ausgabedatei="${ausgabeordner}/MGD_AI_Kennzeichnung-1.3.9.zip"
+ausgabedatei="${ausgabeordner}/MGD_AI_Kennzeichnung-1.3.10.zip"
 arbeitsordner="$(mktemp -d "${TMPDIR:-/tmp}/mgd-ai-release.XXXXXX")"
 paketordner="${arbeitsordner}/MGD_AI_Kennzeichnung"
 mkdir -p "${ausgabeordner}"
 # Das temporäre Archiv liegt absichtlich im Ausgabeordner. Nur dadurch bleibt
 # das abschließende Umbenennen garantiert auf demselben Dateisystem atomar.
 temporaerer_ausgabeordner="$(mktemp -d "${ausgabeordner}/.mgd-ai-release.XXXXXX")"
-temporaeres_zip="${temporaerer_ausgabeordner}/MGD_AI_Kennzeichnung-1.3.9.zip"
+temporaeres_zip="${temporaerer_ausgabeordner}/MGD_AI_Kennzeichnung-1.3.10.zip"
 paketmanifest="${temporaerer_ausgabeordner}/paketmanifest.txt"
 archivmanifest="${temporaerer_ausgabeordner}/archivmanifest.txt"
 
@@ -31,14 +31,16 @@ freigegebene_top_level_pfade=(
     "Scanner"
     "Service"
     "Setup"
+    "UpdateClient"
     "adminmenu"
     "frontend"
     "info.xml"
+    "update"
 )
 
 # Innerhalb der freigegebenen Verzeichnisse bleiben nur die tatsächlich vom
 # Plugin benötigten Quell-, Template- und Bildformate zulässig.
-freigegebene_endungen=("css" "js" "mjs" "php" "png" "svg" "tpl" "xml")
+freigegebene_endungen=("css" "js" "json" "mjs" "php" "png" "svg" "tpl" "xml")
 
 aufraeumen() {
     rm -rf "${arbeitsordner}" "${temporaerer_ausgabeordner}"

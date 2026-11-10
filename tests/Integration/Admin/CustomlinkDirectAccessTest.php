@@ -13,7 +13,7 @@ final class CustomlinkDirectAccessTest extends TestCase
     #[Test]
     public function jeder_customlink_weist_den_direkten_aufruf_ohne_jtl_kontext_mit_403_ab(): void
     {
-        foreach (['assets.php', 'philosophy.php', 'display.php', 'impressum.php'] as $file) {
+        foreach (['assets.php', 'philosophy.php', 'display.php', 'impressum.php', 'updates.php'] as $file) {
             $result = $this->fuehreDirektenAufrufAus($file);
 
             self::assertSame(0, $result['exitCode'], $file);

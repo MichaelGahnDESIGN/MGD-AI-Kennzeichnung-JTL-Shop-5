@@ -68,16 +68,11 @@ Ein veralteter Verweis bedeutet nicht automatisch, dass die Bilddatei gelöscht
 werden darf. Die Bereinigung entfernt deshalb nur ausgewählte Plugin-
 Fundstellen und niemals das Originalbild.
 
-## Updatehinweise
+## Updates
 
-Bei aktivierten Updatehinweisen entsteht eine ausgehende HTTPS-Verbindung zu
-GitHub. Dabei sind Server-IP, Zeitpunkt und der feste User-Agent technisch für
-GitHub sichtbar. Weder Bilder noch Tokens, Kunden-, Shop- oder Formulardaten
-werden übertragen. Positive und negative Ergebnisse werden zwölf Stunden
-lokal zwischengespeichert. Das Plugin installiert keine Updates automatisch;
-der öffentliche Release-Hinweis ersetzt nicht den manuellen, geprüften Upload.
-Betreiber mit strikten Netzwerk- oder Datenschutzvorgaben können die Funktion
-deaktivieren und Releases manuell prüfen.
+Die frühere GitHub-Abfrage wurde entfernt. Der MGD Update Client ruft nur auf
+Klick etwas ab. Das Plugin installiert keine Updates automatisch; der manuelle,
+geprüfte Upload bleibt nötig.
 
 ## Vorschau und Lesbarkeit
 
@@ -92,6 +87,5 @@ Templateänderungen ist deshalb eine Sichtprüfung auf Desktop und Mobil nötig.
 - getrennte Dev- oder Staging-Umgebung;
 - klarer redaktioneller Prüfprozess;
 - Sichtkontrolle nach Template- oder JTL-Updates;
-- Updatehinweise nur nach bewusster Datenschutzentscheidung aktivieren;
 - Update als manuellen ZIP-Upload zuerst auf Dev testen und Rollback bereithalten;
 - Sicherheitsmeldungen ohne Echtdaten und nicht als öffentliches Issue senden.
