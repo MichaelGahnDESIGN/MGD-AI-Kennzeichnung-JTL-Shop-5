@@ -1,5 +1,16 @@
 # Release und Rollback
 
+## Release 1.3.10
+
+Neu ist der Backend-Menüpunkt **Updates** mit dem MGD Update Client. Er prüft
+nur auf Ihren Klick, lädt ein Paket nur nach Bestätigung und rechnet die
+SHA-256-Prüfsumme nach. Installiert wird weiterhin von Hand im
+JTL-Plugin-Manager. Die alte GitHub-Abfrage entfällt. Es gibt keine neue
+Migration.
+Verwenden Sie `MGD_AI_Kennzeichnung-1.3.10.zip` und die zugehörige SHA-256-Datei.
+Der tatsächliche Prüf- und Installationsstand steht in den
+[Release-Hinweisen](../Dokumentation/Release-1.3.10.md).
+
 ## Release 1.3.9
 
 Das Schuhbild ist wieder neutral. Darunter zeigt eine separate Detail-Lupe

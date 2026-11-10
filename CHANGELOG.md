@@ -1,17 +1,17 @@
 # Änderungsprotokoll
 
-## Unveröffentlicht
+## 1.3.10 – 2026-11-10
 
 - Neuer Backend-Menüpunkt **Updates** mit dem gemeinsamen MGD Update Client.
   Er lädt ein Paket nur nach Bestätigung herunter und prüft es. Installiert
   wird nur von Hand in der JTL-Pluginverwaltung.
 - Kein Abruf ohne Ihren Klick oder Ihr Einschalten. Kein Hintergrund-Job.
-- Der Update-Kanal arbeitet im einfachen Modus: Eine kleine Textdatei auf theme.michael-gahn.de (`plugin-updates/mgd-ai-kennzeichnung.json`) nennt Version und SHA-256-Prüfsumme, das ZIP kommt von GitHub, die Prüfsumme wird beim Download nachgerechnet. Das ist eine Prüfsumme, keine Signatur. Solange die Textdatei noch nicht auf dem Server liegt, meldet der Bereich nur einen Fehler beim Abruf. Sonst passiert nichts.
-- Der Menüpunkt erscheint erst mit der nächsten Plugin-Version.
+- Der Update-Kanal arbeitet im einfachen Modus: Eine kleine Textdatei auf theme.michael-gahn.de (`plugin-updates/mgd-ai-kennzeichnung.json`) nennt Version und SHA-256-Prüfsumme, das ZIP kommt von GitHub, die Prüfsumme wird beim Download nachgerechnet. Das ist eine Prüfsumme, keine Signatur.
+- Der Menüpunkt erscheint nach dem Update auf Version 1.3.10.
 - Die alte GitHub-Abfrage (Einstellung „Updatehinweise über GitHub“) entfällt.
   Der Update Client ersetzt sie. Der Darstellungstab ruft nichts mehr bei
   GitHub ab.
-- Die Version wurde nicht erhöht.
+- Prüf- und Installationsstand: [Release-Hinweise](Dokumentation/Release-1.3.10.md).
 
 ## 1.3.9 – 2026-09-03
 

@@ -15,10 +15,10 @@
 
 Transparente Kennzeichnungen für KI-generierte und KI-bearbeitete Bilder – direkt in JTL-Shop 5, ohne die Originalbilder zu verändern und ohne Bilddaten an externe KI-Dienste zu senden.
 
-> **Aktueller Paketstand:** 1.3.9 – separate Detail-Lupe für Transparenz und Hintergrundunschärfe
-> **Download:** [Release 1.3.9 mit Installations-ZIP und Prüfsumme](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases/tag/v1.3.9). Bestehende Shops müssen separat aktualisiert werden.
+> **Aktueller Paketstand:** 1.3.10 – neuer Bereich Updates (MGD Update Client)
+> **Download:** [Release 1.3.10 mit Installations-ZIP und Prüfsumme](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases/tag/v1.3.10). Bestehende Shops müssen separat aktualisiert werden.
 > **Voraussetzungen:** JTL-Shop 5.7.2, PHP 8.1 oder neuer, NOVA oder ein kompatibles NOVA-basiertes Template
-> **Prüfstand:** Die lokalen Prüfungen und der gesonderte Installationsstand sind in [Release 1.3.9](Dokumentation/Release-1.3.9.md) dokumentiert. Eine Veröffentlichung aktualisiert bestehende Shops nicht automatisch.
+> **Prüfstand:** Die lokalen Prüfungen und der gesonderte Installationsstand sind in [Release 1.3.10](Dokumentation/Release-1.3.10.md) dokumentiert. Eine Veröffentlichung aktualisiert bestehende Shops nicht automatisch.
 > **Wichtig:** Das Plugin erkennt KI-Inhalte nicht automatisch. Die fachliche Prüfung und Einstufung erfolgt bewusst durch einen berechtigten Menschen.
 
 Es gibt **keine automatische KI-Erkennung**. Dadurch bleibt jede veröffentlichte Einstufung eine nachvollziehbare redaktionelle Entscheidung.
@@ -107,7 +107,7 @@ Die sichtbaren Texte werden je nach Shop- oder Plugin-Sprache auf Deutsch oder E
 
 ### 1. Paket herunterladen
 
-Das Installationspaket heißt `MGD_AI_Kennzeichnung-1.3.9.zip`. Sie finden veröffentlichte Pakete unter [GitHub Releases](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases). Lokal liegen fertige ZIP-Dateien im Hauptprojekt unter `plugin/`. Verwenden Sie immer das angehängte Plugin-ZIP, nicht den automatisch von GitHub erzeugten Quellcode-Download.
+Das Installationspaket heißt `MGD_AI_Kennzeichnung-1.3.10.zip`. Sie finden veröffentlichte Pakete unter [GitHub Releases](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases). Lokal liegen fertige ZIP-Dateien im Hauptprojekt unter `plugin/`. Verwenden Sie immer das angehängte Plugin-ZIP, nicht den automatisch von GitHub erzeugten Quellcode-Download.
 
 Das öffentlich zugängliche Repository stellt Release-Hinweise bereit, aber
 keinen Auto-Updater. Die Aktualisierung erfolgt als **manueller ZIP-Upload** im
@@ -126,7 +126,7 @@ Erstellen Sie vor Installation oder Update mindestens:
 
 1. JTL-Backend öffnen.
 2. **Plugins → Plugin-Manager → Upload** wählen.
-3. `MGD_AI_Kennzeichnung-1.3.9.zip` zuerst auf der getrennten Dev-Installation hochladen.
+3. `MGD_AI_Kennzeichnung-1.3.10.zip` zuerst auf der getrennten Dev-Installation hochladen.
 4. Das Plugin installieren beziehungsweise aktualisieren.
 5. Plugin aktivieren.
 6. Plugin öffnen und die gewünschte Ansicht prüfen. Seit Version 1.3.4 verwendet das Plugin über den ausdrücklich erzeugten JTL-Backend-Renderer dessen tatsächlich aktive Smarty-Engine, verwirft dort gezielt kompilierte Vorlagen dieses Plugins und startet den lokalen Philosophie-Editor JTL-kompatibel im nachgeladenen AJAX-Tab; andere Shop-Caches bleiben unberührt.
@@ -163,7 +163,7 @@ Die Galerie bietet:
 
 ### OPC-Uploads aus Unterordnern
 
-Version 1.3.9 findet zusätzlich alle
+Version 1.3.10 findet zusätzlich alle
 unterstützten Uploads im OPC-Dateispeicher – auch ohne Verwendung auf einer Seite.
 Das schließt beispielsweise `opc/banner/2026`, `opc/bilder/2026` und tiefere
 Unterordner ein. Nach **Sicheren Bildscan starten** wählen Sie die Quelle
@@ -309,7 +309,7 @@ in der Serverkonfiguration gesperrt werden.
 
 **So arbeitet der Update-Kanal (Stand 10.11.2026):**
 
-- ⚠️ Der Update-Kanal arbeitet im einfachen Modus: Eine kleine Textdatei auf theme.michael-gahn.de (`plugin-updates/mgd-ai-kennzeichnung.json`) nennt Version und SHA-256-Prüfsumme, das ZIP kommt von GitHub, die Prüfsumme wird beim Download nachgerechnet. Das ist eine Prüfsumme, keine Signatur. Solange die Textdatei noch nicht auf dem Server liegt, meldet der Bereich nur einen Fehler beim Abruf. Sonst passiert nichts.
+- ⚠️ Der Update-Kanal arbeitet im einfachen Modus: Eine kleine Textdatei auf theme.michael-gahn.de (`plugin-updates/mgd-ai-kennzeichnung.json`) nennt Version und SHA-256-Prüfsumme, das ZIP kommt von GitHub, die Prüfsumme wird beim Download nachgerechnet. Das ist eine Prüfsumme, keine Signatur.
 - Die signierte Variante (mit Schlüsseln in `update/root-keys.json`) ist vorbereitet, aber noch nicht aktiv.
 
 Die frühere GitHub-Abfrage (Einstellung „Updatehinweise über GitHub“) gibt es
@@ -384,6 +384,7 @@ Eine Deinstallation mit Datenlöschung ist kein normaler Rollback. Ohne ausdrüc
 - [Installation, Test und Rollback](Dokumentation/Installation-und-Livetest.md)
 - [Datenschutz und Sicherheit](Dokumentation/Datenschutz-und-Sicherheit.md)
 - [Darstellung und Live-Vorschau](Dokumentation/Darstellung.md)
+- [Release 1.3.10](Dokumentation/Release-1.3.10.md)
 - [Release 1.3.9](Dokumentation/Release-1.3.9.md)
 - [Release 1.3.4](Dokumentation/Release-1.3.4.md)
 - [Release 1.3.3](Dokumentation/Release-1.3.3.md)
@@ -406,8 +407,8 @@ composer test:js
 composer analyse
 composer style
 bash scripts/build-release.sh
-unzip -t dist/MGD_AI_Kennzeichnung-1.3.9.zip
-shasum -a 256 dist/MGD_AI_Kennzeichnung-1.3.9.zip
+unzip -t dist/MGD_AI_Kennzeichnung-1.3.10.zip
+shasum -a 256 dist/MGD_AI_Kennzeichnung-1.3.10.zip
 ```
 
 Die Testumgebung umfasst PHP-Unit- und Integrationstests, JavaScript-Tests, statische PHP-Analyse, Formatprüfung, Strukturverträge und die Prüfung des installierbaren ZIP-Pakets.

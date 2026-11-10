@@ -89,7 +89,7 @@ nur auf Ihren Klick.
 
 Nein.
 
-Version 1.3.9 wird per geprüftem, manuellem ZIP-Upload installiert. Das aktuelle
+Version 1.3.10 wird per geprüftem, manuellem ZIP-Upload installiert. Das aktuelle
 Testpaket liegt lokal vor; die öffentliche GitHub-Veröffentlichung steht noch aus.
 
 ## Was bedeutet Transparenz?
