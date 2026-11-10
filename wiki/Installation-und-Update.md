@@ -45,7 +45,7 @@ Prüfen Sie nicht nur, ob eine Backupdatei existiert, sondern ob sie lesbar und 
 5. Plugin installieren.
 6. Plugin aktivieren.
 7. **Bildverwaltung** öffnen und den ersten Scan starten.
-8. Einstellungen prüfen und bei Bedarf die standardmäßig aktivierten Updatehinweise ausschalten.
+8. Einstellungen prüfen.
 9. ein unkritisches Bild testweise kennzeichnen.
 10. Frontend und Serverprotokoll kontrollieren.
 

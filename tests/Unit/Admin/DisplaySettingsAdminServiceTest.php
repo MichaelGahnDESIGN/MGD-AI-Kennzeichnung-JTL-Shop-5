@@ -45,7 +45,7 @@ final class DisplaySettingsAdminServiceTest extends TestCase
         $settings = $service->save('csrf', self::validPost());
 
         self::assertFalse($settings->showCredit);
-        self::assertFalse($settings->updateNoticesEnabled);
+        self::assertFalse(property_exists($settings, 'updateNoticesEnabled'));
         self::assertSame(LabelLanguage::De, $settings->language);
         self::assertSame(18, $settings->fontSize);
         self::assertSame(0, $config->loadCalls);

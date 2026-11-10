@@ -13,35 +13,13 @@ im Footer. Nur der Herstellername ist verlinkt und öffnet die Herstellerseite
 sicher in einem neuen Tab. Die Funktion ist freiwillig und für die
 Kennzeichnung selbst nicht erforderlich.
 
-## Updatehinweise über GitHub
+## Updates
 
-Standard bei Neuinstallation: **Ja**
-
-Bei Aktivierung fragt das Plugin höchstens alle zwölf Stunden öffentliche Metadaten des neuesten GitHub-Releases ab.
-
-Dabei gilt:
-
-- keine Bildübertragung;
-- keine Kundendaten;
-- keine Zugangsdaten;
-- kein automatischer Download;
-- keine automatische Installation;
-- TLS-Prüfung erforderlich;
-- Weiterleitungen gesperrt;
-- begrenzte Antwortgröße;
-- lokaler Cache zur Vermeidung unnötiger Anfragen.
-
-Die Verbindung entsteht nur beim Öffnen des adressierten Darstellungstabs.
-GitHub kann dabei technisch die **Server-IP**, den Zeitpunkt und den festen
-**User-Agent** `MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.9` erhalten. Bilder,
-Tokens, Shop-, Kunden- und Formulardaten werden nicht übertragen. Auch ein
-Fehler oder eine nicht gefundene Release-Information wird zwölf Stunden lokal
-gespeichert.
+Die frühere Einstellung „Updatehinweise über GitHub“ gibt es nicht mehr. Updates
+prüfen Sie im Backend-Reiter **Updates** (MGD Update Client), nur auf Ihren Klick.
 
 Das Plugin installiert keine Updates automatisch; verwenden Sie den manuellen
-ZIP-Upload aus dem öffentlichen GitHub-Release. Wenn Ihre Organisation ausgehende
-Verbindungen streng beschränkt, deaktivieren Sie die Funktion und prüfen Sie
-Releases manuell.
+ZIP-Upload.
 
 ## Sprache der Kennzeichnung
 

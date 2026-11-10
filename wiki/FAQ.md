@@ -81,11 +81,9 @@ Nein. Sie ist optional und standardmäßig deaktiviert. Bei Aktivierung erschein
 
 ## Verbindet sich das Plugin mit GitHub?
 
-Bei Neuinstallationen ist die Funktion standardmäßig aktiviert und kann
-ausgeschaltet werden. Sie fragt nur beim adressierten Darstellungstab höchstens
-alle zwölf Stunden öffentliche Release-Metadaten ab. GitHub kann dabei
-Server-IP, Zeitpunkt und User-Agent erhalten; Bilder, Tokens und Kundendaten
-werden nicht übertragen.
+Nicht mehr im Hintergrund. Die frühere GitHub-Abfrage wurde entfernt. Updates
+prüfen Sie selbst im Backend-Reiter **Updates** (MGD Update Client), und zwar
+nur auf Ihren Klick.
 
 ## Installiert das Plugin Updates automatisch?
 

@@ -52,7 +52,6 @@ class Bootstrap extends Bootstrapper
             $konfiguration = $plugin->getConfig();
             $einstellungen = DisplaySettings::fromJtlConfig([
                 'show_credit' => $konfiguration->getValue('show_credit'),
-                'update_notices' => $konfiguration->getValue('update_notices'),
                 'language' => $konfiguration->getValue('language'),
                 'font_size' => $konfiguration->getValue('font_size'),
                 'outer_margin' => $konfiguration->getValue('outer_margin'),

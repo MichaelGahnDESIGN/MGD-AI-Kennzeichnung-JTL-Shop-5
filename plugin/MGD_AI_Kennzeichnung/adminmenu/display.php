@@ -14,11 +14,6 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\CsrfException;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\DisplayConfigCommittedException;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\ValidationException;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Http\AdminTabScope;
-use Plugin\MGD_AI_Kennzeichnung\Admin\Port\UpdateCheckerProviderInterface;
-use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Update\Adapter\CurlHttpClient;
-use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Update\Adapter\FileReleaseCache;
-use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Update\Adapter\SystemClock;
-use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Update\GitHubReleaseChecker;
 
 /* JTLs PluginController definiert PFAD_ROOT und stellt $oPlugin bereit. */
 if (!defined('PFAD_ROOT') || !isset($oPlugin) || !$oPlugin instanceof PluginInterface) {
@@ -76,7 +71,6 @@ try {
         new JtlDisplayConfigAdapter($container->getDB(), $oPlugin, $container->getCache()),
     );
     $message = '';
-    $updateNotice = null;
 
     if ($request->method === 'POST') {
         $expected = [
@@ -105,35 +99,6 @@ try {
         $message = 'Die Darstellung wurde sicher gespeichert.';
     } elseif ($request->method === 'GET' && $request->query === [] && $request->post === []) {
         $settings = $service->load();
-
-        /*
-         * JTL führt Customlinks parallel aus. Deshalb darf die externe,
-         * freiwillige Prüfung nur im wirklich adressierten Darstellungstab
-         * nach erfolgreicher Session-, Rechte- und Einstellungslast erfolgen.
-         */
-        if ($scope->isAddressed && $oPlugin->getConfig()->getValue('update_notices') === 'Y') {
-            try {
-                if (!is_string(PFAD_ROOT)) {
-                    throw new RuntimeException('Der Pluginpfad ist nicht sicher typisiert.');
-                }
-                $cachePath = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR)
-                    . DIRECTORY_SEPARATOR
-                    . 'mgd-ai-release-'
-                    . hash('sha256', (string) PFAD_ROOT)
-                    . '.json';
-                $checker = $container instanceof UpdateCheckerProviderInterface
-                    ? $container->getUpdateChecker()
-                    : new GitHubReleaseChecker(
-                        new CurlHttpClient(),
-                        new FileReleaseCache($cachePath),
-                        new SystemClock(),
-                    );
-                $updateNotice = $checker->check(true, '1.3.9');
-            } catch (Throwable) {
-                // Die rein optionale Prüfung darf niemals einen Adminfehler erzeugen.
-                $updateNotice = null;
-            }
-        }
     } else {
         throw new ValidationException('Die Anfrage wird für den Darstellungstab nicht unterstützt.');
     }
@@ -151,7 +116,6 @@ try {
         ->assign('blur', $settings->blur)
         ->assign('transparency', $settings->transparency)
         ->assign('message', $message)
-        ->assign('updateNotice', $updateNotice)
         ->fetch(__DIR__ . '/templates/display.tpl');
 } catch (AccessDeniedException) {
     echo AdminTabScope::error('Sie besitzen keine Berechtigung für die Darstellung.');

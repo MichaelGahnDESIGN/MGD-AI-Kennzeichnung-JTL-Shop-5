@@ -46,15 +46,6 @@
                     <Option value="Y" sort="2">Ja</Option>
                 </SelectboxOptions>
             </Setting>
-            <Setting type="selectbox" initialValue="Y" sort="2" conf="Y">
-                <Name>Updatehinweise über GitHub abrufen</Name>
-                <Description>Standardmäßig aktiviert: Beim Öffnen des Darstellungstabs erfolgt höchstens alle zwölf Stunden eine Server-zu-GitHub-Verbindung zur Prüfung einer Release-Information aus dem öffentlichen GitHub-Repository. GitHub erhält dabei technisch Server-IP, Zeitpunkt und User-Agent. Es werden keine Tokens und keine Shop-, Kunden- oder Formulardaten übertragen. Das Plugin zeigt ausschließlich einen Hinweis an und installiert keine Updates automatisch.</Description>
-                <ValueName>update_notices</ValueName>
-                <SelectboxOptions>
-                    <Option value="N" sort="1">Nein</Option>
-                    <Option value="Y" sort="2">Ja</Option>
-                </SelectboxOptions>
-            </Setting>
             <Setting type="none" initialValue="auto" sort="3" conf="Y">
                 <Name>Sprache der Kennzeichnung</Name>
                 <Description>Verwendet automatisch die Shopsprache oder eine fest gewählte Sprache.</Description>

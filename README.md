@@ -55,7 +55,7 @@ Das Plugin verändert keine Bilddatei, brennt keinen Text in ein Bild ein und ve
 - sichere JTL-Admin-Integration mit Berechtigungs- und CSRF-Prüfung;
 - kontrollierter Scan, Vorschau vor Stapeländerungen und sicherer Umgang mit veralteten Fundstellen;
 - optionale Herstellernennung **supported by: Michael Gahn DESIGN**;
-- abschaltbare GitHub-Updatehinweise mit positivem und negativem Zwölf-Stunden-Cache.
+- Update-Prüfung nur über den MGD Update Client (Backend-Reiter **Updates**), nie im Hintergrund.
 
 ## Kennzeichnungsstatus
 
@@ -247,7 +247,6 @@ anklickbar.
 | Einstellung | Standard | Zweck |
 |---|---:|---|
 | Herstellernennung im Footer | Aus | Zeigt optional „supported by: Michael Gahn DESIGN“. |
-| Updatehinweise über GitHub | An | Prüft beim adressierten Darstellungstab höchstens alle zwölf Stunden öffentliche Release-Metadaten. |
 | Sprache der Kennzeichnung | Automatisch | Verwendet Shopsprache, Deutsch oder Englisch. |
 | Schriftgröße | 12 px | Zulässig: 8 bis 48 px. |
 | Außenabstand | 8 px | Zulässig: 0 bis 64 px. |
@@ -313,8 +312,8 @@ in der Serverkonfiguration gesperrt werden.
 - **B1:** Die Update-Schlüssel sind noch nicht erzeugt. Die Datei `update/root-keys.json` ist leer. Der Bereich zeigt „Update-Kanal noch nicht eingerichtet“ und ruft nichts ab.
 - **B2:** Der Update-Server kennt das Produkt `mgd-ai-kennzeichnung` noch nicht. Bis dahin kann es keine Updates über diesen Weg geben.
 
-Die bisherigen **Updatehinweise über GitHub** (Einstellung oben) bleiben
-unverändert bestehen.
+Die frühere GitHub-Abfrage (Einstellung „Updatehinweise über GitHub“) gibt es
+nicht mehr. Der Reiter **Updates** ersetzt sie.
 
 ## Datenschutz und Sicherheit
 
@@ -332,14 +331,7 @@ Das Plugin wurde nach dem Prinzip der Datenminimierung entwickelt:
 - HTML-Bereinigung für die AI-Philosophie;
 - keine Drittinhalte, externen Editorbibliotheken, Webfonts, Icons oder
   Telemetrie im Philosophie-Editor;
-- Updateabfrage nur im adressierten Darstellungstab und mit lokalem positiven wie negativen Zwölf-Stunden-Cache;
-- keine Secrets, Tokens oder Bildinhalte in der Updateabfrage.
-
-Bei aktivierter Updateprüfung erhält GitHub technisch die Server-IP, den
-Zeitpunkt und den festen User-Agent
-`MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.9`. Bilder, Kunden-, Shop- und
-Formulardaten werden nicht übertragen. Auch ein Fehler oder ein Ergebnis ohne
-neue Version wird zwölf Stunden zwischengespeichert.
+- Update-Prüfung nur auf Ihren Klick im Reiter **Updates**, ohne Secrets, Tokens oder Bildinhalte.
 
 Weitere Details stehen in [Datenschutz und Sicherheit](Dokumentation/Datenschutz-und-Sicherheit.md) und im [vollständigen GitHub-Handbuch](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/blob/main/wiki/Home.md).
 

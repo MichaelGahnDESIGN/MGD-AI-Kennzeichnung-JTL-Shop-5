@@ -28,7 +28,6 @@ final class DisplaySettings
      */
     private function __construct(
         public readonly bool $showCredit,
-        public readonly bool $updateNoticesEnabled,
         public readonly LabelLanguage $language,
         public readonly int $fontSize,
         public readonly int $outerMargin,
@@ -49,7 +48,6 @@ final class DisplaySettings
 
         return new self(
             showCredit: self::strictBoolean($werte['showCredit'] ?? null, false),
-            updateNoticesEnabled: self::strictBoolean($werte['updateNoticesEnabled'] ?? null, false),
             language: self::language($werte['language'] ?? null),
             fontSize: self::boundedInteger($werte['fontSize'] ?? null, self::DEFAULT_FONT_SIZE, 8, 48),
             outerMargin: self::boundedInteger($werte['outerMargin'] ?? null, self::DEFAULT_OUTER_MARGIN, 0, 64),
@@ -73,7 +71,6 @@ final class DisplaySettings
 
         return self::fromInput([
             'showCredit' => self::jtlBoolean($werte['show_credit'] ?? null),
-            'updateNoticesEnabled' => self::jtlBoolean($werte['update_notices'] ?? null),
             'language' => self::jtlString($werte['language'] ?? null),
             'fontSize' => self::jtlInteger($werte['font_size'] ?? null),
             'outerMargin' => self::jtlInteger($werte['outer_margin'] ?? null),

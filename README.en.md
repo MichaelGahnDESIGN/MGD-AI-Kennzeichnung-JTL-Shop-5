@@ -10,7 +10,7 @@ The editor only accepts `p`, `h2`, `h3`, `ul`, `ol`, `li`, `strong`, `em`, and `
 
 All editor code, styling, icons, and dialogs are included locally. It loads no external editor library, CDN asset, font, third-party content, or telemetry. If JavaScript is unavailable, the large source textareas remain fully usable as a no-JavaScript fallback.
 
-The public repository does not provide an automatic updater. Install the verified `MGD_AI_Kennzeichnung-1.3.9.zip` through JTL's manual plugin upload after a backup and a development-site test. When update notices are enabled, GitHub can technically receive the server IP, time and fixed User-Agent; no images, tokens, customer or form data are sent, and positive or negative results are cached for twelve hours.
+The public repository does not provide an automatic updater. Install the verified `MGD_AI_Kennzeichnung-1.3.9.zip` through JTL's manual plugin upload after a backup and a development-site test. The former GitHub release lookup has been removed; update checks only happen through the MGD Update Client (backend tab Updates) on your click.
 
 Requirements: JTL-Shop 5.7.2 or newer, PHP 8.1 or newer, and NOVA or a compatible NOVA child theme. Back up the database and plugin files before installation. The complete German wiki-style guide is available in the [versioned GitHub handbook](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/blob/main/wiki/Home.md); operating, privacy and rollback documents are stored in [`Dokumentation/`](Dokumentation/README.md).
 

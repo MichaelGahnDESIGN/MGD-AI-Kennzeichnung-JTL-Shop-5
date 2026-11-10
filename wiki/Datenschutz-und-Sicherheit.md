@@ -68,18 +68,10 @@ vollständig bedienbar.
 
 ## Updatehinweise
 
-Bei Neuinstallationen ist die Updateprüfung standardmäßig aktiviert und kann
-jederzeit ausgeschaltet werden. Sie läuft nur beim adressierten Darstellungstab,
-verwendet ausschließlich den festen HTTPS-Endpunkt der öffentlichen
-GitHub-Release-API, prüft TLS, folgt keinen Weiterleitungen und begrenzt die
-Antwortgröße.
-
-GitHub kann technisch die **Server-IP**, den Zeitpunkt und den festen
-**User-Agent** `MGD-AI-Kennzeichnung-JTL-Shop-5/1.3.9` erhalten. Bilder,
-Tokens, Shop-, Kunden- und Formulardaten werden nicht übertragen. Ein Erfolg
-oder Fehler wird zwölf Stunden lokal zwischengespeichert. Das Plugin installiert
-keine Updates automatisch; erforderlich bleibt der manuelle ZIP-Upload des
-geprüften Release-Pakets.
+Die frühere GitHub-Abfrage wurde entfernt. Updates werden nur über den
+Backend-Reiter **Updates** (MGD Update Client) auf Ihren Klick geprüft. Das
+Plugin installiert keine Updates automatisch; erforderlich bleibt der manuelle
+ZIP-Upload des geprüften Pakets.
 
 ## Protokollierung
 

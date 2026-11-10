@@ -10,7 +10,7 @@ Sicherheitskorrekturen werden für die aktuelle Version 1.3.9 bewertet. Vorausse
 
 ## Schutzgrenzen
 
-Das Plugin erkennt KI-Inhalte nicht automatisch und verarbeitet keine Zahlungs- oder Bestelldaten. Bei Neuinstallationen sind Updatehinweise standardmäßig aktiviert und können jederzeit ausgeschaltet werden. Eine Prüfung sendet keine Bilder, Tokens, Shop-, Kunden- oder Formulardaten; GitHub kann technisch Server-IP, Zeitpunkt und den festen User-Agent erhalten. Positive und negative Ergebnisse werden zwölf Stunden lokal zwischengespeichert. Das Plugin installiert keine Updates automatisch. Eine Deinstallation mit Datenlöschung prüft Eigentümermarker und Schema; diese Schutzprüfung darf nicht umgangen werden.
+Das Plugin erkennt KI-Inhalte nicht automatisch und verarbeitet keine Zahlungs- oder Bestelldaten. Die frühere GitHub-Abfrage für Updatehinweise gibt es nicht mehr; Updates werden nur über den MGD Update Client auf Ihren Klick geprüft. Das Plugin installiert keine Updates automatisch. Eine Deinstallation mit Datenlöschung prüft Eigentümermarker und Schema; diese Schutzprüfung darf nicht umgangen werden.
 
 ## Lokaler Philosophie-Editor
 

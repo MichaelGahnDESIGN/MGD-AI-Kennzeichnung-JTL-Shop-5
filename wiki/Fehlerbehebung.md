@@ -128,16 +128,12 @@ Der Menüpunkt erscheint nur bei genau einer lokalen Rasterbilddatei und eindeut
 
 Siehe auch [Release und Rollback](Release-und-Rollback.md).
 
-## Kein GitHub-Updatehinweis sichtbar
+## Kein Updatehinweis sichtbar
 
-Das kann auch bei Version 1.3.0 korrekt sein:
-
-- ein negatives Ergebnis wird zwölf Stunden zwischengespeichert;
-- die Prüfung läuft nur im adressierten Darstellungstab;
-- die Einstellung kann deaktiviert sein.
+Die frühere GitHub-Abfrage gibt es nicht mehr. Updates prüfen Sie im
+Backend-Reiter **Updates** (MGD Update Client).
 
 Das Plugin installiert keine Updates automatisch. Laden Sie das geprüfte
 Release-ZIP manuell herunter und verwenden Sie den manuellen ZIP-Upload im
-Plugin-Manager. GitHub kann bei einer aktiven Prüfung Server-IP, Zeitpunkt und
-User-Agent sehen; senden Sie niemals Tokens oder Zugangsdaten in einen
+Plugin-Manager. Senden Sie niemals Tokens oder Zugangsdaten in einen
 Fehlerbericht.

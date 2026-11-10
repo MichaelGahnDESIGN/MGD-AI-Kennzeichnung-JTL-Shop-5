@@ -31,7 +31,7 @@ Vor dem Dev-Update werden das vorhandene Pluginverzeichnis und die vier Plugin-D
 2. Das Releasepaket `MGD_AI_Kennzeichnung-1.3.9.zip` als **manuellen ZIP-Upload** auswählen. Nicht den automatisch erzeugten GitHub-Quellcode verwenden.
 3. Bei einer bestehenden Version die von JTL angebotene Updatefunktion verwenden; sonst nach erfolgreicher Validierung installieren und aktivieren.
 4. Keine Dateien in JTL-Core, NOVA oder OnvisTheme manuell ersetzen.
-5. Die bei Neuinstallationen standardmäßig aktivierten Updatehinweise bewusst anhand der eigenen Datenschutz- und Netzwerkvorgaben prüfen; die Footer-Nennung bleibt freiwillig.
+5. Die Footer-Nennung bleibt freiwillig.
 
 Version 1.3.9 besitzt keinen Auto-Updater. Das öffentliche Repository stellt
 Release-Hinweise bereit; eine Aktualisierung erfolgt trotzdem immer

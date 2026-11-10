@@ -9,6 +9,9 @@
 - Noch ohne Wirkung: Die Update-Schlüssel fehlen (Blocker B1) und der
   Update-Server kennt das Produkt noch nicht (Blocker B2).
 - Der Menüpunkt erscheint erst mit der nächsten Plugin-Version.
+- Die alte GitHub-Abfrage (Einstellung „Updatehinweise über GitHub“) entfällt.
+  Der Update Client ersetzt sie. Der Darstellungstab ruft nichts mehr bei
+  GitHub ab.
 - Die Version wurde nicht erhöht.
 
 ## 1.3.9 – 2026-09-03
