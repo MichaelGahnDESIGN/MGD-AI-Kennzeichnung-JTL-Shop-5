@@ -27,7 +27,25 @@ Geprüft wurde lokal am 11. November 2026:
 
 - alle PHP-Tests (PHPUnit);
 - Smoke-Test des Bereichs Updates (`php tests/update-smoke.php`);
-- Paketbau mit `scripts/build-release.sh` und ZIP-Integrität.
+- Paketbau mit `scripts/build-release.sh` und ZIP-Integrität;
+- Ergebnis: 528 PHP-Tests und 37 Smoke-Prüfungen ohne Fehler, zwei Builds
+  mit gleicher Prüfsumme.
+
+Veröffentlicht und geprüft am 11. November 2026:
+
+- GitHub-Release v1.3.11 mit ZIP und SHA-256-Datei;
+- Prüfsummen-Datei auf theme.michael-gahn.de nennt 1.3.11. Sie wurde aus dem
+  vom Release zurückgeladenen ZIP erzeugt;
+- vom Server des JTL-Demo-Shops aus: Prüfsummen-Datei abrufbar, ZIP von GitHub
+  geladen, Prüfsumme stimmt;
+- Plugin-Dateien 1.3.11 liegen im JTL-Demo-Shop unter `plugins/`.
+
+Noch **nicht** geprüft:
+
+- Installation und Aktivierung im JTL-Demo-Shop. Das Plugin war dort vorher
+  nicht installiert; die Installation erfolgt von Hand im Plugin-Manager;
+- Bereich Updates im Backend des Demo-Shops;
+- kein zusätzlicher Lauf unter PHP 8.1.
 
 ## Sicherung und Rückweg
 
