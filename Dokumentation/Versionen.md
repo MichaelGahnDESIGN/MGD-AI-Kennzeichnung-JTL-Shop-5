@@ -1,5 +1,11 @@
 # Versionsübersicht
 
+## 1.3.11 – 11. November 2026
+
+Wartungsversion ohne Funktionsänderung. Gleicher Funktionsumfang wie 1.3.10,
+abgenommene Datenschutz-Angaben zum Update-Server. Keine Migration. Siehe
+[Prüf- und Updatehinweise](Release-1.3.11.md).
+
 ## 1.3.10 – 10. November 2026
 
 Neuer Backend-Menüpunkt **Updates** mit dem MGD Update Client. Prüfen und

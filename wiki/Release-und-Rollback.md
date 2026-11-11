@@ -1,5 +1,13 @@
 # Release und Rollback
 
+## Release 1.3.11
+
+Wartungsversion ohne Funktionsänderung. Alles aus 1.3.10 bleibt gleich,
+auch der Bereich **Updates**. Es gibt keine neue Migration.
+Verwenden Sie `MGD_AI_Kennzeichnung-1.3.11.zip` und die zugehörige SHA-256-Datei.
+Der tatsächliche Prüf- und Installationsstand steht in den
+[Release-Hinweisen](../Dokumentation/Release-1.3.11.md).
+
 ## Release 1.3.10
 
 Neu ist der Backend-Menüpunkt **Updates** mit dem MGD Update Client. Er prüft

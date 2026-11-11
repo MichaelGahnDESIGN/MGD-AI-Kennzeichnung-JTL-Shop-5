@@ -1,5 +1,15 @@
 # Änderungsprotokoll
 
+## 1.3.11 – 2026-11-11
+
+- Wartungsversion ohne Funktionsänderung. Bereich **Updates**, Kennzeichnungen,
+  Bilder und Designwerte bleiben wie in 1.3.10.
+- Die Angaben zum Update-Server theme.michael-gahn.de und zum manuellen
+  ZIP-Upload in [Datenschutz und Sicherheit](Dokumentation/Datenschutz-und-Sicherheit.md)
+  sind abgenommen.
+- Keine neue Datenbankmigration.
+- Prüf- und Installationsstand: [Release-Hinweise](Dokumentation/Release-1.3.11.md).
+
 ## 1.3.10 – 2026-11-10
 
 - Neuer Backend-Menüpunkt **Updates** mit dem gemeinsamen MGD Update Client.
