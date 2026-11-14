@@ -201,7 +201,9 @@ final class DisplaySettingsTest extends TestCase
             self::assertInstanceOf(DOMElement::class, $element);
             self::assertSame('selectbox', $element->getAttribute('type'));
         }
-        self::assertCount(0, $xpath->query('/jtlshopplugin/Install/Adminmenu/Settingslink/Setting[ValueName="update_notices"]'));
+        $updateNotices = $xpath->query('/jtlshopplugin/Install/Adminmenu/Settingslink/Setting[ValueName="update_notices"]');
+        self::assertNotFalse($updateNotices);
+        self::assertCount(0, $updateNotices);
         self::assertStringNotContainsString('GitHub', (string) file_get_contents(self::INFO_XML));
         self::assertSame('', $xpath->evaluate('string(/jtlshopplugin/Install/Adminmenu/Settingslink/Setting[ValueName="position"])'));
         self::assertSame('', $xpath->evaluate('string(/jtlshopplugin/Install/Adminmenu/Settingslink/Setting[ValueName="theme"])'));
@@ -210,7 +212,7 @@ final class DisplaySettingsTest extends TestCase
         $dateiname = $xpath->evaluate('string(/jtlshopplugin/Install/Adminmenu/Customlink[Name="Darstellung"]/Filename)');
         self::assertIsString($version);
         self::assertIsString($dateiname);
-        self::assertSame('1.3.11', trim($version));
+        self::assertSame('1.4.0', trim($version));
         self::assertSame('display.php', trim($dateiname));
     }
 

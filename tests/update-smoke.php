@@ -181,7 +181,7 @@ $bare = \Plugin\MGD_AI_Kennzeichnung\UpdateClient\Factory::page($pluginDir . '/u
 $r = $bare->handle('POST', ['mgd_update_action' => 'check_now']);
 check('ohne Schlüssel und ohne Prüfsummen-Adresse: nicht eingerichtet (B1)', str_contains($r['html'], 'noch nicht eingerichtet'));
 // einfacher Modus verdrahtet, nur statisch geprüft
-check('einfacher Modus: Adresse der Prüfsummen-Datei', UpdatesPageFactory::SIMPLE_URL === 'https://theme.michael-gahn.de/plugin-updates/mgd-ai-kennzeichnung.json');
+check('einfacher Modus: Adresse der Prüfsummen-Datei', str_contains((string) file_get_contents($pluginDir . '/Admin/Update/UpdatesPageFactory.php'), "SIMPLE_URL = 'https://theme.michael-gahn.de/plugin-updates/mgd-ai-kennzeichnung.json'"));
 check('einfacher Modus: Factory gibt die Adresse weiter', str_contains((string) file_get_contents($pluginDir . '/Admin/Update/UpdatesPageFactory.php'), "['info.xml'],\n            self::SIMPLE_URL"));
 // GET ohne Einschalten ruft nichts ab
 $r = $real->handle('GET', []);
@@ -191,6 +191,10 @@ check('Verdrahtung: zeigt Plugin Version', str_contains($r['html'], '<strong>' .
 check('Datenordner mit .htaccess Deny', str_contains((string) file_get_contents($dataDir . '/.htaccess'), 'Require all denied'));
 check('Elternordner mit .htaccess', is_file(dirname($dataDir) . '/.htaccess'));
 check('Datenordner liegt unter templates_c', str_starts_with($dataDir, rtrim($compiled, '/') . '/'));
+
+// Erfolgsmeldung nennt nur was geprüft wurde
+check('Meldung einfacher Modus ohne Signatur', !str_contains(UpdatesPage::verifiedText(new \Plugin\MGD_AI_Kennzeichnung\UpdateClient\UpdateResult('update_available', '', [], 'x', ['mode' => 'simple'])), 'Signatur'));
+check('Meldung signierter Modus mit Signatur', str_contains(UpdatesPage::verifiedText(new \Plugin\MGD_AI_Kennzeichnung\UpdateClient\UpdateResult('update_available', '', [], 'x')), 'Signatur'));
 
 // ZIP Auslieferung nur aus Quarantäne
 $q = $dataDir . '/quarantine';

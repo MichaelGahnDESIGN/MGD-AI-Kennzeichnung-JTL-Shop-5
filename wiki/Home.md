@@ -36,7 +36,7 @@ Das Plugin hilft Ihnen, lokale Shopbilder strukturiert zu prüfen und transparen
 
 ## Aktuelle Version
 
-**Version 1.3.11** ist eine Wartungsversion ohne Funktionsänderung. Sie enthält den Backend-Menüpunkt **Updates** aus 1.3.10 (MGD Update Client): prüfen und herunterladen nur auf Ihren Klick, installiert wird von Hand. Sie enthält weiterhin den rekursiven Scan aller
+**Version 1.4.0** bringt alle MGD-Produkte auf eine gemeinsame Versionsnummer. Der Bereich **Updates** meldet nach dem Download jetzt nur noch, was wirklich geprüft wurde: SHA-256-Prüfsumme und Inhalt, keine Signatur. Sie enthält den Backend-Menüpunkt **Updates** aus 1.3.10 (MGD Update Client): prüfen und herunterladen nur auf Ihren Klick, installiert wird von Hand. Sie enthält weiterhin den rekursiven Scan aller
 unterstützten OPC-Uploads einschließlich Unterordnern und unbenutzter Dateien.
 Ebenfalls enthalten ist die separate zweifach vergrößerte Detail-Lupe unter dem neutralen
 Schuhbild. Bunte Flächen und feine Linien machen Transparenz und Unschärfe
@@ -44,7 +44,7 @@ besser erkennbar. Der Speicher-Hotfix bleibt enthalten. Der Installationsstand
 ist gesondert zu prüfen.
 Die bisherigen Filter und Kennzeichnungen bleiben erhalten.
 
-Version 1.3.11 enthält weiterhin die zwei großen Sprachkarten und den
+Version 1.4.0 enthält weiterhin die zwei großen Sprachkarten und den
 lokalen Editor aus Version 1.3.0. Zusätzlich bereinigt sie nach einem
 Plugin-Update den JTL-Backend-Templatecache über die tatsächlich aktive
 Smarty-Engine und startet den Editor zuverlässig im per AJAX nachgeladenen
@@ -55,7 +55,7 @@ Drittinhalte und behält die Textfelder als No-JavaScript-Fallback bei. Die
 Darstellungsfunktionen aus Version 1.2.1 und die optionale Herstellernennung
 **supported by: Michael Gahn DESIGN** bleiben erhalten.
 
-Veröffentlichte Installationspakete finden Sie unter [Releases](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases). Verwenden Sie das angehängte Paket `MGD_AI_Kennzeichnung-1.3.11.zip`. Prüfen Sie jeweils den mitgelieferten SHA-256-Wert. Das öffentliche Repository stellt Hinweise bereit, aber keinen Auto-Updater; das Update erfolgt als manueller ZIP-Upload im JTL-Plugin-Manager.
+Veröffentlichte Installationspakete finden Sie unter [Releases](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases). Verwenden Sie das angehängte Paket `MGD_AI_Kennzeichnung-1.4.0.zip`. Prüfen Sie jeweils den mitgelieferten SHA-256-Wert. Das öffentliche Repository stellt Hinweise bereit, aber keinen Auto-Updater; das Update erfolgt als manueller ZIP-Upload im JTL-Plugin-Manager.
 
 ## Hilfe und Sicherheit
 

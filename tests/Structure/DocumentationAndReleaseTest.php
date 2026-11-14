@@ -11,8 +11,8 @@ use ZipArchive;
 final class DocumentationAndReleaseTest extends TestCase
 {
     private const ROOT = __DIR__ . '/../..';
-    private const VERSION = '1.3.11';
-    private const ZIP = self::ROOT . '/dist/MGD_AI_Kennzeichnung-1.3.11.zip';
+    private const VERSION = '1.4.0';
+    private const ZIP = self::ROOT . '/dist/MGD_AI_Kennzeichnung-1.4.0.zip';
 
     #[Test]
     public function releaseziel_und_lokale_artefakte_sind_eindeutig_abgegrenzt(): void
@@ -26,9 +26,9 @@ final class DocumentationAndReleaseTest extends TestCase
         self::assertIsString($infoXml);
         self::assertIsString($gitignore);
 
-        self::assertStringContainsString('MGD_AI_Kennzeichnung-1.3.11.zip', $script);
+        self::assertStringContainsString('MGD_AI_Kennzeichnung-1.4.0.zip', $script);
         self::assertStringNotContainsString('MGD_AI_Kennzeichnung-1.2.1.zip', $script);
-        self::assertStringContainsString('<Version>1.3.11</Version>', $infoXml);
+        self::assertStringContainsString('<Version>1.4.0</Version>', $infoXml);
         // Gegenprobe: keine GitHub-Abfrage mehr im Darstellungstab
         self::assertStringNotContainsString('check(true,', $display);
         self::assertStringNotContainsString('github', strtolower($display));
@@ -282,14 +282,14 @@ BASH;
     }
 
     #[Test]
-    public function version_1_3_11_ist_in_paket_ci_und_benutzerdokumentation_konsistent(): void
+    public function version_1_4_0_ist_in_paket_ci_und_benutzerdokumentation_konsistent(): void
     {
         $dateien = [
             'README' => self::ROOT . '/README.md',
             'CHANGELOG' => self::ROOT . '/CHANGELOG.md',
             'Sicherheit' => self::ROOT . '/SECURITY.md',
             'Darstellung' => self::ROOT . '/Dokumentation/Darstellung.md',
-            'Release' => self::ROOT . '/Dokumentation/Release-1.3.11.md',
+            'Release' => self::ROOT . '/Dokumentation/Release-1.4.0.md',
             'Datenschutz' => self::ROOT . '/Dokumentation/Datenschutz-und-Sicherheit.md',
             'Installation' => self::ROOT . '/Dokumentation/Installation-und-Livetest.md',
             'Wiki' => self::ROOT . '/wiki/Home.md',
@@ -312,7 +312,7 @@ BASH;
         }
 
         foreach ([
-            'Version 1.3.11',
+            'Version 1.4.0',
             'Live-Vorschau',
             'Transparenz',
             'Nur Vorschau',

@@ -1,5 +1,14 @@
 # Release und Rollback
 
+## Release 1.4.0
+
+Gemeinsame Versionsnummer für alle MGD-Produkte. Der Bereich **Updates**
+meldet nach dem Download nur noch, was wirklich geprüft wurde. Es gibt keine
+neue Migration.
+Verwenden Sie `MGD_AI_Kennzeichnung-1.4.0.zip` und die zugehörige SHA-256-Datei.
+Der tatsächliche Prüf- und Installationsstand steht in den
+[Release-Hinweisen](../Dokumentation/Release-1.4.0.md).
+
 ## Release 1.3.11
 
 Wartungsversion ohne Funktionsänderung. Alles aus 1.3.10 bleibt gleich,

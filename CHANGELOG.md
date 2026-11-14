@@ -1,5 +1,17 @@
 # Änderungsprotokoll
 
+## 1.4.0 – 2026-11-14
+
+- Gemeinsame Versionsnummer 1.4.0 für alle MGD-Themes und -Plugins.
+- Bereich **Updates**: Nach dem Download nennt die Meldung nur noch, was
+  wirklich geprüft wurde. Im einfachen Modus sind das SHA-256-Prüfsumme und
+  Inhalt, keine Signatur. Vorher stand dort fälschlich auch „Signatur“.
+- Update-Client mit dem aktuellen Generator von theme.michael-gahn.de neu
+  erzeugt (veralteter Aufruf `curl_close()` entfernt).
+- Kennzeichnungen, Bilder und Designwerte bleiben unverändert.
+- Keine neue Datenbankmigration.
+- Prüf- und Installationsstand: [Release-Hinweise](Dokumentation/Release-1.4.0.md).
+
 ## 1.3.11 – 2026-11-11
 
 - Wartungsversion ohne Funktionsänderung. Bereich **Updates**, Kennzeichnungen,

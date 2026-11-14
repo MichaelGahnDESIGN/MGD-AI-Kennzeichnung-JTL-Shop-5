@@ -1,5 +1,12 @@
 # Versionsübersicht
 
+## 1.4.0 – 14. November 2026
+
+Gemeinsame Versionsnummer 1.4.0 für alle MGD-Themes und -Plugins. Der Bereich
+**Updates** meldet nach dem Download nur noch, was wirklich geprüft wurde
+(SHA-256-Prüfsumme und Inhalt, im einfachen Modus keine Signatur). Keine
+Migration. Siehe [Prüf- und Updatehinweise](Release-1.4.0.md).
+
 ## 1.3.11 – 11. November 2026
 
 Wartungsversion ohne Funktionsänderung. Gleicher Funktionsumfang wie 1.3.10,

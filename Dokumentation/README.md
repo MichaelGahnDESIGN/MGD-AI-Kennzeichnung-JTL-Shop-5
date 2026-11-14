@@ -12,6 +12,7 @@ Die JTL-Mindestversion 5.7.2 steht im Element `MinShopVersion` der `info.xml`. J
 - [OPC-Kennzeichnung](OPC-Kennzeichnung.md): direkte Bildfelder und fehlertolerante Dateimanager-Kompatibilität.
 - [Plugin-Impressum](Impressum.md): geschützte Herstellerangaben ohne Datenbank, Formular oder öffentliche Shopänderung.
 - [Darstellung](Darstellung.md): globale Werte, lokale Live-Vorschau und Transparenz in Version 1.2.1.
+- [Release 1.4.0](Release-1.4.0.md): gemeinsame Versionsnummer, korrigierte Meldung im Bereich Updates.
 - [Release 1.3.11](Release-1.3.11.md): Wartungsversion ohne Funktionsänderung.
 - [Release 1.3.10](Release-1.3.10.md): Bereich Updates (MGD Update Client), einfacher Modus mit Prüfsumme.
 - [Release 1.3.9](Release-1.3.9.md): separate Detail-Lupe, Prüfungen und Shop-Updates.
