@@ -35,8 +35,25 @@ Geprüft wurde lokal am 14. November 2026:
 - Paketbau mit `scripts/build-release.sh`: ZIP ohne Fehler, zwei Builds mit
   gleicher Prüfsumme.
 
-Noch **nicht** geprüft: Veröffentlichung, Update über theme.michael-gahn.de
-und Update im JTL-Demo-Shop. Diese Schritte folgen erst nach Freigabe.
+Veröffentlicht und geprüft am 14. November 2026:
+
+- GitHub-Release v1.4.0 (fertiges Release, kein Prerelease) mit ZIP und
+  SHA-256-Datei. In der SHA-256-Datei steht nur der Dateiname;
+- ZIP vom Release zurückgeladen: gleiche Prüfsumme wie der lokale Build;
+- Prüfsummen-Datei aus diesem ZIP erzeugt und an die Plattform übergeben. Sie
+  wird über das Plattform-Repository ausgerollt, nicht direkt auf den Server
+  gelegt;
+- JTL-Demo-Shop: vorher Plugin-Dateien und Tabellen gesichert, dann mit dem
+  JTL-Updater auf 1.4.0 gebracht. Plugin aktiv, Adminmenü vollständig,
+  Wartungsmodus unverändert.
+
+Noch **nicht** geprüft:
+
+- Update-Anzeige über theme.michael-gahn.de, solange die Plattform die neue
+  Prüfsummen-Datei noch nicht ausgerollt hat;
+- Bereich Updates und übrige Ansichten im Backend des Demo-Shops (dafür wäre
+  ein Login nötig);
+- kein zusätzlicher Lauf unter PHP 8.1.
 
 ## Sicherung und Rückweg
 
