@@ -47,13 +47,16 @@ Veröffentlicht und geprüft am 14. November 2026:
   JTL-Updater auf 1.4.0 gebracht. Plugin aktiv, Adminmenü vollständig,
   Wartungsmodus unverändert.
 
-Noch **nicht** geprüft:
+- Gegenprobe vom Server des Demo-Shops mit dem echten Update-Client 1.4.0:
+  Prüfsummen-Datei auf theme.michael-gahn.de nennt 1.4.0. Als 1.3.11
+  eingestellt meldet der Client „Update 1.4.0 verfügbar“; der Download
+  landet in der Quarantäne, die Prüfsumme stimmt und die Meldung lautet
+  „geprüft (SHA-256-Prüfsumme, Inhalt)“ ohne Signatur. Als 1.4.0 meldet er
+  „Kein neueres Update verfügbar“;
+- Backend-Ansicht des Plugins im Demo-Shop (angemeldeter Browser, durch den
+  Koordinations-Thread): lädt ohne Fehler, alle sechs Reiter vorhanden.
 
-- Update-Anzeige über theme.michael-gahn.de, solange die Plattform die neue
-  Prüfsummen-Datei noch nicht ausgerollt hat;
-- Bereich Updates und übrige Ansichten im Backend des Demo-Shops (dafür wäre
-  ein Login nötig);
-- kein zusätzlicher Lauf unter PHP 8.1.
+Noch **nicht** geprüft: kein zusätzlicher Lauf unter PHP 8.1.
 
 ## Sicherung und Rückweg
 
