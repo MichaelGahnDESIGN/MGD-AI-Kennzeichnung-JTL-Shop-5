@@ -1,5 +1,12 @@
 # Versionsübersicht
 
+## 1.5.0 – 18. November 2026
+
+Anmeldung der kostenlosen Installation bei theme.michael-gahn.de (höchstens
+einmal am Tag, nur Plugin-Name, Version, Shopsystem, Domain und zufällige ID).
+Abschaltbar im Reiter **Updates**. Keine Migration. Siehe
+[Prüf- und Updatehinweise](Release-1.5.0.md).
+
 ## 1.4.0 – 14. November 2026
 
 Gemeinsame Versionsnummer 1.4.0 für alle MGD-Themes und -Plugins. Der Bereich

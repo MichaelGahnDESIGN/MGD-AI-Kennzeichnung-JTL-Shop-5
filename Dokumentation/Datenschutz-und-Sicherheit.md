@@ -8,12 +8,29 @@ Es findet keine automatische KI-Erkennung statt. Das Plugin sendet **keine Bilde
 
 ## Netzwerkzugriffe
 
-Die frühere GitHub-Abfrage für Updatehinweise wurde entfernt. Das Plugin ruft
-im Hintergrund nichts ab. Updates werden nur über den Backend-Reiter
-**Updates** (MGD Update Client) auf Ihren Klick geprüft. Dabei kann der
+Die frühere GitHub-Abfrage für Updatehinweise wurde entfernt. Updates werden
+nur über den Backend-Reiter **Updates** (MGD Update Client) auf Ihren Klick
+geprüft. Dabei kann der
 Update-Server `theme.michael-gahn.de` technisch **Server-IP** und Zeitpunkt
 der Anfrage erhalten. Updates erfolgen weiterhin per geprüftem, manuellem
 ZIP-Upload.
+
+### Installation melden (ab Version 1.5.0)
+
+Das Plugin meldet sich einmal bei `theme.michael-gahn.de` an und danach
+höchstens einmal am Tag. Gesendet werden nur Plugin-Name, Version,
+Shopsystem, die Domain des Shops und eine zufällige Installations-ID. Dabei
+erhält der Server technisch auch die Server-IP des Shops. Es werden keine
+Kunden-, Bestell- oder Besucherdaten und keine Bilder gesendet.
+
+- Die Meldung läuft nur im Administrationsbereich und bei Installation,
+  Aktivierung und Update, nie im Shop-Frontend.
+- Der Schalter **Installation bei Michael Gahn DESIGN melden** im Reiter
+  **Updates** ist ab Werk an und jederzeit abschaltbar. Abschalten löscht den
+  Eintrag auf der Plattform; danach wird nichts mehr gesendet.
+- Einträge ohne Meldung seit 12 Monaten löscht die Plattform automatisch.
+- Das Plugin funktioniert immer voll weiter, auch wenn die Plattform nicht
+  erreichbar ist oder die Meldung ausgeschaltet ist.
 
 ## Lokaler Editor der AI-Philosophie
 

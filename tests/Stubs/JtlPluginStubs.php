@@ -52,6 +52,10 @@ class Bootstrapper
         return true;
     }
 
+    public function installed(): void {}
+
+    public function enabled(): void {}
+
     public function uninstalled(bool $deleteData = true): void {}
 
     /**

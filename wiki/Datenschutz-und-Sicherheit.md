@@ -73,6 +73,20 @@ Backend-Reiter **Updates** (MGD Update Client) auf Ihren Klick geprüft. Das
 Plugin installiert keine Updates automatisch; erforderlich bleibt der manuelle
 ZIP-Upload des geprüften Pakets.
 
+## Installation melden
+
+Ab Version 1.5.0 meldet sich das Plugin einmal bei theme.michael-gahn.de an
+und danach höchstens einmal am Tag. Gesendet werden nur:
+
+- Plugin-Name und Version;
+- Shopsystem;
+- Domain des Shops;
+- eine zufällige Installations-ID.
+
+Keine Kunden-, Bestell- oder Besucherdaten, keine Bilder. Abschalten:
+Reiter **Updates** öffnen, Haken bei **Installation bei Michael Gahn DESIGN
+melden** entfernen, speichern. Das Plugin läuft danach genauso weiter.
+
 ## Protokollierung
 
 Sicherheitsrelevante Admin-Abläufe sollen nur feste Ereigniscodes und Mengen protokollieren. Tokens, lokale Pfade, eingegebene Philosophie-Inhalte, SQL-Ausnahmen und personenbezogene Daten gehören nicht in Logs oder öffentliche Fehlerberichte.

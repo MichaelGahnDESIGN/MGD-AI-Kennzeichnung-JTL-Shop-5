@@ -1,5 +1,21 @@
 # Änderungsprotokoll
 
+## 1.5.0 – 2026-11-18
+
+- Neu: Anmeldung der kostenlosen Installation bei theme.michael-gahn.de.
+  Einmal nach Installation, Aktivierung und Update, danach höchstens einmal am
+  Tag und nur im Administrationsbereich. Gesendet werden nur Plugin-Name,
+  Version, Shopsystem, Domain und eine zufällige Installations-ID.
+- Schalter **Installation bei Michael Gahn DESIGN melden** im Reiter
+  **Updates**, ab Werk an. Abschalten löscht den Eintrag auf der Plattform.
+- Das Plugin läuft immer voll weiter, auch ohne Plattform oder mit
+  ausgeschalteter Meldung.
+- Update-Client mit dem aktuellen Generator neu erzeugt (Schalter auf der
+  Updates-Seite).
+- Kennzeichnungen, Bilder und Designwerte bleiben unverändert.
+- Keine neue Datenbankmigration.
+- Prüf- und Installationsstand: [Release-Hinweise](Dokumentation/Release-1.5.0.md).
+
 ## 1.4.0 – 2026-11-14
 
 - Gemeinsame Versionsnummer 1.4.0 für alle MGD-Themes und -Plugins.

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugin\MGD_AI_Kennzeichnung\Admin\Update;
 
+use Plugin\MGD_AI_Kennzeichnung\UpdateClient\Admin\InstallReporting;
 use Plugin\MGD_AI_Kennzeichnung\UpdateClient\Admin\UpdatesPage;
 use Plugin\MGD_AI_Kennzeichnung\UpdateClient\Factory;
 use RuntimeException;
@@ -30,6 +31,7 @@ final class UpdatesPageFactory
         string $csrfField,
         callable $csrfValid,
         callable $canManage,
+        ?InstallReporting $install = null,
     ): UpdatesPage {
         $pluginDir = rtrim($pluginDir, '/');
         $host = parse_url($frontendUrl, PHP_URL_HOST);
@@ -53,6 +55,7 @@ final class UpdatesPageFactory
             null,
             ['info.xml'],
             self::SIMPLE_URL,
+            $install,
         );
     }
 }

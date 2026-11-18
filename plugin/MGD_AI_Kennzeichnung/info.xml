@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jtlshopplugin>
     <Name>MGD AI Kennzeichnung</Name>
-    <Description>Kennzeichnet KI-generierte Inhalte transparent im JTL-Shop.</Description>
+    <Description>Kennzeichnet KI-generierte Inhalte transparent im JTL-Shop. Meldet sich höchstens einmal am Tag bei theme.michael-gahn.de (Plugin, Version, Shopsystem, Domain, zufällige ID). Abschaltbar in den Einstellungen.</Description>
     <Author>Michael Gahn DESIGN</Author>
     <URL>https://Michael-Gahn.de</URL>
     <XMLVersion>100</XMLVersion>
     <MinShopVersion>5.7.2</MinShopVersion>
     <PluginID>MGD_AI_Kennzeichnung</PluginID>
     <CreateDate>2026-08-12</CreateDate>
-    <Version>1.4.0</Version>
+    <Version>1.5.0</Version>
     <Install>
         <Portlets>
             <Portlet>

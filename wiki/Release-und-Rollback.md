@@ -1,5 +1,13 @@
 # Release und Rollback
 
+## Release 1.5.0
+
+Neu ist die Anmeldung der kostenlosen Installation bei theme.michael-gahn.de.
+Sie ist im Reiter **Updates** abschaltbar. Es gibt keine neue Migration.
+Verwenden Sie `MGD_AI_Kennzeichnung-1.5.0.zip` und die zugehörige SHA-256-Datei.
+Der tatsächliche Prüf- und Installationsstand steht in den
+[Release-Hinweisen](../Dokumentation/Release-1.5.0.md).
+
 ## Release 1.4.0
 
 Gemeinsame Versionsnummer für alle MGD-Produkte. Der Bereich **Updates**

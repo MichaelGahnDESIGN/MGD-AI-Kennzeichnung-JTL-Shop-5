@@ -6,6 +6,8 @@ parameters:
     excludePaths:
         # erzeugter MGD Update Client (Generator, nicht von Hand ändern)
         - plugin/MGD_AI_Kennzeichnung/UpdateClient
+        # erzeugter Install-Client (Free-Lizenz Anmeldung)
+        - plugin/MGD_AI_Kennzeichnung/Install
     scanFiles:
         - tests/Stubs/JtlPluginStubs.php
     tmpDir: .phpstan.cache

@@ -1,6 +1,6 @@
 {
     "name": "michael-gahn-design/mgd-ai-kennzeichnung-jtl-shop-5",
-    "description": "JTL-Shop-Plugin zur transparenten Kennzeichnung KI-generierter Inhalte.",
+    "description": "JTL-Shop-Plugin zur transparenten Kennzeichnung KI-generierter Inhalte. Meldet sich höchstens einmal am Tag bei theme.michael-gahn.de (Plugin, Version, Shopsystem, Domain, zufällige ID). Abschaltbar in den Einstellungen.",
     "type": "project",
     "license": "GPL-3.0-or-later",
     "authors": [

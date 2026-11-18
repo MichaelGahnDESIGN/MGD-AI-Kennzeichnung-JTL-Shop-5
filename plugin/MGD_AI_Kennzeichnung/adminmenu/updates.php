@@ -9,6 +9,7 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\Adapter\JtlAuthorizationAdapter;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\AccessDeniedException;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Exception\ValidationException;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Http\AdminTabScope;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Update\InstallReport;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Update\PackageDelivery;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Update\UpdateDataDirectory;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Update\UpdatesPageFactory;
@@ -77,14 +78,18 @@ try {
 
     $shopVersion = defined('APPLICATION_VERSION') ? constant('APPLICATION_VERSION') : '';
     $shopVersion = is_string($shopVersion) ? $shopVersion : '';
+    $pluginDir = rtrim($oPlugin->getPaths()->getBasePath(), '/');
+    // Schalter Installation melden (null = kein Schalter, Seite läuft trotzdem)
+    $install = InstallReport::reporting(InstallReport::client($pluginDir));
     $page = UpdatesPageFactory::create(
-        rtrim($oPlugin->getPaths()->getBasePath(), '/'),
+        $pluginDir,
         $dataDir,
         $oPlugin->getPaths()->getFrontendURL(),
         $shopVersion,
         $csrfField,
         static fn(): bool => Form::validateToken(),
         $canManage,
+        $install,
     );
 
     $request = $scope->request;

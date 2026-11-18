@@ -20,6 +20,12 @@ enthält:
 - **keine Telemetrie** oder versteckte Nutzungsanalyse;
 - keine Pro-Freischaltung und keinen automatisch nachgeladenen Programmcode.
 
+Ab Version 1.5.0 meldet sich das kostenlose Plugin offen sichtbar bei
+theme.michael-gahn.de an (höchstens einmal am Tag, nur Plugin-Name, Version,
+Shopsystem, Domain und zufällige ID). Die Meldung ist im Reiter **Updates**
+abschaltbar und ist keine versteckte Nutzungsanalyse. Alle Funktionen laufen
+auch ohne sie.
+
 Damit hängt die bestehende Bildkennzeichnung nicht von einem Drittanbieter,
 einem Konto oder einer laufenden Zahlung ab.
 

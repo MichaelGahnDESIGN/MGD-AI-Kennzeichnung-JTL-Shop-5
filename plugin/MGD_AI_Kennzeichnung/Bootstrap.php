@@ -15,6 +15,7 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\IO\LoadLocalAssetLabel;
 use Plugin\MGD_AI_Kennzeichnung\Admin\IO\SaveLocalAssetLabel;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Presentation\LocalPreviewUrlResolver;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Service\LocalAssetLabelService;
+use Plugin\MGD_AI_Kennzeichnung\Admin\Update\InstallReport;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\FrontendLabelRepository;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\LocalAssetLabelRepository;
 use Plugin\MGD_AI_Kennzeichnung\Presentation\FrontendDocumentIntegrator;
@@ -43,6 +44,8 @@ class Bootstrap extends Bootstrapper
     {
         parent::boot($dispatcher);
         if (!Shop::isFrontend()) {
+            // Free-Lizenz Aktiv-Meldung, nur Admin, max 1x am Tag
+            InstallReport::ping($this->getPlugin()->getPaths()->getBasePath());
             $this->bootAdminIo($dispatcher);
 
             return;
@@ -137,6 +140,20 @@ class Bootstrap extends Bootstrapper
         return (new SystemCompatibilityCheck())->supports($shopVersion, PHP_VERSION);
     }
 
+    // Anmeldung nach Installation
+    public function installed(): void
+    {
+        parent::installed();
+        InstallReport::ping($this->getPlugin()->getPaths()->getBasePath(), true);
+    }
+
+    // Anmeldung nach Aktivieren
+    public function enabled(): void
+    {
+        parent::enabled();
+        InstallReport::ping($this->getPlugin()->getPaths()->getBasePath(), true);
+    }
+
     /**
      * Verwirft nach einem JTL-Update ausschließlich kompilierte Vorlagen dieses
      * Plugins. Dadurch wird trotz reproduzierbarer Datei-Zeitstempel sofort die
@@ -158,6 +175,8 @@ class Bootstrap extends Bootstrapper
         (new CompiledTemplateCacheRefresher($backendSmarty))
             ->refresh($this->getPlugin()->getPaths()->getBasePath());
         parent::updated($oldVersion, $newVersion);
+        // neue Version melden
+        InstallReport::ping($this->getPlugin()->getPaths()->getBasePath(), true);
     }
 
     /**
