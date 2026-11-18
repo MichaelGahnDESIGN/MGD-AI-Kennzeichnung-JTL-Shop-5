@@ -46,6 +46,23 @@ Geprüft wurde lokal am 18. November 2026:
 Install-Client und Update-Client wurden aus dem Plattform-Stand 67d4048 erzeugt
 (Hinweistext freigegeben am 18. November 2026).
 
+Veröffentlicht und geprüft am 18. November 2026:
+
+- GitHub-Release v1.5.0 (fertiges Release, kein Prerelease) mit ZIP und
+  SHA-256-Datei. In der SHA-256-Datei steht nur der Dateiname;
+- ZIP vom Release zurückgeladen: gleiche Prüfsumme wie der lokale Build
+  (`e4d92cb4…af976`, 2007566 Byte);
+- Prüfsummen-Datei aus diesem ZIP erzeugt und an die Plattform übergeben. Sie
+  wird über das Plattform-Repository ausgerollt, nicht direkt auf den Server
+  gelegt;
+- JTL-Demo-Shop: vorher Plugin-Dateien und Tabellen gesichert, dann mit dem
+  JTL-Updater auf 1.5.0 gebracht. Plugin aktiv, Adminmenü vollständig,
+  Wartungsmodus unverändert;
+- Anmeldung: Beim Update hat sich der Demo-Shop sofort angemeldet und einen
+  Schlüssel von theme.michael-gahn.de erhalten. Schalter aus: Installations-ID
+  und Schlüssel gelöscht, Status „Meldung ist ausgeschaltet“. Schalter wieder
+  an: neue Anmeldung mit neuer Installations-ID, Status „Zuletzt gemeldet“.
+
 ## Sicherung und Rückweg
 
 Vor dem Update eine Sicherung von Dateien und Datenbank anlegen. Bei einer
