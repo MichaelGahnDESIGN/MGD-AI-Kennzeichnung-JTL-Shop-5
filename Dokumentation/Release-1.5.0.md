@@ -62,6 +62,13 @@ Veröffentlicht und geprüft am 18. November 2026:
   Schlüssel von theme.michael-gahn.de erhalten. Schalter aus: Installations-ID
   und Schlüssel gelöscht, Status „Meldung ist ausgeschaltet“. Schalter wieder
   an: neue Anmeldung mit neuer Installations-ID, Status „Zuletzt gemeldet“.
+  Auf der Plattform steht danach genau ein Eintrag, der alte ist gelöscht
+  (geprüft durch den Plattform-Thread);
+- Gegenprobe nach dem Ausrollen der Prüfsummen-Datei: Sie nennt 1.5.0 mit
+  der richtigen Prüfsumme. Als 1.4.0 eingestellt meldet der Update-Client
+  „Update 1.5.0 verfügbar“; der Download landet in der Quarantäne, die
+  Prüfsumme stimmt, die Meldung lautet „geprüft (SHA-256-Prüfsumme, Inhalt)“.
+  Als 1.5.0 meldet er „Kein neueres Update verfügbar“.
 
 ## Sicherung und Rückweg
 
