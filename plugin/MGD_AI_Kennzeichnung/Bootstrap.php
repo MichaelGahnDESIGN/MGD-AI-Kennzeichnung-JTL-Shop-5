@@ -15,14 +15,15 @@ use Plugin\MGD_AI_Kennzeichnung\Admin\IO\LoadLocalAssetLabel;
 use Plugin\MGD_AI_Kennzeichnung\Admin\IO\SaveLocalAssetLabel;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Presentation\LocalPreviewUrlResolver;
 use Plugin\MGD_AI_Kennzeichnung\Admin\Service\LocalAssetLabelService;
-use Plugin\MGD_AI_Kennzeichnung\Admin\Update\InstallReport;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\FrontendLabelRepository;
 use Plugin\MGD_AI_Kennzeichnung\Infrastructure\Database\LocalAssetLabelRepository;
 use Plugin\MGD_AI_Kennzeichnung\Presentation\FrontendDocumentIntegrator;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\LocalPathNormalizer;
 use Plugin\MGD_AI_Kennzeichnung\Service\DisplaySettings;
 use Plugin\MGD_AI_Kennzeichnung\Service\SystemCompatibilityCheck;
+use Plugin\MGD_AI_Kennzeichnung\Kit\Platform\Jtl\Setup as Kit;
 use Plugin\MGD_AI_Kennzeichnung\Setup\CompiledTemplateCacheRefresher;
+use Plugin\MGD_AI_Kennzeichnung\Setup\LegacyUpdateData;
 use Plugin\MGD_AI_Kennzeichnung\Setup\PluginDataLifecycle;
 use Throwable;
 
@@ -44,8 +45,10 @@ class Bootstrap extends Bootstrapper
     {
         parent::boot($dispatcher);
         if (!Shop::isFrontend()) {
-            // Free-Lizenz Aktiv-Meldung, nur Admin, max 1x am Tag
-            InstallReport::ping($this->getPlugin()->getPaths()->getBasePath());
+            // Aktiv-Meldung über den Baukasten, nur Admin, max 1x am Tag
+            if (PHP_SAPI !== 'cli') {
+                $this->kitPing();
+            }
             $this->bootAdminIo($dispatcher);
 
             return;
@@ -144,14 +147,14 @@ class Bootstrap extends Bootstrapper
     public function installed(): void
     {
         parent::installed();
-        InstallReport::ping($this->getPlugin()->getPaths()->getBasePath(), true);
+        $this->kitPing(true);
     }
 
     // Anmeldung nach Aktivieren
     public function enabled(): void
     {
         parent::enabled();
-        InstallReport::ping($this->getPlugin()->getPaths()->getBasePath(), true);
+        $this->kitPing(true);
     }
 
     /**
@@ -176,7 +179,21 @@ class Bootstrap extends Bootstrapper
             ->refresh($this->getPlugin()->getPaths()->getBasePath());
         parent::updated($oldVersion, $newVersion);
         // neue Version melden
-        InstallReport::ping($this->getPlugin()->getPaths()->getBasePath(), true);
+        $this->kitPing(true);
+    }
+
+    // alte Daten (bis 1.5.0) rüber, dann Baukasten melden lassen - Fehler nie nach außen
+    private function kitPing(bool $force = false): void
+    {
+        try {
+            $compiled = LegacyUpdateData::compiledDir();
+            if ($compiled !== null) {
+                LegacyUpdateData::migrate($compiled);
+            }
+            Kit::forShop($this->getPlugin())?->ping($force);
+        } catch (Throwable) {
+            return;
+        }
     }
 
     /**
@@ -186,6 +203,16 @@ class Bootstrap extends Bootstrapper
      */
     public function uninstalled(bool $deleteData = true): void
     {
+        // Abmelden bei theme.michael-gahn.de, alte Daten vorher rüber damit die richtige ID abgemeldet wird
+        try {
+            $compiled = LegacyUpdateData::compiledDir();
+            if ($compiled !== null) {
+                LegacyUpdateData::migrate($compiled);
+            }
+            Kit::forShop($this->getPlugin())?->uninstall($deleteData);
+        } catch (Throwable) {
+            // Server weg o.ä. - Deinstallation läuft trotzdem durch
+        }
         (new PluginDataLifecycle($this->getDB()))->uninstalled($deleteData);
         parent::uninstalled($deleteData);
     }
