@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Plugin\MGD_AI_Kennzeichnung\Kit\Platform\Jtl;
 
 use Plugin\MGD_AI_Kennzeichnung\Kit\Install\{InstallClient, Settings};
-use Plugin\MGD_AI_Kennzeichnung\Kit\Catalog\Recommendations;
+use Plugin\MGD_AI_Kennzeichnung\Kit\Catalog\{MediaCache, Recommendations};
 use Plugin\MGD_AI_Kennzeichnung\Kit\License\LicenseClient;
 use Plugin\MGD_AI_Kennzeichnung\Kit\Support\Text;
 
@@ -29,6 +29,7 @@ final class Dashboard
         private readonly ?Recommendations $recommendations = null,
         private readonly ?LicenseClient $license = null,
         private readonly ?InstallClient $install = null,
+        private readonly ?MediaCache $media = null,
     ) {
     }
 
@@ -63,7 +64,7 @@ final class Dashboard
         $out .= self::section('info', 'Info', '<p>Plugin: ' . Text::e($this->pluginName) . '</p><p>Version: ' . Text::e($this->version) . '</p>');
         $notice = $this->notice !== null ? NoticeView::render($this->notice, $this->guard, $this->version, $today, $this->pluginName) : '';
         $out .= self::section('updates', 'Updates', $notice . ($updatesHtml !== '' ? $updatesHtml : '<p>Die Update-Prüfung ist für dieses Plugin nicht eingerichtet.</p>'));
-        $rec = RecommendationsView::render($this->recommendations, $this->guard);
+        $rec = RecommendationsView::render($this->recommendations, $this->guard, $this->media);
         if ($rec !== '') {
             $out .= self::section('plugins', 'Weitere Plugins', $rec);
         }

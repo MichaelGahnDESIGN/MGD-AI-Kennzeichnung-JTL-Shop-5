@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Plugin\MGD_AI_Kennzeichnung\Kit\Platform\Jtl;
 
 use Plugin\MGD_AI_Kennzeichnung\Kit\Install\{CurlTransport, Factory, InstallClient, JsonFileStore, Transport};
-use Plugin\MGD_AI_Kennzeichnung\Kit\Catalog\Recommendations;
+use Plugin\MGD_AI_Kennzeichnung\Kit\Catalog\{MediaCache, Recommendations};
 use Plugin\MGD_AI_Kennzeichnung\Kit\License\{CurlPost, HttpPost, LicenseClient};
 
 // Alle Kit-Teile für ein JTL-Plugin an einer Stelle. Baut Setup::forShop(), Tests bauen direkt
@@ -38,6 +38,7 @@ final class JtlKit
         private readonly ?\Closure $updates = null,
         private readonly ?Transport $http = null,
         private readonly ?HttpPost $post = null,
+        private readonly ?MediaCache $media = null,
     ) {
         if (preg_match(self::PRODUCT_RE, $product) !== 1 || preg_match(self::VERSION_RE, $version) !== 1 || !is_dir($dataDir)) {
             throw new \InvalidArgumentException('Produkt, Version oder Datenordner ungültig.');
@@ -98,6 +99,8 @@ final class JtlKit
         } catch (\Throwable) {
         }
         if ($deleteData) {
+            // Katalog-Bilder in mediafiles gleich mit weg
+            $this->media?->wipe();
             try {
                 self::wipe($this->dataDir);
             } catch (\Throwable) {
@@ -105,6 +108,11 @@ final class JtlKit
         }
 
         return $done;
+    }
+
+    public function media(): ?MediaCache
+    {
+        return $this->media;
     }
 
     public function recommendations(): ?Recommendations
@@ -139,7 +147,7 @@ final class JtlKit
         $updates = $u === null ? null : static fn (string $m, array $p): array => $u($g, $m, $p);
 
         return new Dashboard($this->pluginName, $this->version, $this->product, $this->guard, $updates, $this->noticeReader(),
-            $this->recommendations(), $this->license(), $this->installClient());
+            $this->recommendations(), $this->license(), $this->installClient(), $this->media);
     }
 
     /**
@@ -164,7 +172,7 @@ final class JtlKit
         }
 
         return Dashboard::style() . '<div class="mgd-kit-jtl"><h1>Weitere Plugins von Michael Gahn DESIGN</h1>'
-            . RecommendationsView::render($this->recommendations(), $this->guard) . '</div>';
+            . RecommendationsView::render($this->recommendations(), $this->guard, $this->media) . '</div>';
     }
 
     // Datenordner leeren + weg. Symlinks nur entfernen, nie folgen

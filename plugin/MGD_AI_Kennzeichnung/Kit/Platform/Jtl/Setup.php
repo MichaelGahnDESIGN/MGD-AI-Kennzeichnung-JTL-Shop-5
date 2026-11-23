@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugin\MGD_AI_Kennzeichnung\Kit\Platform\Jtl;
 
+use Plugin\MGD_AI_Kennzeichnung\Kit\Catalog\MediaCache;
 use Plugin\MGD_AI_Kennzeichnung\Kit\Update\Factory as UpdateFactory;
 
 // Einstieg für JTL-Plugins (docs/plugin-baukasten/jtl.md). Ein Aufruf in Bootstrap oder adminmenu/*.php
@@ -40,7 +41,7 @@ final class Setup
             return new JtlKit($product, $name, $version, $dir, Guard::forShop(), self::domain(),
                 (string) ($o['catalogSlug'] ?? Config::CATALOG_SLUG), (string) ($o['repo'] ?? Config::REPO),
                 is_array($o['fallback'] ?? null) ? $o['fallback'] : [], ($o['licenseEnabled'] ?? false) === true,
-                self::updates($base . '/update/root-keys.json', $dir, $product, $name, $version));
+                self::updates($base . '/update/root-keys.json', $dir, $product, $name, $version), media: self::media($product));
         } catch (\Throwable) {
             return null;
         }
@@ -68,7 +69,8 @@ final class Setup
     }
 
     // Befund Pilot ai-kennzeichnung: alter Update-Client lag in templates_c/mgd-update-client/<PluginID>
-    // > install.json + state.json einmal rüberkopieren (nur wenn im neuen Ordner noch nix ist), alt bleibt liegen
+    // > install.json + state.json einmal rüberkopieren (nur wenn im neuen Ordner noch nix ist)
+    // danach alt > *.migrated, sonst holt ein Neuinstallieren nach "Daten löschen" die abgemeldete ID zurück (Befund Pilot)
     public const LEGACY_FILES = ['install.json', 'state.json'];
 
     /** @return list<string> übernommene Dateien */
@@ -86,15 +88,20 @@ final class Setup
             foreach (self::LEGACY_FILES as $f) {
                 $src = $old . '/' . $f;
                 $dst = rtrim($newDir, '/\\') . '/' . $f;
-                if (is_file($dst) || !is_file($src) || is_link($src) || filesize($src) > 65536) {
+                if (!is_file($src) || is_link($src)) {
                     continue;
                 }
-                $data = (string) file_get_contents($src);
-                if (!is_array(json_decode($data, true)) || file_put_contents($dst, $data, LOCK_EX) === false) {
-                    continue;
+                if (!is_file($dst) && filesize($src) <= 65536) {
+                    $data = (string) file_get_contents($src);
+                    if (is_array(json_decode($data, true)) && file_put_contents($dst, $data, LOCK_EX) !== false) {
+                        @chmod($dst, 0600);
+                        $done[] = $f;
+                    }
                 }
-                @chmod($dst, 0600);
-                $done[] = $f;
+                // alt stilllegen, sobald es im neuen Ordner eine Datei gibt (kopiert oder schon da)
+                if (is_file($dst)) {
+                    @rename($src, $src . '.migrated');
+                }
             }
         } catch (\Throwable) {
         }
@@ -168,6 +175,31 @@ final class Setup
 
             return $page->handle($method, $post);
         };
+    }
+
+    public const MEDIA_FOLDER = 'mgd-kit-catalog';
+
+    /** Katalog-Bilder > <shop>/mediafiles/mgd-kit-catalog/<produkt>, per URL erreichbar. null = kein Ordner (dann Farbfläche) */
+    public static function media(string $product, ?string $root = null, ?string $shopUrl = null): ?MediaCache
+    {
+        try {
+            $root ??= defined('PFAD_ROOT') ? (string) constant('PFAD_ROOT') : '';
+            $mf = defined('PFAD_MEDIAFILES') ? (string) constant('PFAD_MEDIAFILES') : 'mediafiles/';
+            $base = rtrim($root, '/\\') . '/' . trim($mf, '/');
+            if ($root === '' || preg_match(JtlKit::PRODUCT_RE, $product) !== 1 || preg_match('#^[a-z0-9_-]+$#D', trim($mf, '/')) !== 1 || !is_dir($base) || !is_writable($base)) {
+                return null;
+            }
+            // nur Pfad, kein Host > Bild kommt immer vom gleichen Server wie das Backend
+            $path = rtrim((string) parse_url($shopUrl ?? (class_exists('\\JTL\\Shop') ? (string) \JTL\Shop::getURL() : (defined('URL_SHOP') ? (string) constant('URL_SHOP') : '')), PHP_URL_PATH), '/');
+            if (preg_match('#^(/[A-Za-z0-9._-]+)*$#D', $path) !== 1 || str_contains($path, '..')) {
+                return null;
+            }
+            $rel = trim($mf, '/') . '/' . self::MEDIA_FOLDER . '/' . $product;
+
+            return new MediaCache($base . '/' . self::MEDIA_FOLDER . '/' . $product, MediaCache::curl('MGDKit/1.0 (jtl5)'), $path . '/' . $rel);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     private static function basePath(object $plugin): string

@@ -1,5 +1,14 @@
 # Änderungsprotokoll
 
+## 1.6.1 – 2026-11-24
+
+- Neue Ansicht **Weitere Plugins**: Karten mit Bild, Kategorie und den
+  wichtigsten Punkten. Die Bilder holt der Server einmal und speichert sie
+  lokal, der Browser lädt nichts extern.
+- Plugin-Baukasten aktualisiert.
+- Kennzeichnungen, Bilder, Einstellungen und Anmeldung bleiben unverändert.
+- Keine neue Datenbankmigration.
+
 ## 1.6.0 – 2026-11-23
 
 - Neue Reiter **Übersicht** (Info, Updates, Weitere Plugins, Installation
