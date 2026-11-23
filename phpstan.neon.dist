@@ -8,6 +8,8 @@ parameters:
         - plugin/MGD_AI_Kennzeichnung/UpdateClient
         # erzeugter Install-Client (Free-Lizenz Anmeldung)
         - plugin/MGD_AI_Kennzeichnung/Install
+        # erzeugter Plugin-Baukasten (bin/build-plugin-kit.php, nicht von Hand ändern)
+        - plugin/MGD_AI_Kennzeichnung/Kit
     scanFiles:
         - tests/Stubs/JtlPluginStubs.php
     tmpDir: .phpstan.cache

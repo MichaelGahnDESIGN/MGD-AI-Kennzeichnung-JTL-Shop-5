@@ -25,7 +25,11 @@ final class Setup
             $pluginId = (string) ($o['pluginId'] ?? Config::PLUGIN_ID);
             $folder = (string) ($o['dataFolder'] ?? strtolower($pluginId) . '_update');
             $base = self::basePath($plugin);
-            $dir = defined('PFAD_ROOT') && defined('PFAD_COMPILEDIR') ? self::dataDir(constant('PFAD_ROOT') . constant('PFAD_COMPILEDIR'), $folder) : null;
+            $compiled = defined('PFAD_ROOT') && defined('PFAD_COMPILEDIR') ? constant('PFAD_ROOT') . constant('PFAD_COMPILEDIR') : '';
+            $dir = $compiled !== '' ? self::dataDir($compiled, $folder) : null;
+            if ($dir !== null && preg_match(self::PLUGIN_ID_RE, $pluginId) === 1) {
+                self::adoptLegacy($compiled, $pluginId, $dir);
+            }
             $version = self::version($plugin, $base);
             if (preg_match(self::PLUGIN_ID_RE, $pluginId) !== 1 || $dir === null || $version === '') {
                 return null;
@@ -61,6 +65,41 @@ final class Setup
         }
 
         return $out['html'];
+    }
+
+    // Befund Pilot ai-kennzeichnung: alter Update-Client lag in templates_c/mgd-update-client/<PluginID>
+    // > install.json + state.json einmal rüberkopieren (nur wenn im neuen Ordner noch nix ist), alt bleibt liegen
+    public const LEGACY_FILES = ['install.json', 'state.json'];
+
+    /** @return list<string> übernommene Dateien */
+    public static function adoptLegacy(string $compiledBase, string $pluginId, string $newDir): array
+    {
+        $done = [];
+        try {
+            if (preg_match(self::PLUGIN_ID_RE, $pluginId) !== 1) {
+                return [];
+            }
+            $old = rtrim($compiledBase, '/\\') . '/mgd-update-client/' . $pluginId;
+            if (!is_dir($old) || is_link($old) || realpath($old) === realpath($newDir)) {
+                return [];
+            }
+            foreach (self::LEGACY_FILES as $f) {
+                $src = $old . '/' . $f;
+                $dst = rtrim($newDir, '/\\') . '/' . $f;
+                if (is_file($dst) || !is_file($src) || is_link($src) || filesize($src) > 65536) {
+                    continue;
+                }
+                $data = (string) file_get_contents($src);
+                if (!is_array(json_decode($data, true)) || file_put_contents($dst, $data, LOCK_EX) === false) {
+                    continue;
+                }
+                @chmod($dst, 0600);
+                $done[] = $f;
+            }
+        } catch (\Throwable) {
+        }
+
+        return $done;
     }
 
     /** Unterordner in templates_c + Zugriffssperre, wie bei den bisherigen MGD-JTL-Plugins. null = geht nicht */

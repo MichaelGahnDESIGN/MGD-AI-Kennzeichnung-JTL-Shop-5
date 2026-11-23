@@ -182,14 +182,10 @@ class Bootstrap extends Bootstrapper
         $this->kitPing(true);
     }
 
-    // alte Daten (bis 1.5.0) rüber, dann Baukasten melden lassen - Fehler nie nach außen
+    // Meldung über den Baukasten (alte Daten bis 1.5.0 holt er selbst) - Fehler nie nach außen
     private function kitPing(bool $force = false): void
     {
         try {
-            $compiled = LegacyUpdateData::compiledDir();
-            if ($compiled !== null) {
-                LegacyUpdateData::migrate($compiled);
-            }
             Kit::forShop($this->getPlugin())?->ping($force);
         } catch (Throwable) {
             return;
@@ -203,13 +199,13 @@ class Bootstrap extends Bootstrapper
      */
     public function uninstalled(bool $deleteData = true): void
     {
-        // Abmelden bei theme.michael-gahn.de, alte Daten vorher rüber damit die richtige ID abgemeldet wird
+        // Abmelden bei theme.michael-gahn.de, danach alten Update-Ordner leeren
         try {
+            Kit::forShop($this->getPlugin())?->uninstall($deleteData);
             $compiled = LegacyUpdateData::compiledDir();
             if ($compiled !== null) {
-                LegacyUpdateData::migrate($compiled);
+                LegacyUpdateData::forget($compiled);
             }
-            Kit::forShop($this->getPlugin())?->uninstall($deleteData);
         } catch (Throwable) {
             // Server weg o.ä. - Deinstallation läuft trotzdem durch
         }

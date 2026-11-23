@@ -15,9 +15,9 @@
 
 Transparente Kennzeichnungen für KI-generierte und KI-bearbeitete Bilder – direkt in JTL-Shop 5, ohne die Originalbilder zu verändern und ohne Bilddaten an externe KI-Dienste zu senden.
 
-> **Aktueller Paketstand:** 1.5.0 – Anmeldung der kostenlosen Installation (abschaltbar)
+> **Aktueller Paketstand:** 1.6.0 – neue Reiter **Übersicht** und **Weitere Plugins**
 > **Hinweis:** Meldet sich höchstens einmal am Tag bei theme.michael-gahn.de (Plugin, Version, Shopsystem, Domain, zufällige ID). Abschaltbar in den Einstellungen.
-> **Download:** [Release 1.5.0 mit Installations-ZIP und Prüfsumme](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases/tag/v1.5.0). Bestehende Shops müssen separat aktualisiert werden.
+> **Download:** [Release 1.6.0 mit Installations-ZIP und Prüfsumme](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases/tag/v1.6.0). Bestehende Shops müssen separat aktualisiert werden.
 > **Voraussetzungen:** JTL-Shop 5.7.2, PHP 8.1 oder neuer, NOVA oder ein kompatibles NOVA-basiertes Template
 > **Prüfstand:** Die lokalen Prüfungen und der gesonderte Installationsstand sind in [Release 1.5.0](Dokumentation/Release-1.5.0.md) dokumentiert. Eine Veröffentlichung aktualisiert bestehende Shops nicht automatisch.
 > **Wichtig:** Das Plugin erkennt KI-Inhalte nicht automatisch. Die fachliche Prüfung und Einstufung erfolgt bewusst durch einen berechtigten Menschen.
@@ -56,7 +56,7 @@ Das Plugin verändert keine Bilddatei, brennt keinen Text in ein Bild ein und ve
 - sichere JTL-Admin-Integration mit Berechtigungs- und CSRF-Prüfung;
 - kontrollierter Scan, Vorschau vor Stapeländerungen und sicherer Umgang mit veralteten Fundstellen;
 - optionale Herstellernennung **supported by: Michael Gahn DESIGN**;
-- Update-Prüfung nur über den MGD Update Client (Backend-Reiter **Updates**), nie im Hintergrund.
+- Update-Prüfung nur über den MGD Update Client (Backend-Reiter **Übersicht**), nie im Hintergrund.
 
 ## Kennzeichnungsstatus
 
@@ -108,7 +108,7 @@ Die sichtbaren Texte werden je nach Shop- oder Plugin-Sprache auf Deutsch oder E
 
 ### 1. Paket herunterladen
 
-Das Installationspaket heißt `MGD_AI_Kennzeichnung-1.5.0.zip`. Sie finden veröffentlichte Pakete unter [GitHub Releases](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases). Lokal liegen fertige ZIP-Dateien im Hauptprojekt unter `plugin/`. Verwenden Sie immer das angehängte Plugin-ZIP, nicht den automatisch von GitHub erzeugten Quellcode-Download.
+Das Installationspaket heißt `MGD_AI_Kennzeichnung-1.6.0.zip`. Sie finden veröffentlichte Pakete unter [GitHub Releases](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases). Lokal liegen fertige ZIP-Dateien im Hauptprojekt unter `plugin/`. Verwenden Sie immer das angehängte Plugin-ZIP, nicht den automatisch von GitHub erzeugten Quellcode-Download.
 
 Das öffentlich zugängliche Repository stellt Release-Hinweise bereit, aber
 keinen Auto-Updater. Die Aktualisierung erfolgt als **manueller ZIP-Upload** im
@@ -127,7 +127,7 @@ Erstellen Sie vor Installation oder Update mindestens:
 
 1. JTL-Backend öffnen.
 2. **Plugins → Plugin-Manager → Upload** wählen.
-3. `MGD_AI_Kennzeichnung-1.5.0.zip` zuerst auf der getrennten Dev-Installation hochladen.
+3. `MGD_AI_Kennzeichnung-1.6.0.zip` zuerst auf der getrennten Dev-Installation hochladen.
 4. Das Plugin installieren beziehungsweise aktualisieren.
 5. Plugin aktivieren.
 6. Plugin öffnen und die gewünschte Ansicht prüfen. Seit Version 1.3.4 verwendet das Plugin über den ausdrücklich erzeugten JTL-Backend-Renderer dessen tatsächlich aktive Smarty-Engine, verwirft dort gezielt kompilierte Vorlagen dieses Plugins und startet den lokalen Philosophie-Editor JTL-kompatibel im nachgeladenen AJAX-Tab; andere Shop-Caches bleiben unberührt.
@@ -179,7 +179,7 @@ Die Meldung läuft nur im Administrationsbereich, nie im Shop-Frontend.
 So schalten Sie die Meldung ab:
 
 1. Im JTL-Backend das Plugin öffnen.
-2. Den Reiter **Updates** öffnen.
+2. Den Reiter **Übersicht** öffnen.
 3. Den Haken bei **Installation bei Michael Gahn DESIGN melden** entfernen und
    speichern.
 
@@ -294,11 +294,18 @@ weiterhin pro Bild im Kennzeichnungsdialog oder in der Stapelbearbeitung
 festgelegt. Die Vorschau bleibt vollständig lokal; erst **Speichern** ändert
 globale Shopwerte.
 
-## Updates
+## Übersicht und Weitere Plugins (ab Version 1.6.0)
 
-Das Plugin hat im Backend den Menüpunkt **Updates**. Er ist neu und noch
-nicht ausgeliefert. Er erscheint erst, wenn eine neue Plugin-Version
-installiert ist, die ihn enthält.
+Ab Version 1.6.0 gibt es im Backend zwei neue Reiter:
+
+1. **Übersicht:** Version, Updates, Weitere Plugins und der Schalter
+   **Installation bei Michael Gahn DESIGN melden** auf einer Seite.
+2. **Weitere Plugins:** andere Plugins von Michael Gahn DESIGN für JTL-Shop 5.
+
+Der frühere Reiter **Updates** ist weg. Der Update-Bereich steht jetzt in der
+**Übersicht**. Ihre Einstellungen, Kennzeichnungen und die Anmeldung bleiben erhalten.
+
+## Updates
 
 **Was der Bereich macht:**
 
@@ -316,7 +323,7 @@ installiert ist, die ihn enthält.
 
 **So gehen Sie vor:**
 
-1. Öffnen Sie im Backend **Plugins → MGD AI Kennzeichnung → Updates**.
+1. Öffnen Sie im Backend **Plugins → MGD AI Kennzeichnung → Übersicht**.
 2. Klicken Sie **Jetzt nach Updates suchen**. Erst dieser Klick ruft den Update-Server ab.
 3. Wollen Sie das regelmäßig, setzen Sie das Häkchen **Update-Prüfung einschalten** und klicken **Speichern**. Standard ist aus.
 4. Gibt es ein Update: Häkchen setzen und **Paket herunterladen und prüfen** klicken.
@@ -329,7 +336,8 @@ Servers. Es werden keine Besucher-, Kunden- oder Bestelldaten gesendet. Das
 Plugin ist kostenlos und sendet deshalb auch keinen Lizenz-Token.
 
 **Wo liegen die Daten?** Der Bereich speichert seinen Zustand und das geprüfte
-Paket unter `templates_c/mgd-update-client/MGD_AI_Kennzeichnung/` im Shop-Ordner.
+Paket ab Version 1.6.0 unter `templates_c/mgd_ai_kennzeichnung_update/` im Shop-Ordner
+(bis 1.5.0: `templates_c/mgd-update-client/MGD_AI_Kennzeichnung/`, wird beim Update übernommen).
 Dort sperrt eine `.htaccess` den Webzugriff. Bei Nginx muss der Ordner
 in der Serverkonfiguration gesperrt werden.
 
@@ -339,7 +347,7 @@ in der Serverkonfiguration gesperrt werden.
 - Die signierte Variante (mit Schlüsseln in `update/root-keys.json`) ist vorbereitet, aber noch nicht aktiv.
 
 Die frühere GitHub-Abfrage (Einstellung „Updatehinweise über GitHub“) gibt es
-nicht mehr. Der Reiter **Updates** ersetzt sie.
+nicht mehr. Der Update-Bereich in der **Übersicht** ersetzt sie.
 
 ## Datenschutz und Sicherheit
 
@@ -436,8 +444,8 @@ composer test:js
 composer analyse
 composer style
 bash scripts/build-release.sh
-unzip -t dist/MGD_AI_Kennzeichnung-1.5.0.zip
-shasum -a 256 dist/MGD_AI_Kennzeichnung-1.5.0.zip
+unzip -t dist/MGD_AI_Kennzeichnung-1.6.0.zip
+shasum -a 256 dist/MGD_AI_Kennzeichnung-1.6.0.zip
 ```
 
 Die Testumgebung umfasst PHP-Unit- und Integrationstests, JavaScript-Tests, statische PHP-Analyse, Formatprüfung, Strukturverträge und die Prüfung des installierbaren ZIP-Pakets.

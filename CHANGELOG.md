@@ -1,5 +1,15 @@
 # Änderungsprotokoll
 
+## 1.6.0 – 2026-11-23
+
+- Neue Reiter **Übersicht** (Info, Updates, Weitere Plugins, Installation
+  melden) und **Weitere Plugins** aus dem gemeinsamen MGD-Plugin-Baukasten.
+- Der frühere Reiter **Updates** ist durch die **Übersicht** ersetzt.
+- Beim Deinstallieren meldet sich das Plugin bei theme.michael-gahn.de ab.
+- Die bisherige Anmeldung und der Update-Stand werden beim Update übernommen.
+- Kennzeichnungen, Bilder und Designwerte bleiben unverändert.
+- Keine neue Datenbankmigration.
+
 ## 1.5.0 – 2026-11-18
 
 - Neu: Anmeldung der kostenlosen Installation bei theme.michael-gahn.de.

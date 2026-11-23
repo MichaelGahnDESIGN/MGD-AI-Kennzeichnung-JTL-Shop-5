@@ -6,42 +6,26 @@ namespace Plugin\MGD_AI_Kennzeichnung\Setup;
 
 use Throwable;
 
-// Brückenversion: Anmeldung + Update-Stand aus dem alten Ordner (bis 1.5.0) in den Baukasten-Ordner schieben
-// alt > templates_c/mgd-update-client/MGD_AI_Kennzeichnung, neu > templates_c/mgd_ai_kennzeichnung_update
+// alter Update-Ordner bis 1.5.0 > templates_c/mgd-update-client/MGD_AI_Kennzeichnung
+// Übernahme macht der Baukasten (adoptLegacy), hier nur beim Deinstallieren wegräumen
+// sonst holt adoptLegacy nach Neuinstallation die alte, schon abgemeldete ID zurück
 final class LegacyUpdateData
 {
     public const OLD_FOLDER = 'mgd-update-client/MGD_AI_Kennzeichnung';
-    public const NEW_FOLDER = 'mgd_ai_kennzeichnung_update';
     public const FILES = ['install.json', 'state.json'];
 
-    /** verschiebt nur, wenns im neuen Ordner noch nix gibt. Fehler nie nach außen */
-    public static function migrate(string $compiledDir): void
+    public static function forget(string $compiledDir): void
     {
         try {
-            $base = rtrim($compiledDir, '/\\');
-            $old = $base . '/' . self::OLD_FOLDER;
-            if ($base === '' || !is_dir($old)) {
-                return;
-            }
-            $new = $base . '/' . self::NEW_FOLDER;
-            if (!is_dir($new) && !@mkdir($new, 0700, true) && !is_dir($new)) {
+            $old = rtrim($compiledDir, '/\\') . '/' . self::OLD_FOLDER;
+            if (!is_dir($old) || is_link($old)) {
                 return;
             }
             foreach (self::FILES as $file) {
-                $from = $old . '/' . $file;
-                $to = $new . '/' . $file;
-                if (!is_file($from) || is_link($from)) {
-                    continue;
+                $path = $old . '/' . $file;
+                if (is_file($path) && !is_link($path)) {
+                    @unlink($path);
                 }
-                if (is_file($to)) {
-                    // neuer Stand gewinnt, alte Kopie weg (sonst kommt nach Neuinstallation die alte ID zurück)
-                    @unlink($from);
-                    continue;
-                }
-                if (!@rename($from, $to) && @copy($from, $to)) {
-                    @unlink($from);
-                }
-                @chmod($to, 0600);
             }
         } catch (Throwable) {
             return;
