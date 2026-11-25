@@ -1,5 +1,9 @@
 # Änderungsprotokoll
 
+## [2.1.1] - 2026-11-25
+
+- Aktueller Baukasten, einheitliche Version.
+
 ## 1.6.1 – 2026-11-24
 
 - Neue Ansicht **Weitere Plugins**: Karten mit Bild, Kategorie und den

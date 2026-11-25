@@ -21,7 +21,7 @@ use Plugin\MGD_AI_Kennzeichnung\Presentation\FrontendDocumentIntegrator;
 use Plugin\MGD_AI_Kennzeichnung\Scanner\LocalPathNormalizer;
 use Plugin\MGD_AI_Kennzeichnung\Service\DisplaySettings;
 use Plugin\MGD_AI_Kennzeichnung\Service\SystemCompatibilityCheck;
-use Plugin\MGD_AI_Kennzeichnung\Kit\Platform\Jtl\Setup as Kit;
+use Plugin\MGD_AI_Kennzeichnung\Kit\Platform\Jtl\Setup;
 use Plugin\MGD_AI_Kennzeichnung\Setup\CompiledTemplateCacheRefresher;
 use Plugin\MGD_AI_Kennzeichnung\Setup\LegacyUpdateData;
 use Plugin\MGD_AI_Kennzeichnung\Setup\PluginDataLifecycle;
@@ -46,7 +46,7 @@ class Bootstrap extends Bootstrapper
         parent::boot($dispatcher);
         if (!Shop::isFrontend()) {
             // Aktiv-Meldung über den Baukasten, nur Admin, max 1x am Tag
-            if (PHP_SAPI !== 'cli') {
+            if (Setup::isBackend()) {
                 $this->kitPing();
             }
             $this->bootAdminIo($dispatcher);
@@ -147,14 +147,14 @@ class Bootstrap extends Bootstrapper
     public function installed(): void
     {
         parent::installed();
-        $this->kitPing(true);
+        $this->kitReport(fn() => Setup::forShop($this->getPlugin())?->ping(true));
     }
 
     // Anmeldung nach Aktivieren
     public function enabled(): void
     {
         parent::enabled();
-        $this->kitPing(true);
+        $this->kitReport(fn() => Setup::forShop($this->getPlugin())?->ping(true));
     }
 
     /**
@@ -178,15 +178,20 @@ class Bootstrap extends Bootstrapper
         (new CompiledTemplateCacheRefresher($backendSmarty))
             ->refresh($this->getPlugin()->getPaths()->getBasePath());
         parent::updated($oldVersion, $newVersion);
-        // neue Version melden
-        $this->kitPing(true);
+        // neue Version melden (das Plugin-Objekt kennt hier noch die alte)
+        $this->kitReport(fn() => Setup::forShop($this->getPlugin(), ['version' => is_string($newVersion) ? $newVersion : ''])?->ping(true));
     }
 
-    // Meldung über den Baukasten (alte Daten bis 1.5.0 holt er selbst) - Fehler nie nach außen
-    private function kitPing(bool $force = false): void
+    // Meldung über den Baukasten (alte Daten holt er selbst) - Fehler nie nach außen
+    private function kitPing(): void
+    {
+        $this->kitReport(fn() => Setup::forShop($this->getPlugin())?->ping());
+    }
+
+    private function kitReport(callable $report): void
     {
         try {
-            Kit::forShop($this->getPlugin())?->ping($force);
+            $report();
         } catch (Throwable) {
             return;
         }
@@ -201,7 +206,7 @@ class Bootstrap extends Bootstrapper
     {
         // Abmelden bei theme.michael-gahn.de, danach alten Update-Ordner leeren
         try {
-            Kit::forShop($this->getPlugin())?->uninstall($deleteData);
+            Setup::forShop($this->getPlugin())?->uninstall($deleteData);
             $compiled = LegacyUpdateData::compiledDir();
             if ($compiled !== null) {
                 LegacyUpdateData::forget($compiled);
