@@ -89,7 +89,7 @@ nur auf Ihren Klick.
 
 Nein.
 
-Version 2.1.1 wird per geprüftem, manuellem ZIP-Upload installiert. Das aktuelle
+Version 2.1.4 wird per geprüftem, manuellem ZIP-Upload installiert. Das aktuelle
 Testpaket liegt lokal vor; die öffentliche GitHub-Veröffentlichung steht noch aus.
 
 ## Was bedeutet Transparenz?

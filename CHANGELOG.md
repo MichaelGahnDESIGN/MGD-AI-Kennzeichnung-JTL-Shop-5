@@ -1,5 +1,9 @@
 # Änderungsprotokoll
 
+## [2.1.4] - 2026-11-26
+
+- MGD Tools: Plugins an- und abschalten, Lizenz je Plugin.
+
 ## [2.1.1] - 2026-11-25
 
 - Aktueller Baukasten, einheitliche Version.

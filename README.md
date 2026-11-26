@@ -15,14 +15,18 @@
 
 Transparente Kennzeichnungen für KI-generierte und KI-bearbeitete Bilder – direkt in JTL-Shop 5, ohne die Originalbilder zu verändern und ohne Bilddaten an externe KI-Dienste zu senden.
 
-> **Aktueller Paketstand:** 2.1.1 – aktueller Baukasten, einheitliche Version
+> **Aktueller Paketstand:** 2.1.4 – aktueller Baukasten, einheitliche Version
 > **Hinweis:** Meldet sich höchstens einmal am Tag bei theme.michael-gahn.de (Plugin, Version, Shopsystem, Domain, zufällige ID). Abschaltbar in den Einstellungen.
-> **Download:** [Release 2.1.1 mit Installations-ZIP und Prüfsumme](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases/tag/v2.1.1). Bestehende Shops müssen separat aktualisiert werden.
+> **Download:** [Release 2.1.4 mit Installations-ZIP und Prüfsumme](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases/tag/v2.1.4). Bestehende Shops müssen separat aktualisiert werden.
 > **Voraussetzungen:** JTL-Shop 5.7.2, PHP 8.1 oder neuer, NOVA oder ein kompatibles NOVA-basiertes Template
 > **Prüfstand:** Die lokalen Prüfungen und der gesonderte Installationsstand sind in [Release 1.5.0](Dokumentation/Release-1.5.0.md) dokumentiert. Eine Veröffentlichung aktualisiert bestehende Shops nicht automatisch.
 > **Wichtig:** Das Plugin erkennt KI-Inhalte nicht automatisch. Die fachliche Prüfung und Einstufung erfolgt bewusst durch einen berechtigten Menschen.
 
 Es gibt **keine automatische KI-Erkennung**. Dadurch bleibt jede veröffentlichte Einstufung eine nachvollziehbare redaktionelle Entscheidung.
+
+## MGD Tools (ab Version 2.1.4)
+
+Im Bereich **MGD Tools** siehst du alle MGD-Plugins an einem Ort. Dort kannst du dieses Plugin **aktivieren und deaktivieren** und siehst, ob eine **Lizenz** nötig ist (Free oder Pro) und ob sie gültig ist.
 
 ## Wofür ist das Plugin gedacht?
 
@@ -108,7 +112,7 @@ Die sichtbaren Texte werden je nach Shop- oder Plugin-Sprache auf Deutsch oder E
 
 ### 1. Paket herunterladen
 
-Das Installationspaket heißt `MGD_AI_Kennzeichnung-2.1.1.zip`. Sie finden veröffentlichte Pakete unter [GitHub Releases](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases). Lokal liegen fertige ZIP-Dateien im Hauptprojekt unter `plugin/`. Verwenden Sie immer das angehängte Plugin-ZIP, nicht den automatisch von GitHub erzeugten Quellcode-Download.
+Das Installationspaket heißt `MGD_AI_Kennzeichnung-2.1.4.zip`. Sie finden veröffentlichte Pakete unter [GitHub Releases](https://github.com/MichaelGahnDESIGN/MGD-AI-Kennzeichnung-JTL-Shop-5/releases). Lokal liegen fertige ZIP-Dateien im Hauptprojekt unter `plugin/`. Verwenden Sie immer das angehängte Plugin-ZIP, nicht den automatisch von GitHub erzeugten Quellcode-Download.
 
 Das öffentlich zugängliche Repository stellt Release-Hinweise bereit, aber
 keinen Auto-Updater. Die Aktualisierung erfolgt als **manueller ZIP-Upload** im
@@ -127,7 +131,7 @@ Erstellen Sie vor Installation oder Update mindestens:
 
 1. JTL-Backend öffnen.
 2. **Plugins → Plugin-Manager → Upload** wählen.
-3. `MGD_AI_Kennzeichnung-2.1.1.zip` zuerst auf der getrennten Dev-Installation hochladen.
+3. `MGD_AI_Kennzeichnung-2.1.4.zip` zuerst auf der getrennten Dev-Installation hochladen.
 4. Das Plugin installieren beziehungsweise aktualisieren.
 5. Plugin aktivieren.
 6. Plugin öffnen und die gewünschte Ansicht prüfen. Seit Version 1.3.4 verwendet das Plugin über den ausdrücklich erzeugten JTL-Backend-Renderer dessen tatsächlich aktive Smarty-Engine, verwirft dort gezielt kompilierte Vorlagen dieses Plugins und startet den lokalen Philosophie-Editor JTL-kompatibel im nachgeladenen AJAX-Tab; andere Shop-Caches bleiben unberührt.
@@ -448,8 +452,8 @@ composer test:js
 composer analyse
 composer style
 bash scripts/build-release.sh
-unzip -t dist/MGD_AI_Kennzeichnung-2.1.1.zip
-shasum -a 256 dist/MGD_AI_Kennzeichnung-2.1.1.zip
+unzip -t dist/MGD_AI_Kennzeichnung-2.1.4.zip
+shasum -a 256 dist/MGD_AI_Kennzeichnung-2.1.4.zip
 ```
 
 Die Testumgebung umfasst PHP-Unit- und Integrationstests, JavaScript-Tests, statische PHP-Analyse, Formatprüfung, Strukturverträge und die Prüfung des installierbaren ZIP-Pakets.
