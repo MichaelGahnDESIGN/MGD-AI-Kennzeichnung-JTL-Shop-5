@@ -24,7 +24,7 @@ Transparente Kennzeichnungen für KI-generierte und KI-bearbeitete Bilder – di
 
 Es gibt **keine automatische KI-Erkennung**. Dadurch bleibt jede veröffentlichte Einstufung eine nachvollziehbare redaktionelle Entscheidung.
 
-## MGD Tools (ab Version 2.1.4)
+## MGD Tools (ab Version 2.2.0)
 
 Im Bereich **MGD Tools** siehst du alle MGD-Plugins an einem Ort. Dort kannst du dieses Plugin **aktivieren und deaktivieren** und siehst, ob eine **Lizenz** nötig ist (Free oder Pro) und ob sie gültig ist.
 
@@ -134,7 +134,7 @@ Erstellen Sie vor Installation oder Update mindestens:
 3. `MGD_AI_Kennzeichnung-2.1.4.zip` zuerst auf der getrennten Dev-Installation hochladen.
 4. Das Plugin installieren beziehungsweise aktualisieren.
 5. Plugin aktivieren.
-6. Plugin öffnen und die gewünschte Ansicht prüfen. Seit Version 1.3.4 verwendet das Plugin über den ausdrücklich erzeugten JTL-Backend-Renderer dessen tatsächlich aktive Smarty-Engine, verwirft dort gezielt kompilierte Vorlagen dieses Plugins und startet den lokalen Philosophie-Editor JTL-kompatibel im nachgeladenen AJAX-Tab; andere Shop-Caches bleiben unberührt.
+6. Plugin öffnen und die gewünschte Ansicht prüfen. Seit Version 2.2.0 verwendet das Plugin über den ausdrücklich erzeugten JTL-Backend-Renderer dessen tatsächlich aktive Smarty-Engine, verwirft dort gezielt kompilierte Vorlagen dieses Plugins und startet den lokalen Philosophie-Editor JTL-kompatibel im nachgeladenen AJAX-Tab; andere Shop-Caches bleiben unberührt.
 
 ### 4. Bilder einlesen
 
@@ -166,7 +166,7 @@ Die Galerie bietet:
 - erneuten Bildscan;
 - getrennte Prüfung veralteter Fundstellen.
 
-### Installation melden (ab Version 1.5.0)
+### Installation melden (ab Version 2.2.0)
 
 Das Plugin meldet sich einmal bei theme.michael-gahn.de an. Danach meldet es
 sich höchstens einmal am Tag. Gesendet werden nur:
@@ -193,7 +193,7 @@ wenn theme.michael-gahn.de nicht erreichbar ist.
 
 ### OPC-Uploads aus Unterordnern
 
-Version 1.5.0 findet zusätzlich alle
+Version 2.2.0 findet zusätzlich alle
 unterstützten Uploads im OPC-Dateispeicher – auch ohne Verwendung auf einer Seite.
 Das schließt beispielsweise `opc/banner/2026`, `opc/bilder/2026` und tiefere
 Unterordner ein. Nach **Sicheren Bildscan starten** wählen Sie die Quelle
@@ -298,15 +298,15 @@ weiterhin pro Bild im Kennzeichnungsdialog oder in der Stapelbearbeitung
 festgelegt. Die Vorschau bleibt vollständig lokal; erst **Speichern** ändert
 globale Shopwerte.
 
-## Übersicht und Weitere Plugins (ab Version 1.6.0)
+## Übersicht und Weitere Plugins (ab Version 2.2.0)
 
-Ab Version 1.6.0 gibt es im Backend zwei neue Reiter:
+Ab Version 2.2.0 gibt es im Backend zwei neue Reiter:
 
 1. **Übersicht:** Version, Updates, Weitere Plugins und der Schalter
    **Installation bei Michael Gahn DESIGN melden** auf einer Seite.
 2. **Weitere Plugins:** andere Plugins von Michael Gahn DESIGN für JTL-Shop 5.
 
-Ab Version 1.6.1 zeigt **Weitere Plugins** Karten mit Bild, Kategorie und den
+Ab Version 2.2.0 zeigt **Weitere Plugins** Karten mit Bild, Kategorie und den
 wichtigsten Punkten. Die Bilder holt der Shop-Server einmal von
 theme.michael-gahn.de und speichert sie lokal. Ihr Browser lädt nichts von fremden Seiten.
 
@@ -344,7 +344,7 @@ Servers. Es werden keine Besucher-, Kunden- oder Bestelldaten gesendet. Das
 Plugin ist kostenlos und sendet deshalb auch keinen Lizenz-Token.
 
 **Wo liegen die Daten?** Der Bereich speichert seinen Zustand und das geprüfte
-Paket ab Version 1.6.0 unter `templates_c/mgd_ai_kennzeichnung_update/` im Shop-Ordner
+Paket ab Version 2.2.0 unter `templates_c/mgd_ai_kennzeichnung_update/` im Shop-Ordner
 (bis 1.5.0: `templates_c/mgd-update-client/MGD_AI_Kennzeichnung/`, wird beim Update übernommen).
 Dort sperrt eine `.htaccess` den Webzugriff. Bei Nginx muss der Ordner
 in der Serverkonfiguration gesperrt werden.
@@ -386,7 +386,7 @@ Weitere Details stehen in [Datenschutz und Sicherheit](Dokumentation/Datenschutz
 - ein berechtigtes JTL-Admin-Konto;
 - empfohlen: Standardtemplate NOVA oder ein sauber abgeleitetes NOVA-Child-Theme.
 
-Die Bildausgabe wurde mit Version 1.1.1 unter NOVA sowie OnvisTheme auf Basis NOVA 1.7.1 geprüft. Version 1.2.0 ergänzte den geschützten Impressum-Tab, Version 1.2.1 die globale Darstellung und Transparenz, Version 1.3.0 den vollständig lokalen Philosophie-Editor, Version 1.3.3 die Neucompilierung über JTLs tatsächlich aktive Backend-Smarty-Engine und Version 1.3.4 den zuverlässigen Editorstart im AJAX-Tab. Andere Templates können funktionieren, sollten aber zuerst in einer getrennten Testumgebung geprüft werden.
+Die Bildausgabe wurde mit Version 2.2.0 unter NOVA sowie OnvisTheme auf Basis NOVA 1.7.1 geprüft. Version 2.2.0 ergänzte den geschützten Impressum-Tab, Version 2.2.0 die globale Darstellung und Transparenz, Version 2.2.0 den vollständig lokalen Philosophie-Editor, Version 2.2.0 die Neucompilierung über JTLs tatsächlich aktive Backend-Smarty-Engine und Version 2.2.0 den zuverlässigen Editorstart im AJAX-Tab. Andere Templates können funktionieren, sollten aber zuerst in einer getrennten Testumgebung geprüft werden.
 
 ## Bewusste Grenzen
 

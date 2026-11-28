@@ -2,7 +2,7 @@
 
 Diese Übersicht verweist auf die verständlichen technischen Erläuterungen des Plugins. Sicherheits- und Datenschutzentscheidungen werden jeweils dort beschrieben, wo Betreiberinnen, Betreiber und Entwickler sie leicht wiederfinden können.
 
-Die JTL-Mindestversion 5.7.2 steht im Element `MinShopVersion` der `info.xml`. JTL-Shop 5.7.2 wertet dort kein Element `PHPVersion` aus. Deshalb wird PHP 8.1 ehrlich als Projekt- und Buildvertrag über `require.php` sowie `config.platform.php` in der `composer.json` und über die CI-Matrix abgesichert.
+Die JTL-Mindestversion 2.2.0 steht im Element `MinShopVersion` der `info.xml`. JTL-Shop 5.7.2 wertet dort kein Element `PHPVersion` aus. Deshalb wird PHP 8.1 ehrlich als Projekt- und Buildvertrag über `require.php` sowie `config.platform.php` in der `composer.json` und über die CI-Matrix abgesichert.
 
 ## Sicherheit und Datenschutz
 
@@ -11,7 +11,7 @@ Die JTL-Mindestversion 5.7.2 steht im Element `MinShopVersion` der `info.xml`. J
 - [Admin-Bildverwaltung](Admin-Bildverwaltung.md): Bildgalerie, Filter, Einzel- und Stapelkennzeichnung.
 - [OPC-Kennzeichnung](OPC-Kennzeichnung.md): direkte Bildfelder und fehlertolerante Dateimanager-Kompatibilität.
 - [Plugin-Impressum](Impressum.md): geschützte Herstellerangaben ohne Datenbank, Formular oder öffentliche Shopänderung.
-- [Darstellung](Darstellung.md): globale Werte, lokale Live-Vorschau und Transparenz in Version 1.2.1.
+- [Darstellung](Darstellung.md): globale Werte, lokale Live-Vorschau und Transparenz in Version 2.2.0.
 - [Release 1.5.0](Release-1.5.0.md): Anmeldung der kostenlosen Installation, abschaltbar.
 - [Release 1.4.0](Release-1.4.0.md): gemeinsame Versionsnummer, korrigierte Meldung im Bereich Updates.
 - [Release 1.3.11](Release-1.3.11.md): Wartungsversion ohne Funktionsänderung.

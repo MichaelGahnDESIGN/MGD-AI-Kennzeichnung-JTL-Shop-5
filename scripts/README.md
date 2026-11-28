@@ -17,7 +17,7 @@ Das Paket wird zweimal gebaut und per SHA-256 auf Reproduzierbarkeit geprüft.
 Anschließend wird genau dieses geprüfte ZIP zuerst auf `<DEV-SHOP-DOMAIN>`
 abgenommen. Für `<SHOP-DOMAIN>` wird dasselbe Artefakt verwendet; zwischen
 Dev-Abnahme und Live-Rollout findet kein neuer Build statt. Das öffentliche
-Repository stellt Releasehinweise bereit. Version 1.5.0 enthält bewusst keinen
+Repository stellt Releasehinweise bereit. Version 2.2.0 enthält bewusst keinen
 Auto-Updater; das Update erfolgt als manueller ZIP-Upload im JTL-Plugin-Manager.
 
 ## Fertige Pakete für Michael ablegen
